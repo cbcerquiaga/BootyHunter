@@ -2,7 +2,8 @@
 
 //-----------------------------------------------------------------------------
 //BOOTYHUNTER: A SWASHBUCKLING ADVENTURE
-//Written by Blake Erquiaga
+//Concept by Blake Erquiaga
+//Written by Blake Erquiaga, Dan Zweiner, Jason Watts
 
 var width = 960, height = 560;
 var playerKills = 0;
@@ -10,8 +11,7 @@ var score = 0;
 var wave = 0;
 var killedBosses = [];
 
-//TESTING PUSH TO GIT!
-
+//ignore this for now
 var N = 1 << 0,
 S = 1 << 1,
 W = 1 << 2,
@@ -104,11 +104,7 @@ GameState.prototype.create = function() {
         Phaser.Keyboard.UP,
         Phaser.Keyboard.DOWN
     ]);
-    this.ship.body.collideWorldBounds = false;
-
-
-
-    //this.game.physics.collide(this.ship, this.walls, this.wallCollision, null, this);
+    this.ship.body.collideWorldBounds = false;//lets the ship wrap around the world
 
 
 
@@ -212,7 +208,7 @@ GameState.prototype.update = function() {
 
 
 
-
+//shoot both guns
   if (this.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) {
     this.weapon.fire();
     this.weapon2.fire();
@@ -221,6 +217,8 @@ GameState.prototype.update = function() {
 
 };
 
+  //sets whic hspriet eis being used based on the acceleration of the ship.
+  //doesn't work exactly right, but works well enough.
   function setWake(){
     if (this.ship.body.velocity <= 50){
       this.wake = 0;
@@ -231,6 +229,9 @@ GameState.prototype.update = function() {
     }
     this.ship.frame = this.wake;
   }
+
+  //function to kill bullets when they hit islands. I couldn't get it working,
+  //so it's commented out
 /*
   function islandWasShot(){
     for (var i = 0; i < this.islands.length; i++){
@@ -303,7 +304,7 @@ GameState.prototype.render =function() {
 }
 
 /*TODO: Long-term goals
--add enemiy ships, make them have colored rings/circles around them
+-add enemiy ships, make them have colored rings/circles around them?
 -make enemy ships avoid islands, move towards the player, and turn to shoot when in range
 -implement health, perhaps by a changing sea color
 -implement wind, make it so that the sprite changes, and the max speed changes, with the ship
