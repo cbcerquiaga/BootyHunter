@@ -58,8 +58,8 @@ GameState.prototype.create = function() {
     console.log(this.game.add);
     //first weapon, fires right relative to the ship
     this.weapon = this.game.add.weapon(100, 'cannonball');
-    this.weapon.bulletKillType = Phaser.Weapon.KILL_DISTANCE;
-    this.weapon.bulletKillDistance = 400;
+    this.weapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+    this.weapon.bulletLifespan = 650;
     this.weapon.bulletSpeed = 600;
     this.weapon.fireRate = 10;
     this.weapon.bulletAngleVariance = 10;
@@ -68,8 +68,8 @@ GameState.prototype.create = function() {
     this.weapon.trackSprite(this.ship, 0, 0, false);//TODO: shift over to actual position of gun
     //second weapon, fires left relative to the ship
     this.weapon2 = this.game.add.weapon(100, 'cannonball');
-    this.weapon2.bulletKillType = Phaser.Weapon.KILL_DISTANCE;
-    this.weapon2.bulletKillDistance = 400;
+    this.weapon2.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+    this.weapon2.bulletLifespan = 650;
     this.weapon2.bulletSpeed = 600;
     this.weapon2.fireRate = 10;
     this.weapon2.bulletAngleVariance = 10;
@@ -117,6 +117,16 @@ GameState.prototype.update = function() {
   //game.physics.arcade.overlap(this.islands , this.weapon.bullets, islandWasShot());
   //game.physics.arcade.overlap(this.islands , this.weapon2.bullets, islandWasShot());
 
+  //TODO: implement wind here with a checkWind(wind direction) method
+  if (this.ship.angle >= 45 && this.ship.angle <135){ //ship pointing south
+        //checkWind(S);
+  } else if (this.ship.angle >= 135 && this.ship.angle <225){//ship pointing west
+          //checkWind(W);
+  } else if (this.ship.angle >= 225 && this.ship.angle <270){//ship pointing north
+        //checkWind(N);
+  } else {//east
+        //checkWind(E);
+  }
 
 
     //  Collide the ship with the islands
@@ -217,7 +227,7 @@ GameState.prototype.update = function() {
 
 };
 
-  //sets whic hspriet eis being used based on the acceleration of the ship.
+  //sets which sprte is being used based on the acceleration of the ship.
   //doesn't work exactly right, but works well enough.
   function setWake(){
     if (this.ship.body.velocity <= 50){
