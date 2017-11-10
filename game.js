@@ -9,6 +9,7 @@ var width = 960, height = 560;
 var playerKills = 0;
 var score = 0;
 var wave = 0;
+var wind = N; //the direction the wind is coming from. N means the wind blows north to south
 var killedBosses = [];
 
 //ignore this for now
@@ -117,15 +118,18 @@ GameState.prototype.update = function() {
   //game.physics.arcade.overlap(this.islands , this.weapon.bullets, islandWasShot());
   //game.physics.arcade.overlap(this.islands , this.weapon2.bullets, islandWasShot());
 
-  //TODO: implement wind here with a checkWind(wind direction) method
+
+  //TODO: refactor into separate method
+  //checks the direction the ship is going, and checks it agianst the wind to
+  //determine if the ship is going in the correct direction
   if (this.ship.angle >= 45 && this.ship.angle <135){ //ship pointing south
-        //checkWind(S);
+        checkWind("S");
   } else if (this.ship.angle >= 135 && this.ship.angle <225){//ship pointing west
-          //checkWind(W);
-  } else if (this.ship.angle >= 225 && this.ship.angle <270){//ship pointing north
-        //checkWind(N);
+          checkWind("W");
+  } else if (this.ship.angle < -45 && this.ship.angle >= -135){//ship pointing north
+        checkWind("N");
   } else {//east
-        //checkWind(E);
+        checkWind("E");
   }
 
 
@@ -307,6 +311,37 @@ function createIsland(x, y, radius1, radius2) {
     return island;
 }
 
+}
+
+//helper method to change the acceleration and top speed of the ship based on its direction
+//TODO: figure out why the console only logs the ship as going crosswind
+function checkWind(facing){
+  switch(facing){
+    case facing === this.wind: //the ship is going into the wind
+      //reduce top speed and acceleration
+      this.MAX_SPEED = 700;
+      this.ACCELERATION = 45;
+      console.log("going into the wind");
+      //slowly decelerate the ship
+      var tempDrag = this.DRAG/3;
+      this.ship.body.drag.setTo(tempDrag, tempDrag);
+      break;
+    case (facing === "N" && this.wind === "S") || (facing === "S" && this.wind === "N")
+          || (facing === "W" && this.wind === "E") || (facing ==="E" && this.wind === "W"):
+          //increase top speed and acceleration
+        this.MAX_SPEED = 1000;
+        this.ACCELERATION = 180;
+        console.log("going downwind");
+        //slowly accelerate the ship
+        this.ship.body.acceleration.x = Math.cos(this.ship.rotation) * 20;
+        this.ship.body.acceleration.y = Math.sin(this.ship.rotation) * 20;
+          break;
+    default:
+    //set speed and acceleration to normal
+      this.MAX_SPEED = 850;
+      this.ACCELERATION = 90;
+      console.log("going crosswind");
+  }
 }
 
 GameState.prototype.render =function() {
