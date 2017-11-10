@@ -10,6 +10,8 @@ var score = 0;
 var wave = 0;
 var killedBosses = [];
 
+//TESTING PUSH TO GIT!
+
 var N = 1 << 0,
 S = 1 << 1,
 W = 1 << 2,
