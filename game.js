@@ -3,13 +3,13 @@
 //-----------------------------------------------------------------------------
 //BOOTYHUNTER: A SWASHBUCKLING ADVENTURE
 //Concept by Blake Erquiaga
-//Written by Blake Erquiaga, Dan Zweiner, Jason Watts
+//Written by Blake Erquiaga, Dan Zweiner, Jason Watts, Liem Gearen
 
 var width = 960, height = 560;
 var playerKills = 0;
 var score = 0;
 var wave = 0;
-var wind = N; //the direction the wind is coming from. N means the wind blows north to south
+var wind = 'N'; //the direction the wind is coming from. N means the wind blows north to south
 var killedBosses = [];
 
 //ignore this for now
@@ -47,7 +47,7 @@ GameState.prototype.create = function() {
     // Define motion constants
     this.ROTATION_SPEED = 180; // degrees/second
     this.ACCELERATION = 90; // pixels/second/second
-    this.MAX_SPEED = 850; // pixels/second
+    this.MAX_SPEED = 850; // pixels/second. This is the max max speed in the game
     this.DRAG = 50; // pixels/second
     this.wake = 0; // starting wake sprite
 
@@ -123,13 +123,13 @@ GameState.prototype.update = function() {
   //checks the direction the ship is going, and checks it agianst the wind to
   //determine if the ship is going in the correct direction
   if (this.ship.angle >= 45 && this.ship.angle <135){ //ship pointing south
-        checkWind("S");
+        checkWind('S');
   } else if (this.ship.angle >= 135 && this.ship.angle <225){//ship pointing west
-          checkWind("W");
+          checkWind('W');
   } else if (this.ship.angle < -45 && this.ship.angle >= -135){//ship pointing north
-        checkWind("N");
+        checkWind('N');
   } else {//east
-        checkWind("E");
+        checkWind('E');
   }
 
 
@@ -313,35 +313,80 @@ function createIsland(x, y, radius1, radius2) {
 
 }
 
-//helper method to change the acceleration and top speed of the ship based on its direction
+//helper funct to change the acceleration and top speed of the ship based on its direction
 //TODO: figure out why the console only logs the ship as going crosswind
 function checkWind(facing){
-  switch(facing){
-    case facing === this.wind: //the ship is going into the wind
-      //reduce top speed and acceleration
-      this.MAX_SPEED = 700;
-      this.ACCELERATION = 45;
-      console.log("going into the wind");
-      //slowly decelerate the ship
-      var tempDrag = this.DRAG/3;
-      this.ship.body.drag.setTo(tempDrag, tempDrag);
-      break;
-    case (facing === "N" && this.wind === "S") || (facing === "S" && this.wind === "N")
-          || (facing === "W" && this.wind === "E") || (facing ==="E" && this.wind === "W"):
-          //increase top speed and acceleration
-        this.MAX_SPEED = 1000;
-        this.ACCELERATION = 180;
-        console.log("going downwind");
-        //slowly accelerate the ship
-        this.ship.body.acceleration.x = Math.cos(this.ship.rotation) * 20;
-        this.ship.body.acceleration.y = Math.sin(this.ship.rotation) * 20;
-          break;
+  switch(facing){//default is east
+    case 'N':
+      switch(wind){ //default is east
+        case 'N': intoWind(); break;
+        case 'S': downWind(); break;
+        case 'W': crossWind(); break; //TODO: add code to use starboard-tack sprite
+        default: crossWind(); //TODO: add code to use port-tack sprite
+      } break;
+    case 'S':
+      switch(wind){
+        case 'N': downWind(); break;
+        case 'S': intoWind(); break;
+        case 'W': crossWind(); break; //TODO: add code to use port-tack sprite
+        default: crossWind();//TODO: add code to use starboard-tack sprite
+      } break;
+    case 'W':
+      switch(wind){
+        case 'N': crossWind(); break;//TODO: add code to use starboard-tack sprite
+        case 'S': crossWind(); break; //TODO: add code to use port-tack sprite
+        case 'W': intoWind(); break;
+        default: downWind();
+      } break;
     default:
-    //set speed and acceleration to normal
-      this.MAX_SPEED = 850;
-      this.ACCELERATION = 90;
-      console.log("going crosswind");
+      switch(wind){
+        case 'N': crossWind(); break; //TODO: add code to use port-tack sprite
+        case 'S': crossWind(); break; //TODO: add code to use starboard-tack sprite
+        case 'W': downWind(); break;
+        default: intoWind();
+      }
   }
+}
+
+//helper function for checkWind. Makes the ship more sluggish, and slowly reduces the top speed
+function intoWind(){
+  //reduce top speed and acceleration
+  if (this.MAX_SPEED > 100){
+    this.MAX_SPEED = this.MAX_SPEED - 10;
+  } else {
+    this.MAX_SPEED = 100;
+  }
+  this.ACCELERATION = 45;
+  console.log("going into the wind " + this.MAX_SPEED);
+  //TODO: add code to change sprite
+}
+
+//helper function for checkWind. Makes the ship quicker, and slowly increases the top speed
+function downWind(){
+  //increase top speed and acceleration
+  if (this.MAX_SPEED < 850){
+    this.MAX_SPEED += 10;
+  } else {
+    this.MAX_SPEED = 850;
+  }
+this.ACCELERATION = 180;
+console.log("going downwind");
+//TODO: add code to change sprite
+}
+
+//helper function for checkWind. Smoothly sets max speed and acceleration to defaults.
+function crossWind(){
+  //set speed and acceleration to normal
+  if (this.MAX_SPEED < 500){
+    this.MAX_SPEED += 10;
+  } else if (this.MAX_SPEED > 500){
+    this.MAX_SPEED -= 10;
+  } else {
+    this.MAX_SPEED = 500;
+  }
+    this.ACCELERATION = 90;
+    //TODO: add code to change sprite to appropriate angled sail
+    console.log("going crosswind");
 }
 
 GameState.prototype.render =function() {
