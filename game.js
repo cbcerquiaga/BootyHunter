@@ -313,8 +313,7 @@ function createIsland(x, y, radius1, radius2) {
 
 }
 
-//helper funct to change the acceleration and top speed of the ship based on its direction
-//TODO: figure out why the console only logs the ship as going crosswind
+//helper function to change the acceleration and top speed of the ship based on its direction
 function checkWind(facing){
   switch(facing){//default is east
     case 'N':
@@ -397,8 +396,6 @@ GameState.prototype.render =function() {
 -add enemiy ships, make them have colored rings/circles around them?
 -make enemy ships avoid islands, move towards the player, and turn to shoot when in range
 -implement health, perhaps by a changing sea color
--implement wind, make it so that the sprite changes, and the max speed changes, with the ship
-moving at a certain percentage of max speed.
 -implement power-ups: temporary invincibility(red sea), health, ability to slow down,
  and ability to launch a boarding pirate that one-hits enemy ships
  -make weapons fire better after the player gets more kills
