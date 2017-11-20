@@ -11,6 +11,7 @@ var score = 0;
 var wave = 0;
 var wind = 'N'; //the direction the wind is coming from. N means the wind blows north to south
 var killedBosses = [];
+var waveIsOver = false;
 
 //ignore this for now
 var N = 1 << 0,
@@ -26,9 +27,8 @@ var GameState = function(game) {
 GameState.prototype.preload = function() {
   //  this.game.load.spritesheet('ship', 'assets/gfx/ship.png', 32, 32);
     this.game.load.spritesheet('ship', 'assets/boatLoRes.png', 38, 32);
-    this.game.load.spritesheet('east-wall', 'assets/east-wall.png', 4, 128);
-    this.game.load.spritesheet('south-wall', 'assets/south-wall.png', 128, 4);
     this.game.load.image('cannonball', 'assets/cannonball.png');
+    this.game.load.image('whitecap', 'assets/whitecap.png');
     console.log("Hello world");
 };
 
@@ -37,11 +37,16 @@ GameState.prototype.create = function() {
     // Set stage background color
 //    this.game.stage.backgroundColor = 0x111111;
 
+  //adds islands to map
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
     this.islands = this.game.add.group();
     this.islands.enableBody = true;
     generateIslands(width, height, 20, 100, 'ship', this.islands);
     this.game.stage.backgroundColor = 0x019ab2;
+
+    //creates whitecaps, which are added in the update() function
+    this.whitecaps = this.game.add.group();
+    this.whitecaps.enableBody = true;
 
 
     // Define motion constants
@@ -117,6 +122,9 @@ GameState.prototype.update = function() {
   this.weapon2.fireAngle = this.ship.angle - 90;
   //game.physics.arcade.overlap(this.islands , this.weapon.bullets, islandWasShot());
   //game.physics.arcade.overlap(this.islands , this.weapon2.bullets, islandWasShot());
+
+  //adds whitecaps
+  whitecaps(15, 25);
 
 
   //TODO: refactor into separate method
@@ -356,7 +364,6 @@ function intoWind(){
     this.MAX_SPEED = 100;
   }
   this.ACCELERATION = 45;
-  console.log("going into the wind " + this.MAX_SPEED);
   //TODO: add code to change sprite
 }
 
@@ -369,7 +376,6 @@ function downWind(){
     this.MAX_SPEED = 850;
   }
 this.ACCELERATION = 180;
-console.log("going downwind");
 //TODO: add code to change sprite
 }
 
@@ -385,7 +391,46 @@ function crossWind(){
   }
     this.ACCELERATION = 90;
     //TODO: add code to change sprite to appropriate angled sail
-    console.log("going crosswind");
+}
+
+//TODO: finish this function
+//implements whitecaps, which are ocean waves that tell the player where the wind is coming from
+function whitecaps(numWhiteCaps, speed){
+  if (!waveIsOver){
+    //make the whitecaps, make them go in the appropriate direction
+    //set killWorldBounds to false so they loop around the world? or kill them and add new ones?
+    switch(this.wind){//find the wind direction
+      case 'N':
+      /*for (var i = 0; i < numWhiteCaps; i++){
+        whitecaps.add(this.game.add.sprite(Math.random() * this.game.width, 0, 'whitecap'));
+      }*/
+      break;
+      case 'S':
+      //add new whitecaps until the number of whitecaps equals numWhiteCaps
+      //add the whitecaps to the southern edge
+      //make the whitecaps go northward
+      break;
+      case 'W':
+      //add new whitecaps until the number of whitecaps equals numWhiteCaps
+      //add the whitecaps to the western edge
+      //make the whitecaps go eastward
+      default: //east
+      //add new whitecaps until the number of whitecaps equals numWhiteCaps
+      //add the whitecaps to the eastern edge
+      //make the whitecaps go westward
+    }
+    //create the whitecaps
+    //make the whitecaps come from the appropriate direction
+    //make the whitecaps move at the speed of the speed parameter
+  } else {
+    //stop making new whitecaps
+    //if it's not (depending on how we implement the whitecaps), change killWorldBounds to true
+    //let the whitecaps leave the screen
+    //wait a specified amount of time
+    //randomize the wind direction
+    //start new whitecaps
+    //set waveIsOver to false again, set everything back to how it was
+  }
 }
 
 GameState.prototype.render =function() {
