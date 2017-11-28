@@ -10,6 +10,7 @@ var playerKills = 0;
 var score = 0;
 var wave = 0;
 var wind = 'N'; //the direction the wind is coming from. N means the wind blows north to south
+var direction = 'C'
 var killedBosses = [];
 var waveIsOver = false;
 
@@ -122,7 +123,6 @@ GameState.prototype.update = function() {
   this.weapon2.fireAngle = this.ship.angle - 90;
   //game.physics.arcade.overlap(this.islands , this.weapon.bullets, islandWasShot());
   //game.physics.arcade.overlap(this.islands , this.weapon2.bullets, islandWasShot());
-
   //adds whitecaps
   whitecaps(15, 25);
 
@@ -130,16 +130,46 @@ GameState.prototype.update = function() {
   //TODO: refactor into separate method
   //checks the direction the ship is going, and checks it agianst the wind to
   //determine if the ship is going in the correct direction
+
   if (this.ship.angle >= 45 && this.ship.angle <135){ //ship pointing south
-        checkWind('S');
+      this.direction = checkWind('S');
   } else if (this.ship.angle >= 135 && this.ship.angle <225){//ship pointing west
-          checkWind('W');
+      this.direction = checkWind('W');
   } else if (this.ship.angle < -45 && this.ship.angle >= -135){//ship pointing north
-        checkWind('N');
+      this.direction = checkWind('N');
   } else {//east
-        checkWind('E');
+      this.direction = checkWind('E');
   }
 
+  switch(this.direction){
+    case 'U':
+      if (this.MAX_SPEED > 100){
+        this.MAX_SPEED = this.MAX_SPEED - 10;
+      } else {
+        this.MAX_SPEED = 100;
+      }
+      this.ACCELERATION = 45;
+      break;
+    case 'D':
+    if (this.MAX_SPEED < 850){
+      this.MAX_SPEED += 10;
+    } else {
+      this.MAX_SPEED = 850;
+    }
+    this.ACCELERATION = 180;
+      break;
+    default:
+    if (this.MAX_SPEED < 500){
+      this.MAX_SPEED += 10;
+    } else if (this.MAX_SPEED > 500){
+      this.MAX_SPEED -= 10;
+    } else {
+      this.MAX_SPEED = 500;
+    }
+      this.ACCELERATION = 90;
+
+
+  }
 
     //  Collide the ship with the islands
     game.physics.arcade.collide(this.ship, this.islands);
@@ -326,72 +356,36 @@ function checkWind(facing){
   switch(facing){//default is east
     case 'N':
       switch(wind){ //default is east
-        case 'N': intoWind(); break;
-        case 'S': downWind(); break;
-        case 'W': crossWind(); break; //TODO: add code to use starboard-tack sprite
-        default: crossWind(); //TODO: add code to use port-tack sprite
+        case 'N':  return 'U'; break;
+        case 'S': return 'D'; break;
+        case 'W': return 'C'; break; //TODO: add code to use starboard-tack sprite
+        default: return 'C'; //TODO: add code to use port-tack sprite
       } break;
     case 'S':
       switch(wind){
-        case 'N': downWind(); break;
-        case 'S': intoWind(); break;
-        case 'W': crossWind(); break; //TODO: add code to use port-tack sprite
-        default: crossWind();//TODO: add code to use starboard-tack sprite
+        case 'N': return 'D'; break;
+        case 'S': return 'U'; break;
+        case 'W': return 'C'; break; //TODO: add code to use port-tack sprite
+        default:  return 'C';//TODO: add code to use starboard-tack sprite
       } break;
     case 'W':
       switch(wind){
-        case 'N': crossWind(); break;//TODO: add code to use starboard-tack sprite
-        case 'S': crossWind(); break; //TODO: add code to use port-tack sprite
-        case 'W': intoWind(); break;
-        default: downWind();
+        case 'N':  return 'C'; break;//TODO: add code to use starboard-tack sprite
+        case 'S':  return 'C'; break; //TODO: add code to use port-tack sprite
+        case 'W': return 'U'; break;
+        default: return 'D';
       } break;
     default:
       switch(wind){
-        case 'N': crossWind(); break; //TODO: add code to use port-tack sprite
-        case 'S': crossWind(); break; //TODO: add code to use starboard-tack sprite
-        case 'W': downWind(); break;
-        default: intoWind();
+        case 'N':  return 'C'; break; //TODO: add code to use port-tack sprite
+        case 'S': return 'C'; break; //TODO: add code to use starboard-tack sprite
+        case 'W':  return 'D'; break;
+        default:  return 'U';
       }
   }
 }
 
-//helper function for checkWind. Makes the ship more sluggish, and slowly reduces the top speed
-function intoWind(){
-  //reduce top speed and acceleration
-  if (this.MAX_SPEED > 100){
-    this.MAX_SPEED = this.MAX_SPEED - 10;
-  } else {
-    this.MAX_SPEED = 100;
-  }
-  this.ACCELERATION = 45;
-  //TODO: add code to change sprite
-}
 
-//helper function for checkWind. Makes the ship quicker, and slowly increases the top speed
-function downWind(){
-  //increase top speed and acceleration
-  if (this.MAX_SPEED < 850){
-    this.MAX_SPEED += 10;
-  } else {
-    this.MAX_SPEED = 850;
-  }
-this.ACCELERATION = 180;
-//TODO: add code to change sprite
-}
-
-//helper function for checkWind. Smoothly sets max speed and acceleration to defaults.
-function crossWind(){
-  //set speed and acceleration to normal
-  if (this.MAX_SPEED < 500){
-    this.MAX_SPEED += 10;
-  } else if (this.MAX_SPEED > 500){
-    this.MAX_SPEED -= 10;
-  } else {
-    this.MAX_SPEED = 500;
-  }
-    this.ACCELERATION = 90;
-    //TODO: add code to change sprite to appropriate angled sail
-}
 
 //TODO: finish this function
 //implements whitecaps, which are ocean waves that tell the player where the wind is coming from
