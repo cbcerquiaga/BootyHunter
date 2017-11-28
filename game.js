@@ -10,7 +10,8 @@ var playerKills = 0;
 var score = 0;
 var wave = 0;
 var wind = 'N'; //the direction the wind is coming from. N means the wind blows north to south
-var direction = 'C'
+var direction = 'C';
+var health = 6;
 var killedBosses = [];
 var waveIsOver = false;
 
@@ -19,7 +20,6 @@ var N = 1 << 0,
 S = 1 << 1,
 W = 1 << 2,
 E = 1 << 3;
-
 
 var GameState = function(game) {
 };
@@ -48,7 +48,6 @@ GameState.prototype.create = function() {
     //creates whitecaps, which are added in the update() function
     this.whitecaps = this.game.add.group();
     this.whitecaps.enableBody = true;
-
 
     // Define motion constants
     this.ROTATION_SPEED = 180; // degrees/second
@@ -113,9 +112,11 @@ GameState.prototype.create = function() {
     ]);
     this.ship.body.collideWorldBounds = false;//lets the ship wrap around the world
 
-
-
 };
+
+
+
+
 
 // The update() method is called every frame
 GameState.prototype.update = function() {
@@ -125,7 +126,6 @@ GameState.prototype.update = function() {
   //game.physics.arcade.overlap(this.islands , this.weapon2.bullets, islandWasShot());
   //adds whitecaps
   whitecaps(15, 25);
-
 
   //TODO: refactor into separate method
   //checks the direction the ship is going, and checks it agianst the wind to
@@ -167,13 +167,10 @@ GameState.prototype.update = function() {
       this.MAX_SPEED = 500;
     }
       this.ACCELERATION = 90;
-
-
   }
 
     //  Collide the ship with the islands
     game.physics.arcade.collide(this.ship, this.islands);
-
 
     if (this.game.time.fps !== 0) {
        // this.fpsText.setText(this.game.time.fps + ' FPS');
@@ -187,9 +184,6 @@ GameState.prototype.update = function() {
     if (this.ship.x < 0) this.ship.x = this.game.width;
     if (this.ship.y > this.game.height) this.ship.y = 0;
     if (this.ship.y < 0) this.ship.y = this.game.height;
-
-    //var speed2 = (this.ship.body.velocity.x * this.ship.body.velocity.x) + (this.ship.body.velocity.y * this.ship.body.velocity.y);
-    //var acceler2 = (this.ship.body.acceleration.x * this.ship.body.acceleration.x) + (this.ship.body.acceleration.y * this.ship.body.acceleration.y);
 
     var speed = Math.sqrt((this.ship.body.velocity.x * this.ship.body.velocity.x) + (this.ship.body.velocity.y * this.ship.body.velocity.y));
     var acceleration = Math.sqrt(this.ship.body.acceleration.x * this.ship.body.acceleration.x) + (this.ship.body.acceleration.y * this.ship.body.acceleration.y);
@@ -224,8 +218,6 @@ GameState.prototype.update = function() {
         this.ship.body.acceleration.x = Math.cos(this.ship.rotation) * this.ACCELERATION;
         this.ship.body.acceleration.y = Math.sin(this.ship.rotation) * this.ACCELERATION;
 
-
-
 		this.wake = !this.wake;
         // Show the frame from the spritesheet with the engine on
         if (this.ship.body.velocity <= 50){
@@ -257,20 +249,47 @@ GameState.prototype.update = function() {
         this.ship.frame = 0;
     }
 
-
-
-
 //shoot both guns
   if (this.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) {
     this.weapon.fire();
     this.weapon2.fire();
   }
 
+  //changes the color of the ocean depending on the health of the player.
+  //TODO: figure out oprimum number of hits to take
+  switch(this.health){
+    case 0:
+      //run game over sequence...show score, kills ,wave,
+      //maybe a fun historically accurate pirate fact too
+      break;
+    case 1:
+      //dark sea
+      break;
+    case 2:
+      //almost dark sea
+      break;
+    case 3:
+      //moderately dark sea
+      break;
+    case 4:
+      //deep blue sea
+      break;
+    case 5:
+      //blue-green sea
+      break;
+    case 100:
+      //invincibility power-up, red sea
+      break;
+    default:
+      this.health = 6; //make sure health is at a normal value
+      //teal sea
+  }
 
 };
 
-  //sets which sprte is being used based on the acceleration of the ship.
+  //sets which sprite is being used based on the acceleration of the ship.
   //doesn't work exactly right, but works well enough.
+  //TODO: add code to use left and right tack sprites
   function setWake(){
     if (this.ship.body.velocity <= 50){
       this.wake = 0;
