@@ -4,33 +4,31 @@ Basic Enemies
 Maybe we can assign a "difficulty value" to each enemy type, and each wave is allowed to have a higher difficulty value.
 1. Gunboat- small, slow, and shitty. Only shoots one shot
 2. Ship- exactly like the player's ship
-3. ?- faster than the player's ship, but less heavily armored
-4. ?- slower than the player's ship, but more heavily armored
+3. Dhow- faster than the player's ship, but less heavily armored (3 hits?). Fires a single cannon from the bow. Has a long, skinny profile and a single sail that only has left and right tack sprites
+4. Man O’ War- slower than the player's ship, but more heavily armored (12 hits?). Has 2 sails that look like the regular player’s ship, and 6 cannons on each side. The sprite is 32 pixels wide.
 5. Shark- seeks the player and dies on impact
 6.
 
 Bosses
-If we even do bosses. I really want to, and I think it'll mae the game be actually good, but it's a stretch goal for now.
+If we even do bosses. I really want to, and I think it'll make the game be actually good, but it's a stretch goal for now.
 Potentially, we could break up bosses into two groups- "easy" and "hard", and have a higher chance of a "hard" boss the higher the wave is.
-1. Kraken- head takes damage, tentacles act like sharks and don't take damage. 
-    The head disappears breifly after being hit and reappears somewhere else.
+1. Kraken- head takes damage, tentacles act like sharks and don't take damage.
+    The head disappears briefly after being hit and reappears somewhere else.
 2. Mother Of All Boats- giant ship that doesn't really move, has cannons that shoot in bullet-hell patterns.
-3. Megaladon- giant super shark
+3. Megaladon- giant super shark that seeks the player
 4. Chinese Junk- ship that fires exploding rockets (with proximity fuses) instead of cannonballs
 5. Hurricane- can't actually be killed by the player, just lives for a certain amount of time and then disappears
-6. Moby Dick- ?
+6. Moby Dick- moves around the map in pre-designed patterns, regardless of what the player does
 7.
 
 Power-ups
 1. Treasure- the player's score is how much treasure they pick up, not how many kills they get. Treasure is dropped by killed enemies.
-    We may want it to disappear after a certain amount of time, or slide down wind and disappear off the edge of the map. We also may 
+    We may want it to disappear after a certain amount of time, or slide down wind and disappear off the edge of the map. We also may
     want treasure to sometimes randomly blow in with enemies
 2. Health
-3. Accurate shot- makes bullets fly straight instead of spraying for a short period of time
-4. Anchor- lets the player stop and slow down using the down arrow for a short period of time
-5. Exploding shot- switches cannonballs for rockets for a short time
-6. Invincibility- turns the ocean red and makes any ramming attack instantly fatal for the enemy.
-7.
+3. Accurate shot- makes bullets fly straight instead of spraying for a short period of
+4. Invincibility- turns the ocean red and makes any ramming attack instantly fatal for the enemy.
+5.
 
 UI
 1. Treasure map- It would be sweet if we made the web page have a tan frame around the game, and make it look like a treasure map.
