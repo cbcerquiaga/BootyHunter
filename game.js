@@ -123,9 +123,16 @@ GameState.prototype.update = function() {
   this.weapon.fireAngle = this.ship.angle + 90; //make the shots fire sideways
   this.weapon2.fireAngle = this.ship.angle - 90;
 
-  console.log(this.MAX_SPEED + " " + this.ACCELERATION);
   //keeps a steady flow of whitecaps on the screen
   generateWhitecaps(1, 45);
+
+  //kills whitecaps when they collide with other sprites
+  for (var i=0;i<this.whitecaps.length; i++) {
+    console.log(i);
+     game.physics.arcade.collide(this.islands, this.whitecaps[i], whiteCapHitIsland);
+     game.physics.arcade.collide(this.islands, this.whitecaps[i], whiteCapHitIsland);
+   }
+
 
   game.physics.arcade.overlap(this.islands, this.weapon.bullets, islandWasShot);
   game.physics.arcade.overlap(this.islands, this.weapon2.bullets, islandWasShot);
@@ -146,10 +153,10 @@ GameState.prototype.update = function() {
 
   switch(this.direction){
     case 'U':
-      if (this.MAX_SPEED > 50){
+      if (this.MAX_SPEED > 100){
         this.MAX_SPEED = this.MAX_SPEED - 10;
       } else {
-        this.MAX_SPEED = 50;
+        this.MAX_SPEED = 100;
       }
       this.ACCELERATION = 20;//previously 50
       break;
@@ -173,14 +180,15 @@ GameState.prototype.update = function() {
   }
 
   if (this.ship.body.velocity.x > this.MAX_SPEED){
-    this.ship.body.velocity.x = this.MAX_SPEED;
+    this.ship.body.velocity.x -= 10;
   }
   if (this.ship.body.velocity.y > this.MAX_SPEED){
-    this.ship.body.velocity.y = this.MAX_SPEED;
+    this.ship.body.velocity.y -= 10;
   }
 
     //  Collide the ship with the islands
-    game.physics.arcade.collide(this.ship, this.islands, this.ship.health = playerWasHit);
+    game.physics.arcade.collide(this.ship, this.islands, playerHitIsland);
+
 
     if (this.game.time.fps !== 0) {
        // this.fpsText.setText(this.game.time.fps + ' FPS');
@@ -288,7 +296,7 @@ GameState.prototype.update = function() {
 
   //changes the color of the ocean depending on the health of the player.
   //TODO: figure out optimum number of hits to take
-  switch(this.health){
+  switch(this.ship.health){
     case 0:
       console.log("You'd be dead if this game was finished");//run game over sequence...show score, kills ,wave,
       //maybe a fun historically accurate pirate fact too
@@ -437,7 +445,6 @@ function checkWind(facing){
 //implements whitecaps, which are ocean waves that tell the player where the wind is coming from
 function generateWhitecaps(numWhiteCaps, speed){
   var makeOrNot = Math.random()>0.02?false:true; //keeps the screen from being completely full of them
-  //console.log(makeOrNot);
    if (makeOrNot){
     switch(this.wind){//find the wind direction
       case 'N':
@@ -514,11 +521,8 @@ function generateWhitecaps(numWhiteCaps, speed){
 function initializeWhitecap(whitecap, angle){
   whitecap.anchor.setTo(0.5, 0.5);
   whitecap.angle = angle;
-  whitecap.inputEnabled = true;
   whitecap.enableBody = true;
   this.game.physics.enable(whitecap, Phaser.Physics.ARCADE);
-  game.physics.arcade.overlap(this.islands, whitecap, whiteCapHitIsland);
-  game.physics.arcade.overlap(this.ship, whitecap, whiteCapHitShip);
   whitecap.body.collideWorldBounds = false;
 
 
@@ -550,18 +554,25 @@ function whiteCapHitShip(ship, whitecap){
   generateWhitecaps(1,45);
 }
 
-/*
-At the moment, this function breaks the game if the player spawns on an island.
-This is something that needs to be fixed...later. For now, we can just leave the
-game-breaking bits commented out.
-*/
-function playerWasHit(){
-    //this.ship.damage(1);
-    //TODO: add bounce so the ship doesn't lose all its health from crashing into an island
+//damages the ship, bounces it back, and brings it to a halt after crashing into an island
+function playerHitIsland(ship, island){
+    //ship.damage(1);
+    ship.health--;
+  /*  ship.body.velocity.x = 0 - ship.body.velocity.x;
+    ship.body.velocity.y = 0 - ship.body.velocity.y;
+    while (ship.body.velocity.x < 0 || ship.body.velocity.y < 0){
+      if (ship.body.velocity.x < 0){
+        ship.body.velocity.x += 10;
+      }
+      if (ship.body.velocity.y < 0){
+        ship.body.velocity.y += 10;
+      }
+    }*/
     //TODO: add sound for when the player is hit
-    //console.log("We've been hit, Captain! " + this.ship.health);
-    //return this.ship.health;
-}
+    //TODO: add "explosion" of water/sand pixels?
+    console.log("We've been hit, Captain! " + ship.health);
+  }
+
 
 GameState.prototype.render =function() {
   this.weapon.debug();
