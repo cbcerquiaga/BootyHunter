@@ -53,8 +53,7 @@ GameState.prototype.create = function() {
     this.whitecaps = new Array();
     this.whitecaps = this.game.add.group();
     this.whitecaps.enableBody = true;
-    //adds whitecaps
-    generateWhitecaps(15, 45);
+
 
     // Define motion constants
     this.ROTATION_SPEED = 180; // degrees/second
@@ -91,13 +90,6 @@ GameState.prototype.create = function() {
     this.weapon2.bulletWorldWrap = true;
     this.weapon2.trackSprite(this.ship, 0, 0, false);//TODO: shift over to actual position of gun
 
-    //TODO: have a kill counter, increase number of shots fired each shot
-    //when a shot is fired, scatter them randomly a little bit
-    //kill bullets when they overlap with islands or ships
-    //figure out why sometimes bullets continue forever instead of dying when the
-    //player spins and fires for an extended period of time
-
-
     // Enable physics on the ship
     this.game.physics.enable(this.ship, Phaser.Physics.ARCADE);
 
@@ -130,10 +122,13 @@ GameState.prototype.create = function() {
 GameState.prototype.update = function() {
   this.weapon.fireAngle = this.ship.angle + 90; //make the shots fire sideways
   this.weapon2.fireAngle = this.ship.angle - 90;
+
+  console.log(this.MAX_SPEED + " " + this.ACCELERATION);
+  //keeps a steady flow of whitecaps on the screen
+  generateWhitecaps(1, 45);
+
   game.physics.arcade.overlap(this.islands, this.weapon.bullets, islandWasShot);
   game.physics.arcade.overlap(this.islands, this.weapon2.bullets, islandWasShot);
-  game.physics.arcade.overlap(this.islands, this.whitecaps, whiteCapHit);
-  game.physics.arcade.overlap(this.ship, this.whitecaps, whiteCapHit);
 
   //TODO: refactor into separate method
   //checks the direction the ship is going, and checks it agianst the wind to
@@ -151,30 +146,37 @@ GameState.prototype.update = function() {
 
   switch(this.direction){
     case 'U':
-      if (this.MAX_SPEED > 100){
+      if (this.MAX_SPEED > 50){
         this.MAX_SPEED = this.MAX_SPEED - 10;
       } else {
-        this.MAX_SPEED = 100;
+        this.MAX_SPEED = 50;
       }
-      this.ACCELERATION = 45;
+      this.ACCELERATION = 20;//previously 50
       break;
     case 'D':
-    if (this.MAX_SPEED < 850){
-      this.MAX_SPEED += 10;
+    if (this.MAX_SPEED < 600){//previously 850
+      this.MAX_SPEED += 20;
     } else {
-      this.MAX_SPEED = 850;
+      this.MAX_SPEED = 600;
     }
     this.ACCELERATION = 180;
       break;
     default:
-    if (this.MAX_SPEED < 500){
+    if (this.MAX_SPEED < 250){//previously 500
       this.MAX_SPEED += 10;
-    } else if (this.MAX_SPEED > 500){
+    } else if (this.MAX_SPEED > 250){
       this.MAX_SPEED -= 10;
     } else {
-      this.MAX_SPEED = 500;
+      this.MAX_SPEED = 250;
     }
       this.ACCELERATION = 90;
+  }
+
+  if (this.ship.body.velocity.x > this.MAX_SPEED){
+    this.ship.body.velocity.x = this.MAX_SPEED;
+  }
+  if (this.ship.body.velocity.y > this.MAX_SPEED){
+    this.ship.body.velocity.y = this.MAX_SPEED;
   }
 
     //  Collide the ship with the islands
@@ -193,16 +195,6 @@ GameState.prototype.update = function() {
     if (this.ship.y > this.game.height) this.ship.y = 0;
     if (this.ship.y < 0) this.ship.y = this.game.height;
 
-    //TODO: make this work
-    //keep whitecaps on the screen
-    for (var i = 0; i < this.whitecaps.length; i++){
-      if (this.whitecaps[i].x > this.game.width) this.whitecaps[i].x = 0;
-      if (this.whitecaps[i].x < 0) this.whitecaps[i].x = this.game.width;
-      if (this.whitecaps[i].y > this.game.height) this.whitecaps[i].y = 0;
-      if (this.whitecaps[i].y < 0) this.whitecaps[i].y = this.game.height;
-    }
-
-    //TODO: fix this, it's stupid
     var speed = Math.sqrt((this.ship.body.velocity.x * this.ship.body.velocity.x) + (this.ship.body.velocity.y * this.ship.body.velocity.y));
     var acceleration = Math.sqrt(this.ship.body.acceleration.x * this.ship.body.acceleration.x) + (this.ship.body.acceleration.y * this.ship.body.acceleration.y);
 
@@ -240,7 +232,7 @@ GameState.prototype.update = function() {
         // Show the frame from the spritesheet with the engine on
         if (this.ship.body.velocity <= 50){
           this.wake = 0;
-        } else if (this.ship.body.velocity <= 175){
+        } else if (this.ship.body.velocity <= 300){
           this.wake = 1;
         } else {
           this.wake = 2;
@@ -274,15 +266,24 @@ GameState.prototype.update = function() {
   }
 
   //modifies weapon effectiveness based on the number of playerKills
-  if (playerKills > 14){
+  /*if (playerKills > 14){//maybe 34 and 100 instead of 14 and 41?
     this.weapon.fireLimit = 41;
     this.weapon2.fireLimit = 41;
   } else {
     this.weapon.fireLimit = 3* (playerKills + 1);
     this.weapon2.fireLimit = 3 * (playerKills + 1);
-    //TODO: figure out how to re-set shots after a delay
-  //  game.time.events.add(300, this.weapon.resetShots());
-    //game.time.events.add(300, this.weapon2.resetShots());
+  }
+  //since both weapons fire at the same time, we only need to check the one weapon's shots
+  if (this.weapon.shots === this.weapon.fireLimit){
+    game.time.events.add(3000, this.weapon.resetShots());
+    game.time.events.add(3000, this.weapon2.resetShots());
+  }*/
+  if (playerKills >= 10){
+    this.weapon.bulletLifespan = 650;
+    this.weapon2.bulletLifespan = 650;
+  } else {
+    this.weapon.bulletLifespan = 200 + 50 * (playerKills);
+    this.weapon2.bulletLifespan = 200 + 50 * (playerKills);
   }
 
   //changes the color of the ocean depending on the health of the player.
@@ -322,7 +323,7 @@ GameState.prototype.update = function() {
   function setWake(){
     if (this.ship.body.velocity <= 50){
       this.wake = 0;
-    } else if (this.ship.body.velocity <= 175){
+    } else if (this.ship.body.velocity <= 300){
       this.wake = 1;
     } else {
       this.wake = 2;
@@ -435,13 +436,13 @@ function checkWind(facing){
 //TODO: refactor into cleaner code
 //implements whitecaps, which are ocean waves that tell the player where the wind is coming from
 function generateWhitecaps(numWhiteCaps, speed){
-  if (!waveIsOver){
-    //make the whitecaps, make them go in the appropriate direction
-    //set killWorldBounds to false so they loop around the world? or kill them and add new ones?
+  var makeOrNot = Math.random()>0.02?false:true; //keeps the screen from being completely full of them
+  //console.log(makeOrNot);
+   if (makeOrNot){
     switch(this.wind){//find the wind direction
       case 'N':
       for (var i = 0; i < numWhiteCaps; i++){
-          game.time.events.add(Math.random() * 300, function(){
+          game.time.events.add(Math.random() * 10000, function(){
             var x = Math.random() * this.width;
             var y = 0;
             var angle = 0;
@@ -458,7 +459,7 @@ function generateWhitecaps(numWhiteCaps, speed){
       break;
       case 'S':
       for (var i = 0; i < numWhiteCaps; i++){
-          game.time.events.add(Math.random() * 300, function(){
+          game.time.events.add(Math.random() * 10000, function(){
             var x = Math.random() * this.width;
             var y = this.height;
             var angle = 0;
@@ -475,7 +476,7 @@ function generateWhitecaps(numWhiteCaps, speed){
       break;
       case 'W':
       for (var i = 0; i < numWhiteCaps; i++){
-          game.time.events.add(Math.random() * 300, function(){
+          game.time.events.add(Math.random() * 10000, function(){
             var x = 0;
             var y = Math.random() * this.height;
             var angle = 90;
@@ -489,9 +490,10 @@ function generateWhitecaps(numWhiteCaps, speed){
             this.whitecaps.push(whitecap);
           });
         }
+        break;
       default: //east
       for (var i = 0; i < numWhiteCaps; i++){
-          game.time.events.add(Math.random() * 300, function(){
+          game.time.events.add(Math.random() * 10000, function(){
             var x = this.width;
             var y = Math.random() * this.height;
             var angle = -90;
@@ -506,22 +508,17 @@ function generateWhitecaps(numWhiteCaps, speed){
     });//end of delay
   }//end of loop
 }//end of switch
-} else { //end of conditional
-  //stop making new whitecaps
-  //if it's not (depending on how we implement the whitecaps), change killWorldBounds to true
-//  whitecap.body.collideWorldBounds = true;//let the whitecaps leave the screen
-  //wait a specified amount of time
-  //randomize the wind direction
-  //start new whitecaps
-  this.waveIsOver = false;//set waveIsOver to false again, set everything back to how it was
-}
+}//end of conditional
 }
 
 function initializeWhitecap(whitecap, angle){
   whitecap.anchor.setTo(0.5, 0.5);
   whitecap.angle = angle;
-  this.game.physics.enable(whitecap, Phaser.Physics.ARCADE);
+  whitecap.inputEnabled = true;
   whitecap.enableBody = true;
+  this.game.physics.enable(whitecap, Phaser.Physics.ARCADE);
+  game.physics.arcade.overlap(this.islands, whitecap, whiteCapHitIsland);
+  game.physics.arcade.overlap(this.ship, whitecap, whiteCapHitShip);
   whitecap.body.collideWorldBounds = false;
 
 
@@ -531,61 +528,26 @@ function initializeWhitecap(whitecap, angle){
 
 }
 
-//TODO: take redundant code from this and generateWhitecaps and refactor it into a helper
-function whiteCapHit(object, whitecap){
-  console.log("woosh")
+function whiteCapHitIsland(island, whitecap){
+  whitecap.destroy();
+  console.log("woosh");
     //TODO: make wave crashing sound?
     //TODO: create explosion animation for whitecaps
     //var explosion = explosions.getFirstExists(false);
     //explosion.play('whitecapSound', 10, false, true);
     //explosion_sound.play("",0,.5,false,true);
-    whitecap.kill();
-    game.time.events.add(30, function(){
-      var newWhiteCap = this.game.add.sprite(x, y, 'whitecap');
-      this.game.physics.enable(newWhitecap, Phaser.Physics.ARCADE);
-      switch(this.wind){
-        case 'N':
-          var x = Math.random() * this.width;
-          var y = 0;
-          var angle = 90;
-          var xSpeed = 0;
-          var ySpeed = speed;
-          newWhitecap.body.velocity.x = xSpeed;
-          newWhitecap.body.velocity.y = ySpeed;
-          initializeWhitecap(newWhitecap, angle, xSpeed, ySpeed);
-          break;
-        case 'S':
-          var x = Math.random() * this.width;
-          var y = this.height;
-          var angle = -90;
-          var xSpeed = 0;
-          var ySpeed = speed;
-          newWhitecap.body.velocity.x = xSpeed;
-          newWhitecap.body.velocity.y = ySpeed;
-          initializeWhitecap(newWhitecap, angle, xSpeed, ySpeed);
-          break;
-        case 'W':
-          var x = 0;
-          var y = Math.random() * this.height;
-          var angle = 0;
-          var xSpeed = speed;
-          var ySpeed = 0;
-          newWhitecap.body.velocity.x = xSpeed;
-          newWhitecap.body.velocity.y = ySpeed;
-          initializeWhitecap(newWhitecap, angle, xSpeed, ySpeed);
-          break;
-        default://east
-          var x = this.width;
-          var y = Math.random() * this.height;
-          var angle = 180;
-          var xSpeed = speed;
-          var ySpeed = 0;
-          newWhitecap.body.velocity.x = xSpeed;
-          newWhitecap.body.velocity.y = ySpeed;
-          initializeWhitecap(newWhitecap, angle);
-        }
-      this.whitecaps.push(newWhiteCap);
-    });
+  generateWhitecaps(1,45);
+}
+
+function whiteCapHitShip(ship, whitecap){
+  whitecap.destroy();
+  console.log("splash");
+    //TODO: make wave crashing sound?
+    //TODO: create explosion animation for whitecaps
+    //var explosion = explosions.getFirstExists(false);
+    //explosion.play('whitecapSound', 10, false, true);
+    //explosion_sound.play("",0,.5,false,true);
+  generateWhitecaps(1,45);
 }
 
 /*
