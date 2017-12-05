@@ -2,12 +2,12 @@ Here is where we can put down ideas. Feel free to change whatever you want, or a
 
 Basic Enemies
 Maybe we can assign a "difficulty value" to each enemy type, and each wave is allowed to have a higher difficulty value.
-1. Gunboat- small, slow, and shitty. Only shoots one shot
-2. Ship- exactly like the player's ship
-3. Dhow- faster than the player's ship, but less heavily armored (3 hits?). Fires a single cannon from the bow. Has a long, skinny profile and a single sail that only has left and right tack sprites
-4. Man O’ War- slower than the player's ship, but more heavily armored (12 hits?). Has 2 sails that look like the regular player’s ship, and 6 cannons on each side. The sprite is 32 pixels wide.
-5. Shark- seeks the player and dies on impact
-6.
+1. Gunboat- small, slow, and shitty. Only shoots one shot. Difficulty value of 1
+2. Ship- exactly like the player's ship. Difficulty value of 4?
+3. Dhow- faster than the player's ship, but less heavily armored (3 hits?). Fires a single cannon from the bow. Has a long, skinny profile and a single sail that only has left and right tack sprites.
+  Difficulty value of 9?
+4. Man O’ War- slower than the player's ship, but more heavily armored (12 hits?). Has 2 sails that look like the regular player’s ship, and 6 cannons on each side.
+  The sprite is 32 pixels wide. Difficulty value of 9?
 
 Bosses
 If we even do bosses. I really want to, and I think it'll make the game be actually good, but it's a stretch goal for now.
@@ -19,7 +19,8 @@ Potentially, we could break up bosses into two groups- "easy" and "hard", and ha
 4. Chinese Junk- ship that fires exploding rockets (with proximity fuses) instead of cannonballs
 5. Hurricane- can't actually be killed by the player, just lives for a certain amount of time and then disappears
 6. Moby Dick- moves around the map in pre-designed patterns, regardless of what the player does
-7.
+7. Spanish Galleon- runs away from the player, dropping bombs
+8.
 
 Power-ups
 1. Treasure- the player's score is how much treasure they pick up, not how many kills they get. Treasure is dropped by killed enemies.
@@ -36,7 +37,8 @@ UI
 2. Sea Color- Instead of having a health bar, we could have the color of the sea change as the player's health goes down. It could
   go from the current friendly blue-green, to a deep navy, to an ugly gray. Depending on how we want to implement health, it could
   be a sliding, gradual scale, or it could be a simple three hits, three colors system.
-3. Upon the player's death, it would be funny to have a randomly selected, historically accurate pirate fact appear on screen along with    the player's final score, total number of enemies killed, and list of each boss killed
+3. Upon the player's death, it would be funny to have a randomly selected, historically accurate pirate fact appear on screen along with
+   the player's final score, total number of enemies killed, and list of each boss killed
 4.
 
 Other

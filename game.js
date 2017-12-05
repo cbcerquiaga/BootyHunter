@@ -53,7 +53,6 @@ GameState.prototype.create = function() {
     this.whitecaps = this.game.add.group();
     this.whitecaps.enableBody = true;
 
-
     // Define motion constants
     this.ROTATION_SPEED = 180; // degrees/second
     this.ACCELERATION = 90; // pixels/second/second
@@ -124,6 +123,9 @@ GameState.prototype.update = function() {
 
   //keeps a steady flow of whitecaps on the screen
   generateWhitecaps(1, 45, this.whitecaps);
+  //collides whitecaps with the world
+  game.physics.arcade.overlap(this.ship, this.whitecaps, whiteCapHitShip);
+  game.physics.arcade.overlap(this.islands, this.whitecaps, whiteCapHitIsland);
 
   game.physics.arcade.overlap(this.islands, this.weapon.bullets, islandWasShot);
   game.physics.arcade.overlap(this.islands, this.weapon2.bullets, islandWasShot);
@@ -144,28 +146,28 @@ GameState.prototype.update = function() {
 
   switch(this.direction){
     case 'U':
-      if (this.MAX_SPEED > 100){
+      if (this.MAX_SPEED > 150){
         this.MAX_SPEED = this.MAX_SPEED - 10;
       } else {
-        this.MAX_SPEED = 100;
+        this.MAX_SPEED = 150;
       }
-      this.ACCELERATION = 20;//previously 50
+      this.ACCELERATION = 30;//previously 50
       break;
     case 'D':
-    if (this.MAX_SPEED < 600){//previously 850
+    if (this.MAX_SPEED < 650){//previously 850
       this.MAX_SPEED += 20;
     } else {
-      this.MAX_SPEED = 600;
+      this.MAX_SPEED = 650;
     }
     this.ACCELERATION = 180;
       break;
     default:
-    if (this.MAX_SPEED < 250){//previously 500
+    if (this.MAX_SPEED < 300){//previously 500
       this.MAX_SPEED += 10;
-    } else if (this.MAX_SPEED > 250){
+    } else if (this.MAX_SPEED > 300){
       this.MAX_SPEED -= 10;
     } else {
-      this.MAX_SPEED = 250;
+      this.MAX_SPEED = 300;
     }
       this.ACCELERATION = 90;
   }
@@ -179,8 +181,6 @@ GameState.prototype.update = function() {
 
     //  Collide the ship with the islands
     game.physics.arcade.collide(this.ship, this.islands, playerHitIsland);
-    game.physics.arcade.collide(this.ship, this.whitecaps, whiteCapHitShip);
-    game.physics.arcade.collide(this.islands, this.whitecaps, whiteCapHitIsland);
 
 
     if (this.game.time.fps !== 0) {
@@ -290,7 +290,6 @@ GameState.prototype.update = function() {
   }
 
   //changes the color of the ocean depending on the health of the player.
-  //TODO: figure out optimum number of hits to take
   switch(this.ship.health){
     case 0:
       console.log("You'd be dead if this game was finished");//run game over sequence...show score, kills ,wave,
@@ -303,19 +302,20 @@ GameState.prototype.update = function() {
       this.game.stage.backgroundColor = 0x0b2c5e// dark sea, #0b2c5e
       break;
     case 3:
-      this.game.stage.backgroundColor = 0x043b8e//moderately dark sea, #043b8e
+      this.game.stage.backgroundColor = 0x124375//moderately dark sea
       break;
     case 4:
-      this.game.stage.backgroundColor = 0x065bdb//deep blue sea, #065bdb
+      this.game.stage.backgroundColor = 0x136875//dark blue-green sea
       break;
     case 5:
-      this.game.stage.backgroundColor = 0x14899b;//blue-green sea, #17b5d8
+      this.game.stage.backgroundColor = 0x14899b;//blue-green sea
       break;
     case "invincible":
-      this.game.stage.backgroundColor = 0xd81200;//invincibility power-up, red sea
+      this.game.stage.backgroundColor = 0xb52012;//invincibility power-up, red sea
       break;
-    default://default health is 6. //TODO: balance health and damage
+    default://default health is 6.
       this.game.stage.backgroundColor = 0x019ab2;// caribbean teal sea
+      this.ship.health = 6;
   }
 
 };
@@ -477,11 +477,14 @@ function generateWhitecaps(numWhiteCaps, speed, whitecaps){
 }//end of conditional
 
 function initializeWhitecap(whitecap, angle){
+  whitecap.lifespan = 23000;//kills the whitecap after it leaves the screen
   whitecap.anchor.setTo(0.5, 0.5);
   whitecap.angle = angle;
   whitecap.enableBody = true;
   this.game.physics.enable(whitecap, Phaser.Physics.ARCADE);
   whitecap.body.collideWorldBounds = false;
+  whitecap.body.width = 75;
+  whitecap.body.height = 56;
   return whitecap;
 
   //in case we want to have animated whitecaps instead of static ones
@@ -534,24 +537,22 @@ function checkWind(facing){
 
 function whiteCapHitIsland(island, whitecap){
   whitecap.kill();
-  console.log("woosh");
     //TODO: make wave crashing sound?
     //TODO: create explosion animation for whitecaps
     //var explosion = explosions.getFirstExists(false);
     //explosion.play('whitecapSound', 10, false, true);
     //explosion_sound.play("",0,.5,false,true);
-  generateWhitecaps(1,45, this.whitecaps);
+//  generateWhitecaps(1,45, this.whitecaps);
 }
 
 function whiteCapHitShip(ship, whitecap){
-  whitecap.destroy();
-  console.log("splash");
+  whitecap.kill();
     //TODO: make wave crashing sound?
     //TODO: create explosion animation for whitecaps
     //var explosion = explosions.getFirstExists(false);
     //explosion.play('whitecapSound', 10, false, true);
     //explosion_sound.play("",0,.5,false,true);
-  generateWhitecaps(1,45, this.whitecaps);
+//  generateWhitecaps(1,45, this.whitecaps);
 }
 
 //damages the ship, bounces it back, and brings it to a halt after crashing into an island
