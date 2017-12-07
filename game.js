@@ -10,10 +10,11 @@
 var width = 960, height = 560;
 var playerKills = 0;
 var score = 0;
+var startWake = 0;
 
 //wind global variables
 var whitecaps = new Array();
-var wind = 'E'; //the direction the wind is coming from. N means the wind blows north to south
+var wind = 'N'; //the direction the wind is coming from. N means the wind blows north to south
 var direction = 'C';
 
 //enemy global variables
@@ -58,7 +59,7 @@ GameState.prototype.create = function() {
     this.ACCELERATION = 90; // pixels/second/second
     this.MAX_SPEED = 850; // pixels/second. This is the max max speed in the game
     this.DRAG = 50; // pixels/second
-    this.wake = 0; // starting wake sprite
+    this.wake = this.startWake; // starting wake sprite
 
     // Add the ship to the stage
     this.ship = this.game.add.sprite(this.game.width/2, this.game.height/2, 'ship');
@@ -106,7 +107,9 @@ GameState.prototype.create = function() {
         Phaser.Keyboard.LEFT,
         Phaser.Keyboard.RIGHT,
         Phaser.Keyboard.UP,
-        Phaser.Keyboard.DOWN
+        Phaser.Keyboard.DOWN,
+        Phaser.Keyboard.SPACEBAR
+        //TODO: add code to allow WSAD controls
     ]);
     this.ship.body.collideWorldBounds = false;//lets the ship wrap around the world
 
@@ -143,6 +146,8 @@ GameState.prototype.update = function() {
   } else {//east
       this.direction = checkWind('E');
   }
+
+  this.startWake = checkTack(this.wind, this.startWake, this.ship.angle, this.direction);
 
   switch(this.direction){
     case 'U':
@@ -231,17 +236,20 @@ GameState.prototype.update = function() {
         this.ship.body.acceleration.x = Math.cos(this.ship.rotation) * this.ACCELERATION;
         this.ship.body.acceleration.y = Math.sin(this.ship.rotation) * this.ACCELERATION;
 
+        //TODO: figure out why the sprite always returns to 0 unless accelerating
+        //TODO: figure out why the partially accelerated sprite isn't used
+        //TODO: figure out why the port and starboard tacks are messed up
 		this.wake = !this.wake;
         // Show the frame from the spritesheet with the engine on
         if (this.ship.body.velocity <= 50){
-          this.wake = 0;
+          this.wake = this.startWake;
         } else if (this.ship.body.velocity <= 300){
-          this.wake = 1;
+          this.wake = this.startWake + 1;
         } else {
-          this.wake = 2;
+          this.wake = this.startWake + 2;
         }
        this.ship.frame = this.wake;
-        if (this.wake === 3){
+        if (this.wake === 9){
           this.wake = 0;
         }
 
@@ -323,13 +331,13 @@ GameState.prototype.update = function() {
   //sets which sprite is being used based on the acceleration of the ship.
   //doesn't work exactly right, but works well enough.
   //TODO: add code to use left and right tack sprites
-  function setWake(){
+  function setWake(tack){
     if (this.ship.body.velocity <= 50){
-      this.wake = 0;
+      this.wake = tack;
     } else if (this.ship.body.velocity <= 300){
-      this.wake = 1;
+      this.wake = tack + 1;
     } else {
-      this.wake = 2;
+      this.wake = tack + 2;
     }
     this.ship.frame = this.wake;
   }
@@ -531,7 +539,56 @@ function checkWind(facing){
   }
 }
 
-
+/*
+returns which sprites on the spritesheet the ship should be using based on its angle
+and the ship's direction. If the ship is going downwind, it should use the downwind
+sprites (0-2). If it's going upwind or crosswind but the wind is going across its right side, it
+should use the starboard tack sprites (3-5), otherwise it should use the port tack sprites (6-8).
+If the ship is going directly into the wind, then it can keep its current sprites.
+*/
+//TODO: figure out whether angle or direction is a better way of going about this
+function checkTack(wind, startWake, angle, direction){
+  var retVal = startWake;
+  switch(wind){
+    case 'N':
+    if (angle < -90 &&  angle > 135){//starboard tack
+      retVal = 3;
+    } else if (angle > -90 && angle < 45){//port tack
+      retVal = 6;
+    } else if (angle >= 45 && angle <= 135){//downwind
+      retVal = 0;
+    }
+    break;
+    case 'S':
+    if (angle < 90 && direction !== 'D'){//starboard tack
+      retVal = 3;
+    } else if (angle > 90 && direction !== 'D'){//port tack
+      retVal = 6;
+    } else if (direction == 'D'){//downwind
+      retVal = 0;
+    }
+    break;
+    case 'W':
+    if (angle < 180 && direction !== 'D'){ //starboard tack
+      retVal = 3;
+    } else if (angle > 180 && direction !== 'D'){ //port tack
+      retVal = 6;
+    } else if (direction == 'D'){//downwind
+      retVal = 0;
+    }
+    break;
+    default://east
+    if (angle < 0 && direction !== 'D'){ //starboard tack
+      retVal = 3;
+    } else if (angle > 0 && direction !== 'D'){ //port tack
+      retVal = 6;
+    } else if (direction == 'D'){//downwind
+      retVal = 0;
+    }
+  }
+  console.log(retVal);
+  return retVal;
+}
 
 
 
