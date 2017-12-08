@@ -339,8 +339,13 @@ GameState.prototype.update = function() {
   }
 
     //forces the player to not hold down the fire button by reducing the fireRate
-    var newFireRate = stopFireSpam(fireButtonHeld, this.weapon.fireRate);
-    console.log("actual fire rate: " + newFireRate);
+    //originally wanted this in a separate function, but it didn't work for some reason
+    //TODO: balance out the spam time value. Is 90 too long? Is it too short?
+    //TODO: balance out slow down rate. Is 10% of the fireButtonHeld time too harsh?
+      var newFireRate = 10;
+      if (this.fireButtonHeld >= 90){
+        newFireRate = newFireRate * (this.fireButtonHeld/10);
+      }
     this.weapon.fireRate = newFireRate;
     this.weapon2.fireRate = newFireRate;
 
@@ -679,14 +684,7 @@ function playerHitIsland(ship, island){
     //console.log("We've been hit, Captain! " + ship.health);
   }
 
-  function stopFireSpam(fireButtonHeld, fireRate){
-    var newFireRate = fireRate;
-    if (fireButtonHeld >= 90){
-      newFireRate = newFireRate * (fireButtonHeld/10);
-    }
-    console.log("function fire rate: " + newFireRate);
-    return newFireRate;
-  }
+
 
 
 GameState.prototype.render =function() {
