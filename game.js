@@ -13,7 +13,6 @@ var score = 0;
 var fireButtonHeld = 0;
 
 //wind global variables
-var whitecaps = new Array();
 var wind = 'N'; //the direction the wind is coming from. N means the wind blows north to south, N,S,E,W
 var direction = 'C'; //C, U, D
 var startWake = 0;
@@ -21,8 +20,16 @@ var tack = 'P'; //P, S, D
 
 //enemy global variables
 var wave = 0;
+var numEnemies = 0;
 var waveIsOver = false;
 var killedBosses = [];
+var enemies = new Array();
+var enemyDownWindSpeed = {'gunboat': 100, 'manowar': 500, 'normal': 850};//TODO: add dhow
+var enemyCrossWindSpeed = {'gunboat': 60, 'manowar': 250, 'normal': 500};
+var enemyUpWindSpeed = {'gunboat': 35, 'manowar': 100, 'normal': 150};
+var enemyHealth = {'gunboat': 1, 'manowar': 12, 'normal': 6};
+var enemyDifficulty = {'gunboat': 1, 'manowar': 10, 'normal': 5};
+var waveDifficulty;
 
 //-----------------------------------------------------------------------------
 
@@ -35,6 +42,7 @@ GameState.prototype.preload = function() {
     this.game.load.spritesheet('ship', 'assets/boatLoRes.png', 38, 32);
     this.game.load.image('cannonball', 'assets/cannonball.png');
     this.game.load.image('whitecap', 'assets/whitecap.png');
+    this.game.load.image('gunboat', 'assets/gunBoat.png');
     console.log("Hello world");
 };
 
@@ -42,6 +50,12 @@ GameState.prototype.preload = function() {
 GameState.prototype.create = function() {
     // Set stage background color
 //    this.game.stage.backgroundColor = 0x111111;
+
+
+  //TODO: remove redundant code
+  var numEnemies = 0;
+  var wave = 0;
+  var waveDifficulty = 0;
 
   this.playerKills = 0;
   //console.log("kills: " + playerKills);
@@ -71,6 +85,8 @@ GameState.prototype.create = function() {
     this.ship.setHealth(6);
     this.ship.anchor.setTo(0.5, 0.5);
     this.ship.angle = -90; // Point the ship up
+    this.ship.enableBody = true;
+    //this.ship.body.bounce.set(0.25);//bounce the ship off of things it collides with
 
     //console.log(this.game.add);
     //first weapon, fires right relative to the ship
@@ -248,7 +264,7 @@ GameState.prototype.update = function() {
       	this.wake = !this.wake;
         //console.log("start wake: " + this.startWake);
         // Show the frame from the spritesheet with the engine on
-        console.log("start wake " + this.startWake);
+        //console.log("start wake " + this.startWake);
         if (this.ship.body.velocity <= 50){
           this.wake = this.startWake;
         } else if (this.ship.body.velocity <= 300){
@@ -349,6 +365,20 @@ GameState.prototype.update = function() {
       break;
     default://default health is 6.
       this.game.stage.backgroundColor = 0x019ab2;// caribbean teal sea
+  }
+
+
+  //if there are no enemies, then the game moves to the next wave
+  if (this.numEnemies <= 0){
+    console.log("no enemies");
+    this.wave++;
+    console.log("wave " + this.wave);
+    this.waveDifficulty = this.waveDifficulty * 1.5;
+    console.log(this.waveDifficulty);
+    for (var i = 0; i <= this.waveDifficulty; i++){
+      //TODO: add code to randomly select different types of enemies
+      initializeEnemy('gunboat', this.wind);
+    }
   }
 
 };
@@ -713,23 +743,57 @@ function whiteCapHitShip(ship, whitecap){
 //  generateWhitecaps(1,45, this.whitecaps);
 }
 
-//damages the ship, bounces it back, and brings it to a halt after crashing into an island
+//damages the ship, after crashing into an island
 function playerHitIsland(ship, island){
     //ship.damage(1);
     ship.health--;
-  /*  ship.body.velocity.x = 0 - ship.body.velocity.x;
-    ship.body.velocity.y = 0 - ship.body.velocity.y;
-    while (ship.body.velocity.x < 0 || ship.body.velocity.y < 0){
-      if (ship.body.velocity.x < 0){
-        ship.body.velocity.x += 10;
-      }
-      if (ship.body.velocity.y < 0){
-        ship.body.velocity.y += 10;
-      }
-    }*/
     //TODO: add sound for when the player is hit
     //TODO: add "explosion" of water/sand pixels?
     //console.log("We've been hit, Captain! " + ship.health);
+  }
+
+  function initializeEnemy(type, wind){
+    //TODO: make enemies come from every direction BUT upwind, randomly deciding which edge to come from
+    var x = 0;
+    var y = 0;
+    var xVelocity = 0;
+    var yVelocity = 0;
+    var angle = 0;
+    switch(wind){
+      case 'N':
+        x = Math.random() * this.width;
+        angle = -90;
+        yVelocity = this.enemyDownWindSpeed[type];
+      break;
+      case 'S':
+        x = Math.random() * this.width;
+        y = this.height;
+        angle = 90;
+        yVelocity = 0 - this.enemyDownWindSpeed[type];
+      break;
+      case 'W':
+        y = Math.random() * this.height;
+        xVelocity = this.enemyDownWindSpeed[type];
+      break;
+      default://east
+        y = Math.random() * this.height;
+        x = this.width;
+        angle = 180;
+        xVelocity = this.enemyDownWindSpeed[type];
+    }
+    var enemy = this.game.add(x, y, type);
+    //TODO: add weapons to enemies depending on their type
+    enemy.anchor.setTo(0.5, 0.5);
+    enemy.angle = angle;
+    this.game.physics.enable(enemy, Phaser.Physics.ARCADE);
+    enemy.enableBody = true;
+    enemy.body.collideWorldBounds = false;
+    enemy.body.velocity.x = xVelocity;
+    enemy.body.velocity.y = yVelocity;
+  //  enemy.body.bounce.set(0.25);
+    enemy.health = this.enemyHealth[type];
+    this.enemies.push(enemy);
+    this.numEnemies++;
   }
 
 
