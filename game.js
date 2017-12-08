@@ -10,12 +10,14 @@
 var width = 960, height = 560;
 var playerKills = 0;
 var score = 0;
-var startWake = 0;
+var fireButtonHeld = 0;
 
 //wind global variables
 var whitecaps = new Array();
-var wind = 'N'; //the direction the wind is coming from. N means the wind blows north to south
-var direction = 'C';
+var wind = 'N'; //the direction the wind is coming from. N means the wind blows north to south, N,S,E,W
+var direction = 'C'; //C, U, D
+var startWake = 0;
+var tack = 'P'; //P, S, D
 
 //enemy global variables
 var wave = 0;
@@ -42,7 +44,9 @@ GameState.prototype.create = function() {
 //    this.game.stage.backgroundColor = 0x111111;
 
   this.playerKills = 0;
-  console.log(playerKills);
+  console.log("kills: " + playerKills);
+
+  this.fireButtonHeld = 0;
 
   //adds islands to map
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -123,7 +127,6 @@ GameState.prototype.create = function() {
 GameState.prototype.update = function() {
   this.weapon.fireAngle = this.ship.angle + 90; //make the shots fire sideways
   this.weapon2.fireAngle = this.ship.angle - 90;
-
   //keeps a steady flow of whitecaps on the screen
   generateWhitecaps(1, 45, this.whitecaps);
   //collides whitecaps with the world
@@ -240,18 +243,50 @@ GameState.prototype.update = function() {
         //TODO: figure out why the partially accelerated sprite isn't used
         //TODO: figure out why the port and starboard tacks are messed up
 		this.wake = !this.wake;
+    switch(this.startWake){
+      case 0:
         // Show the frame from the spritesheet with the engine on
         if (this.ship.body.velocity <= 50){
-          this.wake = this.startWake;
+          this.wake = 0;
         } else if (this.ship.body.velocity <= 300){
-          this.wake = this.startWake + 1;
+          this.wake = 1;
         } else {
-          this.wake = this.startWake + 2;
+          this.wake = 2;
         }
-       this.ship.frame = this.wake;
-        if (this.wake === 9){
+      this.ship.frame = this.wake;
+        if (this.wake === 3){
           this.wake = 0;
         }
+        break;
+        case 3:
+          // Show the frame from the spritesheet with the engine on
+          if (this.ship.body.velocity <= 50){
+            this.wake = 3;
+          } else if (this.ship.body.velocity <= 300){
+            this.wake = 4;
+          } else {
+            this.wake = 5;
+          }
+          this.ship.frame = this.wake;
+          if (this.wake === 6){
+            this.wake = 3;
+          }
+        break;
+        default:
+        // Show the frame from the spritesheet with the engine on
+        if (this.ship.body.velocity <= 50){
+          this.wake = 6;
+        } else if (this.ship.body.velocity <= 300){
+          this.wake = 7;
+        } else {
+          this.wake = 8;
+        }
+      this.ship.frame = this.wake;
+        if (this.wake === 9){
+          this.wake = 6;
+        }
+        break;
+      }
 
     }  else if (this.input.keyboard.isDown(Phaser.Keyboard.DOWN)) {
 
@@ -274,6 +309,12 @@ GameState.prototype.update = function() {
   if (this.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) {
     this.weapon.fire();
     this.weapon2.fire();
+    this.fireButtonHeld++;
+  } else { //reduce the fireButtonHeld value
+      if (this.fireButtonHeld > 0)
+        this.fireButtonHeld -= 1; //TODO: balance cooldown time vs spam time. Should it be longer? Should it be shorter?
+      if (this.fireButtonHeld < 0)
+        this.fireButtonHeld = 0;
   }
 
   //modifies weapon effectiveness based on the number of playerKills
@@ -296,6 +337,13 @@ GameState.prototype.update = function() {
     this.weapon.bulletLifespan = 200 + 50 * (playerKills);
     this.weapon2.bulletLifespan = 200 + 50 * (playerKills);
   }
+
+    //forces the player to not hold down the fire button by reducing the fireRate
+    var newFireRate = stopFireSpam(fireButtonHeld, this.weapon.fireRate);
+    console.log("actual fire rate: " + newFireRate);
+    this.weapon.fireRate = newFireRate;
+    this.weapon2.fireRate = newFireRate;
+
 
   //changes the color of the ocean depending on the health of the player.
   switch(this.ship.health){
@@ -586,7 +634,7 @@ function checkTack(wind, startWake, angle, direction){
       retVal = 0;
     }
   }
-  console.log(retVal);
+  //console.log(retVal);
   return retVal;
 }
 
@@ -629,6 +677,15 @@ function playerHitIsland(ship, island){
     //TODO: add sound for when the player is hit
     //TODO: add "explosion" of water/sand pixels?
     //console.log("We've been hit, Captain! " + ship.health);
+  }
+
+  function stopFireSpam(fireButtonHeld, fireRate){
+    var newFireRate = fireRate;
+    if (fireButtonHeld >= 90){
+      newFireRate = newFireRate * (fireButtonHeld/10);
+    }
+    console.log("function fire rate: " + newFireRate);
+    return newFireRate;
   }
 
 

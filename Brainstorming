@@ -20,16 +20,19 @@ Potentially, we could break up bosses into two groups- "easy" and "hard", and ha
 5. Hurricane- can't actually be killed by the player, just lives for a certain amount of time and then disappears
 6. Moby Dick- moves around the map in pre-designed patterns, regardless of what the player does
 7. Spanish Galleon- runs away from the player, dropping bombs
-8.
+8. Viking longboat- like a normal ship, but it goes at top speed in all directions, regardless of wind, and takes a ton of damage
+9.
 
 Power-ups
 1. Treasure- the player's score is how much treasure they pick up, not how many kills they get. Treasure is dropped by killed enemies.
     We may want it to disappear after a certain amount of time, or slide down wind and disappear off the edge of the map. We also may
     want treasure to sometimes randomly blow in with enemies
-2. Health
-3. Accurate shot- makes bullets fly straight instead of spraying for a short period of
-4. Invincibility- turns the ocean red and makes any ramming attack instantly fatal for the enemy.
-5.
+2. Health- restores 1 health
+3. Full health- returns the ship to max health (6)
+4. Accurate shot- makes bullets fly straight instead of spraying for a short period of
+5. Invincibility- turns the ocean red and makes any ramming attack instantly fatal for the enemy.
+6. Boarding pirate- once the ship is close to an enemy, a pirate jumps off of the player's ship onto the enemy,
+   instantly killing it (not sure what to do with bosses) and automatically collecting the treasure it drops
 
 UI
 1. Treasure map- It would be sweet if we made the web page have a tan frame around the game, and make it look like a treasure map.
