@@ -44,7 +44,7 @@ GameState.prototype.create = function() {
 //    this.game.stage.backgroundColor = 0x111111;
 
   this.playerKills = 0;
-  console.log("kills: " + playerKills);
+  //console.log("kills: " + playerKills);
 
   this.fireButtonHeld = 0;
 
@@ -68,10 +68,11 @@ GameState.prototype.create = function() {
     // Add the ship to the stage
     this.ship = this.game.add.sprite(this.game.width/2, this.game.height/2, 'ship');
     this.ship.health = 6;
+    this.ship.setHealth(6);
     this.ship.anchor.setTo(0.5, 0.5);
     this.ship.angle = -90; // Point the ship up
 
-    console.log(this.game.add);
+    //console.log(this.game.add);
     //first weapon, fires right relative to the ship
     this.weapon = this.game.add.weapon(100, 'cannonball');
     this.weapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
@@ -141,16 +142,18 @@ GameState.prototype.update = function() {
   //determine if the ship is going in the correct direction
 
   if (this.ship.angle >= 45 && this.ship.angle <135){ //ship pointing south
+      this.startWake = setWake('S', this.ship.angle, this.wind);
       this.direction = checkWind('S');
   } else if (this.ship.angle >= 135 && this.ship.angle <225){//ship pointing west
+      this.startWake = setWake('W', this.ship.angle, this.wind);
       this.direction = checkWind('W');
   } else if (this.ship.angle < -45 && this.ship.angle >= -135){//ship pointing north
+      this.startWake = setWake('N', this.ship.angle, this.wind);
       this.direction = checkWind('N');
   } else {//east
+      this.startWake = setWake('E', this.ship.angle, this.wind);
       this.direction = checkWind('E');
   }
-
-  this.startWake = checkTack(this.wind, this.startWake, this.ship.angle, this.direction);
 
   switch(this.direction){
     case 'U':
@@ -242,51 +245,21 @@ GameState.prototype.update = function() {
         //TODO: figure out why the sprite always returns to 0 unless accelerating
         //TODO: figure out why the partially accelerated sprite isn't used
         //TODO: figure out why the port and starboard tacks are messed up
-		this.wake = !this.wake;
-    switch(this.startWake){
-      case 0:
+      	this.wake = !this.wake;
+        //console.log("start wake: " + this.startWake);
         // Show the frame from the spritesheet with the engine on
+        console.log("start wake " + this.startWake);
         if (this.ship.body.velocity <= 50){
-          this.wake = 0;
+          this.wake = this.startWake;
         } else if (this.ship.body.velocity <= 300){
-          this.wake = 1;
+          this.wake = this.startWake + 1;
         } else {
-          this.wake = 2;
+          this.wake = this.startWake + 2;
+        }
+        if (this.wake > this.startWake + 3 || this.wake < this.startWake){
+          this.wake = this.startWake;
         }
       this.ship.frame = this.wake;
-        if (this.wake === 3){
-          this.wake = 0;
-        }
-        break;
-        case 3:
-          // Show the frame from the spritesheet with the engine on
-          if (this.ship.body.velocity <= 50){
-            this.wake = 3;
-          } else if (this.ship.body.velocity <= 300){
-            this.wake = 4;
-          } else {
-            this.wake = 5;
-          }
-          this.ship.frame = this.wake;
-          if (this.wake === 6){
-            this.wake = 3;
-          }
-        break;
-        default:
-        // Show the frame from the spritesheet with the engine on
-        if (this.ship.body.velocity <= 50){
-          this.wake = 6;
-        } else if (this.ship.body.velocity <= 300){
-          this.wake = 7;
-        } else {
-          this.wake = 8;
-        }
-      this.ship.frame = this.wake;
-        if (this.wake === 9){
-          this.wake = 6;
-        }
-        break;
-      }
 
     }  else if (this.input.keyboard.isDown(Phaser.Keyboard.DOWN)) {
 
@@ -302,7 +275,7 @@ GameState.prototype.update = function() {
         this.ship.body.acceleration.setTo(0, 0);
 
         // Show the frame from the spritesheet with the engine off
-        this.ship.frame = 0;
+        this.ship.frame = this.startWake;
     }
 
 //shoot both guns
@@ -376,7 +349,6 @@ GameState.prototype.update = function() {
       break;
     default://default health is 6.
       this.game.stage.backgroundColor = 0x019ab2;// caribbean teal sea
-      this.ship.health = 6;
   }
 
 };
@@ -384,15 +356,89 @@ GameState.prototype.update = function() {
   //sets which sprite is being used based on the acceleration of the ship.
   //doesn't work exactly right, but works well enough.
   //TODO: add code to use left and right tack sprites
-  function setWake(tack){
-    if (this.ship.body.velocity <= 50){
-      this.wake = tack;
-    } else if (this.ship.body.velocity <= 300){
-      this.wake = tack + 1;
-    } else {
-      this.wake = tack + 2;
+  function setWake(facing, angle, wind){
+    switch(facing){
+      case 'N':
+        switch(wind){
+          case 'W'://starboard tack
+            console.log("facing west");
+            return 3;
+          break;
+          case 'E'://port tack
+            console.log("facing east");
+            return 6;
+          break;
+          case 'S'://downwind
+            console.log("facing downwind");
+            return 0;
+          break;
+          default://upwind, change depending on angle
+            if ((angle <= -90 && angle > -179) || (angle <= 270 && angle > 181)){//port tack
+            //  console.log(angle + ", port tack");
+              return 6;
+            } else {//starboard tack
+            //  console.log(angle + ", starboard tack");
+              return 3;
+            }
+        }
+      break;
+      case 'S':
+      switch(wind){
+        case 'E'://starboard tack
+          return 3;
+        break;
+        case 'W'://port tack
+          return 6;
+        break;
+        case 'N'://downwind
+          return 0;
+        break;
+        default://upwind, change depending on angle
+          if (angle >= 90){//port tack
+            return 6;
+          } else {//starboard tack
+            return 3;
+          }
+      }
+      break;
+      case 'W':
+      switch(wind){
+        case 'S'://starboard tack
+          return 3;
+        break;
+        case 'N'://port tack
+          return 6;
+        break;
+        case 'E'://downwind
+          return 0;
+        break;
+        default://upwind, change depending on angle
+          if (angle <= 180 && angle > 0){//port tack
+            return 6;
+          } else {//starboard tack
+            return 3;
+          }
+      }
+      break;
+      default://east
+      switch(wind){
+        case 'W'://starboard tack
+          return 3;
+        break;
+        case 'E'://port tack
+          return 6;
+        break;
+        case 'S'://downwind
+          return 0;
+        break;
+        default://upwind, change depending on angle
+          if (angle <= 0 || angle > 180){//port tack
+            return 6;
+          } else {//starboard tack
+            return 3;
+          }
+      }
     }
-    this.ship.frame = this.wake;
   }
 
   //function to kill bullets when they hit islands. I couldn't get it working,
@@ -602,11 +648,13 @@ If the ship is going directly into the wind, then it can keep its current sprite
 //TODO: figure out whether angle or direction is a better way of going about this
 function checkTack(wind, startWake, angle, direction){
   var retVal = startWake;
+  console.log(angle);
   switch(wind){
     case 'N':
     if (angle < -90 &&  angle > 135){//starboard tack
       retVal = 3;
     } else if (angle > -90 && angle < 45){//port tack
+
       retVal = 6;
     } else if (angle >= 45 && angle <= 135){//downwind
       retVal = 0;
@@ -704,7 +752,6 @@ GameState.prototype.render =function() {
 */
 
 //-----------------------------------------------------------------------------
-
 
 //var game = new Phaser.Game(848, 450, Phaser.AUTO, 'game');
 var game = new Phaser.Game(960, 650, Phaser.AUTO, 'game');
