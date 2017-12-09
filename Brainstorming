@@ -12,7 +12,7 @@ Maybe we can assign a "difficulty value" to each enemy type, and each wave is al
 Bosses
 If we even do bosses. I really want to, and I think it'll make the game be actually good, but it's a stretch goal for now.
 Potentially, we could break up bosses into two groups- "easy" and "hard", and have a higher chance of a "hard" boss the higher the wave is.
-1. Kraken- head takes damage, tentacles act like sharks and don't take damage.
+1. Kraken- head takes damage, tentacles seek out the player and don't take damage.
     The head disappears briefly after being hit and reappears somewhere else.
 2. Mother Of All Boats- giant ship that doesn't really move, has cannons that shoot in bullet-hell patterns.
 3. Megaladon- giant super shark that seeks the player
@@ -21,7 +21,9 @@ Potentially, we could break up bosses into two groups- "easy" and "hard", and ha
 6. Moby Dick- moves around the map in pre-designed patterns, regardless of what the player does
 7. Spanish Galleon- runs away from the player, dropping bombs
 8. Viking longboat- like a normal ship, but it goes at top speed in all directions, regardless of wind, and takes a ton of damage
-9.
+9. Ironclad- moves in predesigned patterns and fires in 4 directions
+10. Ghost ship- mirror's all of the player's actions, can't run into islands or whitecaps.
+11.
 
 Power-ups
 1. Treasure- the player's score is how much treasure they pick up, not how many kills they get. Treasure is dropped by killed enemies.

@@ -14,9 +14,8 @@ var fireButtonHeld = 0;
 
 //wind global variables
 var wind = 'N'; //the direction the wind is coming from. N means the wind blows north to south, N,S,E,W
-var direction = 'C'; //C, U, D
+var direction = 'C'; //P, S, U, D
 var startWake = 0;
-var tack = 'P'; //P, S, D
 
 //enemy global variables
 var wave = 0;
@@ -157,18 +156,59 @@ GameState.prototype.update = function() {
   //checks the direction the ship is going, and checks it agianst the wind to
   //determine if the ship is going in the correct direction
 
+  var recentDirection = this.direction;
   if (this.ship.angle >= 45 && this.ship.angle <135){ //ship pointing south
-      this.startWake = setWake('S', this.ship.angle, this.wind);
       this.direction = checkWind('S');
+      switch(this.direction){
+        case 'D': this.startWake = 0; break;
+        case 'P': this.startWake = 6; break;
+        case 'S': this.startWake = 3; break;
+        default:
+          if (recentDirection === 'P'){
+            this.startWake = 6;
+          } else if (recentDirection === 'S'){
+            this.startWake = 3;
+          }
+    }
   } else if (this.ship.angle >= 135 && this.ship.angle <225){//ship pointing west
-      this.startWake = setWake('W', this.ship.angle, this.wind);
       this.direction = checkWind('W');
+      switch(this.direction){
+        case 'D': this.startWake = 0; break;
+        case 'P': this.startWake = 6; break;
+        case 'S': this.startWake = 3; break;
+        default:
+          if (recentDirection === 'P'){
+            this.startWake = 6;
+          } else if (recentDirection === 'S'){
+            this.startWake = 3;
+          }
+    }
   } else if (this.ship.angle < -45 && this.ship.angle >= -135){//ship pointing north
-      this.startWake = setWake('N', this.ship.angle, this.wind);
       this.direction = checkWind('N');
+      switch(this.direction){
+        case 'D': this.startWake = 0; break;
+        case 'P': this.startWake = 6; break;
+        case 'S': this.startWake = 3; break;
+        default:
+          if (recentDirection === 'P'){
+            this.startWake = 6;
+          } else if (recentDirection === 'S'){
+            this.startWake = 3;
+          }
+    }
   } else {//east
-      this.startWake = setWake('E', this.ship.angle, this.wind);
       this.direction = checkWind('E');
+      switch(this.direction){
+        case 'D': this.startWake = 0; break;
+        case 'P': this.startWake = 6; break;
+        case 'S': this.startWake = 3; break;
+        default:
+          if (recentDirection === 'P'){
+            this.startWake = 6;
+          } else if (recentDirection === 'S'){
+            this.startWake = 3;
+          }
+    }
   }
 
   switch(this.direction){
@@ -188,7 +228,7 @@ GameState.prototype.update = function() {
     }
     this.ACCELERATION = 180;
       break;
-    default:
+    default://P or S
     if (this.MAX_SPEED < 300){//previously 500
       this.MAX_SPEED += 10;
     } else if (this.MAX_SPEED > 300){
@@ -383,94 +423,6 @@ GameState.prototype.update = function() {
 
 };
 
-  //sets which sprite is being used based on the acceleration of the ship.
-  //doesn't work exactly right, but works well enough.
-  //TODO: add code to use left and right tack sprites
-  function setWake(facing, angle, wind){
-    switch(facing){
-      case 'N':
-        switch(wind){
-          case 'W'://starboard tack
-            console.log("facing west");
-            return 3;
-          break;
-          case 'E'://port tack
-            console.log("facing east");
-            return 6;
-          break;
-          case 'S'://downwind
-            console.log("facing downwind");
-            return 0;
-          break;
-          default://upwind, change depending on angle
-            if ((angle <= -90 && angle > -179) || (angle <= 270 && angle > 181)){//port tack
-            //  console.log(angle + ", port tack");
-              return 6;
-            } else {//starboard tack
-            //  console.log(angle + ", starboard tack");
-              return 3;
-            }
-        }
-      break;
-      case 'S':
-      switch(wind){
-        case 'E'://starboard tack
-          return 3;
-        break;
-        case 'W'://port tack
-          return 6;
-        break;
-        case 'N'://downwind
-          return 0;
-        break;
-        default://upwind, change depending on angle
-          if (angle >= 90){//port tack
-            return 6;
-          } else {//starboard tack
-            return 3;
-          }
-      }
-      break;
-      case 'W':
-      switch(wind){
-        case 'S'://starboard tack
-          return 3;
-        break;
-        case 'N'://port tack
-          return 6;
-        break;
-        case 'E'://downwind
-          return 0;
-        break;
-        default://upwind, change depending on angle
-          if (angle <= 180 && angle > 0){//port tack
-            return 6;
-          } else {//starboard tack
-            return 3;
-          }
-      }
-      break;
-      default://east
-      switch(wind){
-        case 'W'://starboard tack
-          return 3;
-        break;
-        case 'E'://port tack
-          return 6;
-        break;
-        case 'S'://downwind
-          return 0;
-        break;
-        default://upwind, change depending on angle
-          if (angle <= 0 || angle > 180){//port tack
-            return 6;
-          } else {//starboard tack
-            return 3;
-          }
-      }
-    }
-  }
-
   //function to kill bullets when they hit islands. I couldn't get it working,
   //so it's commented out
 
@@ -641,84 +593,31 @@ function checkWind(facing){
       switch(wind){ //default is east
         case 'N':  return 'U'; break;
         case 'S': return 'D'; break;
-        case 'W': return 'C'; break; //TODO: add code to use starboard-tack sprite
-        default: return 'C'; //TODO: add code to use port-tack sprite
+        case 'W': return 'S'; break; //TODO: add code to use starboard-tack sprite
+        default: return 'P'; //TODO: add code to use port-tack sprite
       } break;
     case 'S':
       switch(wind){
         case 'N': return 'D'; break;
         case 'S': return 'U'; break;
-        case 'W': return 'C'; break; //TODO: add code to use port-tack sprite
-        default:  return 'C';//TODO: add code to use starboard-tack sprite
+        case 'W': return 'P'; break; //TODO: add code to use port-tack sprite
+        default:  return 'S';//TODO: add code to use starboard-tack sprite
       } break;
     case 'W':
       switch(wind){
-        case 'N':  return 'C'; break;//TODO: add code to use starboard-tack sprite
-        case 'S':  return 'C'; break; //TODO: add code to use port-tack sprite
+        case 'N':  return 'S'; break;//TODO: add code to use starboard-tack sprite
+        case 'S':  return 'P'; break; //TODO: add code to use port-tack sprite
         case 'W': return 'U'; break;
         default: return 'D';
       } break;
     default:
       switch(wind){
-        case 'N':  return 'C'; break; //TODO: add code to use port-tack sprite
-        case 'S': return 'C'; break; //TODO: add code to use starboard-tack sprite
+        case 'N':  return 'P'; break; //TODO: add code to use port-tack sprite
+        case 'S': return 'S'; break; //TODO: add code to use starboard-tack sprite
         case 'W':  return 'D'; break;
         default:  return 'U';
       }
   }
-}
-
-/*
-returns which sprites on the spritesheet the ship should be using based on its angle
-and the ship's direction. If the ship is going downwind, it should use the downwind
-sprites (0-2). If it's going upwind or crosswind but the wind is going across its right side, it
-should use the starboard tack sprites (3-5), otherwise it should use the port tack sprites (6-8).
-If the ship is going directly into the wind, then it can keep its current sprites.
-*/
-//TODO: figure out whether angle or direction is a better way of going about this
-function checkTack(wind, startWake, angle, direction){
-  var retVal = startWake;
-  console.log(angle);
-  switch(wind){
-    case 'N':
-    if (angle < -90 &&  angle > 135){//starboard tack
-      retVal = 3;
-    } else if (angle > -90 && angle < 45){//port tack
-
-      retVal = 6;
-    } else if (angle >= 45 && angle <= 135){//downwind
-      retVal = 0;
-    }
-    break;
-    case 'S':
-    if (angle < 90 && direction !== 'D'){//starboard tack
-      retVal = 3;
-    } else if (angle > 90 && direction !== 'D'){//port tack
-      retVal = 6;
-    } else if (direction == 'D'){//downwind
-      retVal = 0;
-    }
-    break;
-    case 'W':
-    if (angle < 180 && direction !== 'D'){ //starboard tack
-      retVal = 3;
-    } else if (angle > 180 && direction !== 'D'){ //port tack
-      retVal = 6;
-    } else if (direction == 'D'){//downwind
-      retVal = 0;
-    }
-    break;
-    default://east
-    if (angle < 0 && direction !== 'D'){ //starboard tack
-      retVal = 3;
-    } else if (angle > 0 && direction !== 'D'){ //port tack
-      retVal = 6;
-    } else if (direction == 'D'){//downwind
-      retVal = 0;
-    }
-  }
-  //console.log(retVal);
-  return retVal;
 }
 
 
