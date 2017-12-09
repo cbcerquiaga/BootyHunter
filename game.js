@@ -164,11 +164,7 @@ GameState.prototype.update = function() {
         case 'P': this.startWake = 6; break;
         case 'S': this.startWake = 3; break;
         default:
-          if (recentDirection === 'P'){
-            this.startWake = 6;
-          } else if (recentDirection === 'S'){
-            this.startWake = 3;
-          }
+          this.startWake = 9;
     }
   } else if (this.ship.angle >= 135 && this.ship.angle <225){//ship pointing west
       this.direction = checkWind('W');
@@ -177,11 +173,7 @@ GameState.prototype.update = function() {
         case 'P': this.startWake = 6; break;
         case 'S': this.startWake = 3; break;
         default:
-          if (recentDirection === 'P'){
-            this.startWake = 6;
-          } else if (recentDirection === 'S'){
-            this.startWake = 3;
-          }
+          this.startWake = 9;
     }
   } else if (this.ship.angle < -45 && this.ship.angle >= -135){//ship pointing north
       this.direction = checkWind('N');
@@ -190,11 +182,7 @@ GameState.prototype.update = function() {
         case 'P': this.startWake = 6; break;
         case 'S': this.startWake = 3; break;
         default:
-          if (recentDirection === 'P'){
-            this.startWake = 6;
-          } else if (recentDirection === 'S'){
-            this.startWake = 3;
-          }
+          this.startWake = 9;
     }
   } else {//east
       this.direction = checkWind('E');
@@ -203,11 +191,7 @@ GameState.prototype.update = function() {
         case 'P': this.startWake = 6; break;
         case 'S': this.startWake = 3; break;
         default:
-          if (recentDirection === 'P'){
-            this.startWake = 6;
-          } else if (recentDirection === 'S'){
-            this.startWake = 3;
-          }
+          this.startWake = 9;
     }
   }
 

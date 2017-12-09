@@ -23,7 +23,8 @@ Potentially, we could break up bosses into two groups- "easy" and "hard", and ha
 8. Viking longboat- like a normal ship, but it goes at top speed in all directions, regardless of wind, and takes a ton of damage
 9. Ironclad- moves in predesigned patterns and fires in 4 directions
 10. Ghost ship- mirror's all of the player's actions, can't run into islands or whitecaps.
-11.
+11. Loch Ness Monster- doesn't attack the player, rarely ever spawns so players think it's a myth
+12.
 
 Power-ups
 1. Treasure- the player's score is how much treasure they pick up, not how many kills they get. Treasure is dropped by killed enemies.
@@ -47,3 +48,5 @@ UI
 4.
 
 Other
+1. Players should get more points for picking up treasure at higher speed. This would encourage players to
+   play faster, and make the game more difficult.
