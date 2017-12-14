@@ -13,7 +13,7 @@ var score = 0;
 var fireButtonHeld = 0;
 
 //wind global variables
-var wind = 'N'; //the direction the wind is coming from. N means the wind blows north to south, N,S,E,W
+var wind = 'S'; //the direction the wind is coming from. N means the wind blows north to south, N,S,E,W
 var direction = 'C'; //P, S, U, D
 var startWake = 0;
 
@@ -171,7 +171,7 @@ GameState.prototype.update = function() {
         default:
           this.startWake = 9;
     }
-  } else if (this.ship.angle >= 135 && this.ship.angle <225){//ship pointing west
+  } else if ((this.ship.angle >= 135 && this.ship.angle <225) || (this.ship.angle >= -225 && this.ship.angle < -135)){//ship pointing west
       this.direction = checkWind('W');
       switch(this.direction){
         case 'D': this.startWake = 0; break;
@@ -180,7 +180,7 @@ GameState.prototype.update = function() {
         default:
           this.startWake = 9;
     }
-  } else if (this.ship.angle < -45 && this.ship.angle >= -135){//ship pointing north
+  } else if ((this.ship.angle < -45 && this.ship.angle >= -135)|| (this.ship.angle < 315 && this.ship.angle >= 225)){//ship pointing north
       this.direction = checkWind('N');
       switch(this.direction){
         case 'D': this.startWake = 0; break;
@@ -585,27 +585,27 @@ function checkWind(facing){
       switch(wind){ //default is east
         case 'N':  return 'U'; break;
         case 'S': return 'D'; break;
-        case 'W': return 'S'; break; //TODO: add code to use starboard-tack sprite
-        default: return 'P'; //TODO: add code to use port-tack sprite
+        case 'W': return 'P'; break; //TODO: add code to use starboard-tack sprite
+        default: return 'S'; //TODO: add code to use port-tack sprite
       } break;
     case 'S':
       switch(wind){
         case 'N': return 'D'; break;
         case 'S': return 'U'; break;
-        case 'W': return 'P'; break; //TODO: add code to use port-tack sprite
-        default:  return 'S';//TODO: add code to use starboard-tack sprite
+        case 'W': return 'S'; break;
+        default:  return 'P';
       } break;
     case 'W':
       switch(wind){
-        case 'N':  return 'S'; break;//TODO: add code to use starboard-tack sprite
-        case 'S':  return 'P'; break; //TODO: add code to use port-tack sprite
+        case 'N':  return 'S'; break;
+        case 'S':  return 'P'; break;
         case 'W': return 'U'; break;
         default: return 'D';
       } break;
     default:
       switch(wind){
-        case 'N':  return 'P'; break; //TODO: add code to use port-tack sprite
-        case 'S': return 'S'; break; //TODO: add code to use starboard-tack sprite
+        case 'N':  return 'P'; break;
+        case 'S': return 'S'; break;
         case 'W':  return 'D'; break;
         default:  return 'U';
       }
