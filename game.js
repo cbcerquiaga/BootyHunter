@@ -81,7 +81,7 @@ GameState.prototype.create = function() {
     // Add the ship to the stage
     this.ship = this.game.add.sprite(this.game.width/2, this.game.height/2, 'ship');
     this.ship.health = 6;
-    this.ship.setHealth(6);
+    //this.ship.setHealth(6);
     this.ship.anchor.setTo(0.5, 0.5);
     this.ship.angle = -90; // Point the ship up
     this.ship.enableBody = true;
@@ -369,6 +369,9 @@ GameState.prototype.update = function() {
 
 
   //changes the color of the ocean depending on the health of the player.
+  if(this.ship.health < 1) {
+    this.ship.health = 1;
+  }
   switch(this.ship.health){
     case 0:
       console.log("You'd be dead if this game was finished");//run game over sequence...show score, kills ,wave,
@@ -684,7 +687,14 @@ function playerHitIsland(ship, island){
     this.numEnemies++;
   }
 
+  function gameOverSequnce(score, wave, kills, bossesKilled) {
+      //TODO Explosion sprite
 
+      //TODO Kill ship
+
+      //TODO Change the current screen to an GameOver Screen with
+      //score, wave, kills and bossesKilled
+  }
 
 
 GameState.prototype.render =function() {
