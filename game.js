@@ -125,10 +125,15 @@ GameState.prototype.create = function() {
     // platforms may not need code like this.
     this.game.input.keyboard.addKeyCapture([
         Phaser.Keyboard.LEFT,
+        Phaser.Keyboard.A,
         Phaser.Keyboard.RIGHT,
+        Phaser.Keyboard.D,
         Phaser.Keyboard.UP,
+        Phaser.Keyboard.W,
         Phaser.Keyboard.DOWN,
+        Phaser.Keyboard.S,
         Phaser.Keyboard.SPACEBAR
+
         //TODO: add code to allow WSAD controls
     ]);
     this.ship.body.collideWorldBounds = false;//lets the ship wrap around the world
@@ -252,7 +257,7 @@ GameState.prototype.update = function() {
     var speed = Math.sqrt((this.ship.body.velocity.x * this.ship.body.velocity.x) + (this.ship.body.velocity.y * this.ship.body.velocity.y));
     var acceleration = Math.sqrt(this.ship.body.acceleration.x * this.ship.body.acceleration.x) + (this.ship.body.acceleration.y * this.ship.body.acceleration.y);
 
-    if (this.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
+    if (this.input.keyboard.isDown(Phaser.Keyboard.LEFT)  || this.input.keyboard.isDown(Phaser.Keyboard.A)) {
         // If the LEFT key is down, rotate left
         this.ship.body.angularVelocity = -this.ROTATION_SPEED;
         this.ship.body.velocity.x = Math.cos(this.ship.rotation) * speed;
@@ -260,7 +265,7 @@ GameState.prototype.update = function() {
         this.ship.body.acceleration.x = Math.cos(this.ship.rotation) * acceleration;
         this.ship.body.acceleration.y = Math.sin(this.ship.rotation) * acceleration;
 
-    } else if (this.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
+    } else if (this.input.keyboard.isDown(Phaser.Keyboard.RIGHT)  || this.input.keyboard.isDown(Phaser.Keyboard.D)) {
         // If the RIGHT key is down, rotate right
         this.ship.body.angularVelocity = this.ROTATION_SPEED;
 
@@ -275,7 +280,7 @@ GameState.prototype.update = function() {
     }
 
 
-    if (this.input.keyboard.isDown(Phaser.Keyboard.UP)) {
+    if (this.input.keyboard.isDown(Phaser.Keyboard.UP)  || this.input.keyboard.isDown(Phaser.Keyboard.W)) {
         // If the UP key is down, thrust
 
         // Calculate acceleration vector based on this.angle and this.ACCELERATION
@@ -301,7 +306,7 @@ GameState.prototype.update = function() {
         }
       this.ship.frame = this.wake;
 
-    }  else if (this.input.keyboard.isDown(Phaser.Keyboard.DOWN)) {
+    }  else if (this.input.keyboard.isDown(Phaser.Keyboard.DOWN) || this.input.keyboard.isDown(Phaser.Keyboard.S)) {
 
 		// break...
       //  this.ship.body.acceleration.setTo(0, 0);
@@ -635,7 +640,7 @@ function playerHitIsland(ship, island){
     //console.log("We've been hit, Captain! " + ship.health);
   }
 
-  function initializeEnemy(type, wind){
+  function initializeEnemy(type, wind) {
     //TODO: make enemies come from every direction BUT upwind, randomly deciding which edge to come from
     var x = 0;
     var y = 0;
