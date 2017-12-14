@@ -125,7 +125,29 @@ GameState.prototype.update = function() {
 
   //adds whitecaps
   whitecaps(15, 25);
+  var collisionHandler = function(island, bullet) {
+    bullet.kill;
+    console.log("Kill me");
+  }
 
+  var bulletGroup = this.weapon.bullets.children;
+  for (var i = 0; i < bulletGroup.len; i++) {
+    for(var j = 0; j < this.islands.children.len; j++)
+      game.physics.arcade.overlap(islands[j], bulletGroup[i], this.collisionHandler, null, this);
+  }
+
+  /*if(this.weapon2.bullets.children != null){
+    console.log("Weapon 2");
+    console.log(this.weapon2.bullets.children);
+  }
+  if(this.weapon.bullets.children != null){
+    console.log("Weapon 1");
+    console.log(this.weapon.bullets.children);
+  }*/
+  /*if(this.islands.children != undefined){
+    console.log("Island");
+    console.log(this.islands.children);
+  }*/
 
   //TODO: refactor into separate method
   //checks the direction the ship is going, and checks it agianst the wind to
