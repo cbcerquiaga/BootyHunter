@@ -134,7 +134,6 @@ GameState.prototype.create = function() {
         Phaser.Keyboard.S,
         Phaser.Keyboard.SPACEBAR
 
-        //TODO: add code to allow WSAD controls
     ]);
     this.ship.body.collideWorldBounds = false;//lets the ship wrap around the world
 
@@ -160,7 +159,6 @@ GameState.prototype.update = function() {
   //TODO: refactor into separate method
   //checks the direction the ship is going, and checks it agianst the wind to
   //determine if the ship is going in the correct direction
-
   var recentDirection = this.direction;
   if (this.ship.angle >= 45 && this.ship.angle <135){ //ship pointing south
       this.direction = checkWind('S');
@@ -287,9 +285,7 @@ GameState.prototype.update = function() {
         this.ship.body.acceleration.x = Math.cos(this.ship.rotation) * this.ACCELERATION;
         this.ship.body.acceleration.y = Math.sin(this.ship.rotation) * this.ACCELERATION;
 
-        //TODO: figure out why the sprite always returns to 0 unless accelerating
         //TODO: figure out why the partially accelerated sprite isn't used
-        //TODO: figure out why the port and starboard tacks are messed up
       	this.wake = !this.wake;
         //console.log("start wake: " + this.startWake);
         // Show the frame from the spritesheet with the engine on
@@ -480,8 +476,7 @@ function createIsland(x, y, radius1, radius2) {
 
 }
 
-//TODO: finish this function
-//TODO: refactor into cleaner code
+
 //implements whitecaps, which are ocean waves that tell the player where the wind is coming from
 function generateWhitecaps(numWhiteCaps, speed, whitecaps){
   var makeOrNot = Math.random()>0.02?false:true; //keeps the screen from being completely full of them
@@ -585,8 +580,8 @@ function checkWind(facing){
       switch(wind){ //default is east
         case 'N':  return 'U'; break;
         case 'S': return 'D'; break;
-        case 'W': return 'P'; break; //TODO: add code to use starboard-tack sprite
-        default: return 'S'; //TODO: add code to use port-tack sprite
+        case 'W': return 'P'; break;
+        default: return 'S';
       } break;
     case 'S':
       switch(wind){
