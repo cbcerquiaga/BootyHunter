@@ -18,16 +18,16 @@ var direction = 'C'; //P, S, U, D
 var startWake = 0;
 
 //enemy global variables
-var wave = 0;
+var wave = 1;
 var numEnemies = 0;
 var waveIsOver = false;
 var killedBosses = [];
 var enemies = new Array();
-var enemyDownWindSpeed = {'gunboat': 100, 'manowar': 500, 'normal': 850};//TODO: add dhow
-var enemyCrossWindSpeed = {'gunboat': 60, 'manowar': 250, 'normal': 500};
-var enemyUpWindSpeed = {'gunboat': 35, 'manowar': 100, 'normal': 150};
-var enemyHealth = {'gunboat': 1, 'manowar': 12, 'normal': 6};
-var enemyDifficulty = {'gunboat': 1, 'manowar': 10, 'normal': 5};
+var enemyDownWindSpeed = {'gunboat': 100, 'manowar': 500, 'normal': 850, 'dhow': 950};//TODO: add dhow
+var enemyCrossWindSpeed = {'gunboat': 60, 'manowar': 250, 'normal': 500, 'dhow': 600};
+var enemyUpWindSpeed = {'gunboat': 35, 'manowar': 100, 'normal': 150, 'dhow': 250};
+var enemyHealth = {'gunboat': 1, 'manowar': 12, 'normal': 6, 'dhow': 3};
+var enemyDifficulty = {'gunboat': 1, 'manowar': 10, 'normal': 5, 'dhow': 10};
 var waveDifficulty;
 
 //-----------------------------------------------------------------------------
@@ -41,7 +41,14 @@ GameState.prototype.preload = function() {
     this.game.load.spritesheet('ship', 'assets/boatLoRes.png', 38, 32);
     this.game.load.image('cannonball', 'assets/cannonball.png');
     this.game.load.image('whitecap', 'assets/whitecap.png');
-    this.game.load.image('gunboat', 'assets/gunBoat.png');
+    this.game.load.image('gunboat', 'assets/gunBoat.png', 15, 19);
+    this.game.load.image('manowar', 'assets/manOwar.png', 59, 32);
+    this.game.load.image('dhow', 'assets/dhow.png', 40, 32);
+    this.game.load.image('silverCoin', 'assets/silverCoin.png');
+    this.game.load.image('goldCoin', 'assets/goldCoin.png');
+    this.game.load.image('emerald', 'assets/emerald.png');
+    this.game.load.image('purpleGem', 'assets/purpleGem.png');
+    this.game.load.image('diamond', 'assets/diamond.png');
     console.log("Hello world");
 };
 
@@ -404,8 +411,31 @@ GameState.prototype.update = function() {
     this.waveDifficulty = this.waveDifficulty * 1.5;
     console.log(this.waveDifficulty);
     for (var i = 0; i <= this.waveDifficulty; i++){
-      //TODO: add code to randomly select different types of enemies
-      initializeEnemy('gunboat', this.wind);
+      //TODO: find a way to weight the selection to favor a certain type of enemy if one of that type has already been added to the wave
+      var remainingValue = this.waveDifficulty - i;
+      var shipChosen = false;
+      if (remainingvalue >= 10 && !shipChosen){ //difficulty value of the man o' war and dhow
+          var useThisSprite = Math.random()>0.5?true:false; //TODO: balance freequency of selecting hardest available enemy
+          if (useThisSprite){
+            shipChosen = true;
+            var useDhow =  Math.random()>0.5?true:false; //determines whether to use dhow or man o' war
+            if (useDhow){//create a dhow
+              initializeEnemy('dhow', this.wind);
+            } else {// create a man o war
+              initializeEnemy('manowar', this.wind);
+            }
+          }
+      }
+      if (remainingValue >= 5 && !shipChosen){
+        var useThisSprite = Math.random()>0.5?true:false;//TODO: balance freequency of selecting hardest available enemy
+        if (useThisSprite){
+          shipChosen = true;
+          initializeEnemy('normal', this.wind);
+        }
+      }
+      if (!shipChosen){//no other ship was chosen and/or the remaining difficulty value is too low
+        initializeEnemy('gunboat', this.wind);
+      }
     }
   }
 
