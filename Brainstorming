@@ -2,15 +2,14 @@ Here is where we can put down ideas. Feel free to change whatever you want, or a
 
 Basic Enemies
 Maybe we can assign a "difficulty value" to each enemy type, and each wave is allowed to have a higher difficulty value.
-1. Gunboat- small, slow, and shitty. Only shoots one shot. Difficulty value of 1
+1. Gunboat- small, slow, and shitty. Only shoots one shot. Dumb AI. Difficulty value of 1
 2. Ship- exactly like the player's ship. Difficulty value of 4?
 3. Dhow- faster than the player's ship, but less heavily armored (3 hits?). Fires a single cannon from the bow. Has a long, skinny profile and a single sail that only has left and right tack sprites.
-  Difficulty value of 9?
+  Difficulty value of 9? Wants to use hit-and run tactics
 4. Man O’ War- slower than the player's ship, but more heavily armored (12 hits?). Has 2 sails that look like the regular player’s ship, and 6 cannons on each side.
-  The sprite is 32 pixels wide. Difficulty value of 9?
+  The sprite is 32 pixels wide. Difficulty value of 9? Wants to use napoleonic ship-of-the-line flocking tactics
 
 Bosses
-If we even do bosses. I really want to, and I think it'll make the game be actually good, but it's a stretch goal for now.
 Potentially, we could break up bosses into two groups- "easy" and "hard", and have a higher chance of a "hard" boss the higher the wave is.
 1. Kraken- head takes damage, tentacles seek out the player and don't take damage.
     The head disappears briefly after being hit and reappears somewhere else.
@@ -22,20 +21,28 @@ Potentially, we could break up bosses into two groups- "easy" and "hard", and ha
 7. Spanish Galleon- runs away from the player, dropping bombs
 8. Viking longboat- like a normal ship, but it goes at top speed in all directions, regardless of wind, and takes a ton of damage
 9. Ironclad- moves in predesigned patterns and fires in 4 directions
-10. Ghost ship- mirror's all of the player's actions, can't run into islands or whitecaps.
+10. Ghost ship- mirrors all of the player's actions, can't run into islands or whitecaps.
 11. Loch Ness Monster- doesn't attack the player, rarely ever spawns so players think it's a myth
-12.
+12. Leviathan- snakelike monster that tries to encircle the player's ship
+13. Ironclad- steam powered ship that has a ridiculous amount of health, slowly chugs towards the player and ignores the wind
+14. Giant Squid- leaves trail of ink behind it that slows the player down, then turns and shoots
+15.
 
 Power-ups
 1. Treasure- the player's score is how much treasure they pick up, not how many kills they get. Treasure is dropped by killed enemies.
     We may want it to disappear after a certain amount of time, or slide down wind and disappear off the edge of the map. We also may
     want treasure to sometimes randomly blow in with enemies
-2. Health- restores 1 health
-3. Full health- returns the ship to max health (6)
-4. Accurate shot- makes bullets fly straight instead of spraying for a short period of
-5. Invincibility- turns the ocean red and makes any ramming attack instantly fatal for the enemy.
+    Types of treasure:
+    -silver coin (10 pts)
+    -gold coin (80 pts)
+    -emerald (100 + .1 * speed pts)
+    -purple gem (150 + .2 * speed pts)
+    -diamond (speed pts)
+2. Health- restores 1 health: seagull that flies around the map
+3. Full health- returns the ship to max health (6): pelican that flies around the map
+5. Invincibility- turns the ocean red and makes any ramming attack instantly fatal for the enemy: albatross that flies around the map
 6. Boarding pirate- once the ship is close to an enemy, a pirate jumps off of the player's ship onto the enemy,
-   instantly killing it (not sure what to do with bosses) and automatically collecting the treasure it drops
+   instantly killing it (not sure what to do with bosses) and automatically collecting the treasure it drops: parrot that flies around the map
 
 UI
 1. Treasure map- It would be sweet if we made the web page have a tan frame around the game, and make it look like a treasure map.
@@ -45,8 +52,11 @@ UI
   be a sliding, gradual scale, or it could be a simple three hits, three colors system.
 3. Upon the player's death, it would be funny to have a randomly selected, historically accurate pirate fact appear on screen along with
    the player's final score, total number of enemies killed, and list of each boss killed
-4.
+4. We should probably change the lower-health sea colors to something greyer rather than darker so the game can be played with a darker screen
 
 Other
 1. Players should get more points for picking up treasure at higher speed. This would encourage players to
    play faster, and make the game more difficult.
+2. Different enemies should have different AIs. Gunboats should simply always chase the player and turn to shoot when they get close,
+  but man o' wars should try to form lines (like actual naval ships did) and perform choreographed maneuvers, dhows should sometimes
+  run away instead of attacking, etc. The enemies should not just look different and have different stats, but BE different.

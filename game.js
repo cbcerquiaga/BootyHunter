@@ -7,7 +7,7 @@
 //Special thanks to Dr. Thomas Houpt and Dr. Forrest Stonedahl
 
 //global variables
-var width = 960, height = 560;
+var width = 960, height = 650;
 var playerKills = 0;
 var score = 0;
 var fireButtonHeld = 0;
