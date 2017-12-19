@@ -375,10 +375,10 @@ GameState.prototype.update = function () {
 
 
   //changes the color of the ocean depending on the health of the player.
-  if(player1.sprite.health < 1) {
-    player1.sprite.health = 1;
+  if(player1.health < 1) {
+    player1.health = 1;
   }
-  switch(player1.sprite.health){
+  switch(player1.health){
     case 0:
       console.log("You'd be dead if this game was finished");//run game over sequence...show score, kills ,wave,
       //maybe a fun historically accurate pirate fact too
@@ -665,7 +665,7 @@ function whiteCapHitShip(ship, whitecap){
 //damages the ship, after crashing into an island
 function playerHitIsland(ship, island){
     //ship.damage(1);
-    ship.health--;
+    player1.health--;
     //TODO: add sound for when the player is hit
     //TODO: add "explosion" of water/sand pixels?
     //console.log("We've been hit, Captain! " + ship.health);
