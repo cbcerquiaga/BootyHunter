@@ -169,7 +169,6 @@ GameState.prototype.update = function () {
   //TODO: refactor into separate method
   //checks the direction the ship is going, and checks it agianst the wind to
   //determine if the ship is going in the correct direction
-  var recentDirection = this.direction;
   if (player1.sprite.angle >= 45 && player1.sprite.angle <135){ //ship pointing south
       this.direction = checkWind('S');
       switch(this.direction){
