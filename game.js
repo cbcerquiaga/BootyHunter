@@ -7,6 +7,7 @@
 //Special thanks to Dr. Thomas Houpt and Dr. Forrest Stonedahl
 
 //global variables
+var player1;//represents playable character
 var width = 960, height = 650;
 var playerKills = 0;
 var score = 0;
@@ -90,13 +91,14 @@ GameState.prototype.create = function() {
     this.wake = this.startWake; // starting wake sprite
 
     // Add the ship to the stage
-    this.ship = this.game.add.sprite(this.game.width/2, this.game.height/2, 'ship');
-    this.ship.health = 6;
+    player1 = new ship(this.game.add.sprite(this.game.width / 2, this.game.height / 2, 'ship'));
+    
+    /*this.ship.health = 6;//moved to ship.js
     //this.ship.setHealth(6);
-    this.ship.anchor.setTo(0.5, 0.5);
-    this.ship.angle = -90; // Point the ship up
-    this.ship.enableBody = true;
-    //this.ship.body.bounce.set(0.25);//bounce the ship off of things it collides with
+    //this.ship.anchor.setTo(0.5, 0.5);
+    //this.ship.angle = -90; // Point the ship up
+    //this.ship.enableBody = true;*///all of this was moved to ship.js
+    
 
     //console.log(this.game.add);
     //first weapon, fires right relative to the ship
@@ -108,7 +110,7 @@ GameState.prototype.create = function() {
     this.weapon.bulletAngleVariance = 10;
     this.weapon.bulletCollideWorldBounds = false;
     this.weapon.bulletWorldWrap = true;
-    this.weapon.trackSprite(this.ship, 0, 0, false);//TODO: shift over to actual position of gun
+    this.weapon.trackSprite(player1.sprite, 0, 0, false);//TODO: shift over to actual position of gun
     //second weapon, fires left relative to the ship
     this.weapon2 = this.game.add.weapon(100, 'cannonball');
     this.weapon2.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
@@ -118,13 +120,14 @@ GameState.prototype.create = function() {
     this.weapon2.bulletAngleVariance = 10;
     this.weapon2.bulletCollideWorldBounds = false;
     this.weapon2.bulletWorldWrap = true;
-    this.weapon2.trackSprite(this.ship, 0, 0, false);//TODO: shift over to actual position of gun
+    this.weapon2.trackSprite(player1.sprite, 0, 0, false);//TODO: shift over to actual position of gun
 
     // Enable physics on the ship
-    this.game.physics.enable(this.ship, Phaser.Physics.ARCADE);
+    this.game.physics.enable(player1.sprite, Phaser.Physics.ARCADE);
+    player1.enablePhysics();
 
     // Set maximum velocity
-    this.ship.body.maxVelocity.setTo(this.MAX_SPEED, this.MAX_SPEED); // x, y
+    //this.ship.body.maxVelocity.setTo(this.MAX_SPEED, this.MAX_SPEED); // x, y// Moved to ship.js
 
     // Add drag to the ship that slows it down when it is not accelerating
     //this.ship.body.drag.setTo(this.DRAG, this.DRAG); // x, y
@@ -146,7 +149,7 @@ GameState.prototype.create = function() {
         Phaser.Keyboard.SPACEBAR
 
     ]);
-    this.ship.body.collideWorldBounds = false;//lets the ship wrap around the world
+    //this.ship.body.collideWorldBounds = false;//lets the ship wrap around the world
 
 };
 
@@ -155,13 +158,13 @@ GameState.prototype.create = function() {
 
 
 // The update() method is called every frame
-GameState.prototype.update = function() {
-  this.weapon.fireAngle = this.ship.angle + 90; //make the shots fire sideways
-  this.weapon2.fireAngle = this.ship.angle - 90;
+GameState.prototype.update = function () {
+    this.weapon.fireAngle = player1.sprite.angle + 90; //make the shots fire sideways
+    this.weapon2.fireAngle = player1.sprite.angle - 90;
   //keeps a steady flow of whitecaps on the screen
   generateWhitecaps(1, 45, this.whitecaps);
   //collides whitecaps with the world
-  game.physics.arcade.overlap(this.ship, this.whitecaps, whiteCapHitShip);
+  game.physics.arcade.overlap(player1, this.whitecaps, whiteCapHitShip);
   game.physics.arcade.overlap(this.islands, this.whitecaps, whiteCapHitIsland);
   game.physics.arcade.overlap(this.enemies, this.whitecaps, whiteCapHitShip);
 //  game.physics.arcade.overlap(this.enemies, this.islands, enemyHitIsland);
@@ -184,7 +187,8 @@ GameState.prototype.update = function() {
   //TODO: refactor into separate method
   //checks the direction the ship is going, and checks it agianst the wind to
   //determine what sprites the ship should be using
-  if (this.ship.angle >= 45 && this.ship.angle <135){ //ship pointing south
+  if (player1.sprite.angle >= 45 && player1.sprite.angle <135){ //ship pointing south
+
       this.direction = checkWind('S');
       switch(this.direction){
         case 'D': this.startWake = 0; break;
@@ -193,7 +197,7 @@ GameState.prototype.update = function() {
         default:
           this.startWake = 9;
     }
-  } else if ((this.ship.angle >= 135 && this.ship.angle <225) || (this.ship.angle >= -225 && this.ship.angle < -135)){//ship pointing west
+  } else if ((player1.sprite.angle >= 135 && player1.sprite.angle <225) || (player1.sprite.angle >= -225 && player1.sprite.angle < -135)){//ship pointing west
       this.direction = checkWind('W');
       switch(this.direction){
         case 'D': this.startWake = 0; break;
@@ -202,7 +206,7 @@ GameState.prototype.update = function() {
         default:
           this.startWake = 9;
     }
-  } else if ((this.ship.angle < -45 && this.ship.angle >= -135)|| (this.ship.angle < 315 && this.ship.angle >= 225)){//ship pointing north
+  } else if ((player1.sprite.angle < -45 && player1.sprite.angle >= -135)|| (player1.sprite.angle < 315 && player1.sprite.angle >= 225)){//ship pointing north
       this.direction = checkWind('N');
       switch(this.direction){
         case 'D': this.startWake = 0; break;
@@ -250,15 +254,15 @@ GameState.prototype.update = function() {
       this.ACCELERATION = 90;
   }
 
-  if (this.ship.body.velocity.x > this.MAX_SPEED){
-    this.ship.body.velocity.x -= 10;
+  if (player1.sprite.body.velocity.x > this.MAX_SPEED){
+    player1.sprite.body.velocity.x -= 10;
   }
-  if (this.ship.body.velocity.y > this.MAX_SPEED){
-    this.ship.body.velocity.y -= 10;
+  if (player1.sprite.body.velocity.y > this.MAX_SPEED){
+    player1.sprite.body.velocity.y -= 10;
   }
 
     //  Collide the ship with the islands
-    game.physics.arcade.collide(this.ship, this.islands, playerHitIsland);
+    game.physics.arcade.collide(player1.sprite, this.islands, playerHitIsland);
 
 
     if (this.game.time.fps !== 0) {
@@ -269,36 +273,36 @@ GameState.prototype.update = function() {
     }
 
     // Keep the ship on the screen
-    if (this.ship.x > this.game.width) this.ship.x = 0;
-    if (this.ship.x < 0) this.ship.x = this.game.width;
-    if (this.ship.y > this.game.height) this.ship.y = 0;
-    if (this.ship.y < 0) this.ship.y = this.game.height;
+    if (player1.sprite.x > this.game.width) player1.sprite.x = 0;
+    if (player1.sprite.x < 0) player1.sprite.x = this.game.width;
+    if (player1.sprite.y > this.game.height) player1.sprite.y = 0;
+    if (player1.sprite.y < 0) player1.sprite.y = this.game.height;
 
 
 
-    var speed = Math.sqrt((this.ship.body.velocity.x * this.ship.body.velocity.x) + (this.ship.body.velocity.y * this.ship.body.velocity.y));
-    var acceleration = Math.sqrt(this.ship.body.acceleration.x * this.ship.body.acceleration.x) + (this.ship.body.acceleration.y * this.ship.body.acceleration.y);
+    var speed = Math.sqrt((player1.sprite.body.velocity.x * player1.sprite.body.velocity.x) + (player1.sprite.body.velocity.y * player1.sprite.body.velocity.y));
+    var acceleration = Math.sqrt(player1.sprite.body.acceleration.x * player1.sprite.body.acceleration.x) + (player1.sprite.body.acceleration.y * player1.sprite.body.acceleration.y);
 
     if (this.input.keyboard.isDown(Phaser.Keyboard.LEFT)  || this.input.keyboard.isDown(Phaser.Keyboard.A)) {
         // If the LEFT key is down, rotate left
-        this.ship.body.angularVelocity = -this.ROTATION_SPEED;
-        this.ship.body.velocity.x = Math.cos(this.ship.rotation) * speed;
-        this.ship.body.velocity.y = Math.sin(this.ship.rotation) * speed;
-        this.ship.body.acceleration.x = Math.cos(this.ship.rotation) * acceleration;
-        this.ship.body.acceleration.y = Math.sin(this.ship.rotation) * acceleration;
+        player1.sprite.body.angularVelocity = -this.ROTATION_SPEED;
+        player1.sprite.body.velocity.x = Math.cos(player1.sprite.rotation) * speed;
+        player1.sprite.body.velocity.y = Math.sin(player1.sprite.rotation) * speed;
+        player1.sprite.body.acceleration.x = Math.cos(player1.sprite.rotation) * acceleration;
+        player1.sprite.body.acceleration.y = Math.sin(player1.sprite.rotation) * acceleration;
 
     } else if (this.input.keyboard.isDown(Phaser.Keyboard.RIGHT)  || this.input.keyboard.isDown(Phaser.Keyboard.D)) {
         // If the RIGHT key is down, rotate right
-        this.ship.body.angularVelocity = this.ROTATION_SPEED;
+        player1.sprite.body.angularVelocity = this.ROTATION_SPEED;
 
-        this.ship.body.velocity.x = Math.cos(this.ship.rotation) * speed;
-        this.ship.body.velocity.y = Math.sin(this.ship.rotation) * speed;
-        this.ship.body.acceleration.x = Math.cos(this.ship.rotation) * acceleration;
-        this.ship.body.acceleration.y = Math.sin(this.ship.rotation) * acceleration;
+        player1.sprite.body.velocity.x = Math.cos(player1.sprite.rotation) * speed;
+        player1.sprite.body.velocity.y = Math.sin(player1.sprite.rotation) * speed;
+        player1.sprite.body.acceleration.x = Math.cos(player1.sprite.rotation) * acceleration;
+        player1.sprite.body.acceleration.y = Math.sin(player1.sprite.rotation) * acceleration;
 
     } else {
         // Stop rotating
-        this.ship.body.angularVelocity = 0;
+        player1.sprite.body.angularVelocity = 0;
     }
 
 
@@ -306,17 +310,17 @@ GameState.prototype.update = function() {
         // If the UP key is down, thrust
 
         // Calculate acceleration vector based on this.angle and this.ACCELERATION
-        this.ship.body.acceleration.x = Math.cos(this.ship.rotation) * this.ACCELERATION;
-        this.ship.body.acceleration.y = Math.sin(this.ship.rotation) * this.ACCELERATION;
+        player1.sprite.body.acceleration.x = Math.cos(player1.sprite.rotation) * this.ACCELERATION;
+        player1.sprite.body.acceleration.y = Math.sin(player1.sprite.rotation) * this.ACCELERATION;
 
         //TODO: figure out why the partially accelerated sprite isn't used
       	this.wake = !this.wake;
         //console.log("start wake: " + this.startWake);
         // Show the frame from the spritesheet with the engine on
         //console.log("start wake " + this.startWake);
-        if (this.ship.body.velocity <= 50){
+        if (player1.sprite.body.velocity <= 50){
           this.wake = this.startWake;
-        } else if (this.ship.body.velocity <= 300){
+        } else if (player1.sprite.body.velocity <= 300){
           this.wake = this.startWake + 1;
         } else {
           this.wake = this.startWake + 2;
@@ -324,23 +328,23 @@ GameState.prototype.update = function() {
         if (this.wake > this.startWake + 3 || this.wake < this.startWake){
           this.wake = this.startWake;
         }
-      this.ship.frame = this.wake;
+      player1.sprite.frame = this.wake;
 
     }  else if (this.input.keyboard.isDown(Phaser.Keyboard.DOWN) || this.input.keyboard.isDown(Phaser.Keyboard.S)) {
 
 		// break...
-      //  this.ship.body.acceleration.setTo(0, 0);
-        // this.ship.body.velocity.setTo(0, 0);
+      //  player1.sprite.body.acceleration.setTo(0, 0);
+        // player1.sprite.body.velocity.setTo(0, 0);
 
         // Show the frame from the spritesheet with the engine off
-      //  this.ship.frame = 0;
+      //  player1.sprite.frame = 0;
 
 	} else {
         // Otherwise, stop thrusting
-        this.ship.body.acceleration.setTo(0, 0);
+        player1.sprite.body.acceleration.setTo(0, 0);
 
         // Show the frame from the spritesheet with the engine off
-        this.ship.frame = this.startWake;
+        player1.sprite.frame = this.startWake;
     }
 
 //shoot both guns
@@ -389,10 +393,10 @@ GameState.prototype.update = function() {
 
 
   //changes the color of the ocean depending on the health of the player.
-  if(this.ship.health < 1) {
-    this.ship.health = 1;
+  if(player1.health < 1) {
+    player1.health = 1;
   }
-  switch(this.ship.health){
+  switch(player1.health){
     case 0:
       console.log("You'd be dead if this game was finished");//run game over sequence...show score, kills ,wave,
       //maybe a fun historically accurate pirate fact too
@@ -716,7 +720,7 @@ function whiteCapHitShip(ship, whitecap){
 //damages the ship, after crashing into an island
 function playerHitIsland(ship, island){
     //ship.damage(1);
-    ship.health--;
+    player1.health--;
     //TODO: add sound for when the player is hit
     //TODO: add "explosion" of water/sand pixels?
     //console.log("We've been hit, Captain! " + ship.health);
@@ -809,7 +813,7 @@ function playerHitIsland(ship, island){
     enemy.frame = 0;
     enemy.anchor.setTo(0.5, 0.5);
     enemy.angle = angle;
-    this.game.physics.enable(enemy, Phaser.Physics.ARCADE);
+    this.game.physics.enable(enemy, Phaser.Physics.ARCADE);// What are these "this" refering to???
     enemy.enableBody = true;
     enemy.body.collideWorldBounds = false;
     enemy.body.velocity.x = xVelocity;
