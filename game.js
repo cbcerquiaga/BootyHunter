@@ -9,7 +9,7 @@
 //global variables
 var player1;//represents playable character
 var width = 960, height = 650;
-var playerKills = 0;
+//var playerKills = 0;
 var score = 0;
 var fireButtonHeld = 0;
 
@@ -62,9 +62,9 @@ GameState.prototype.create = function() {
   this.numEnemies = 0;
   this.wave = 0;
   this.waveDifficulty = 2;
-  console.log("wave: " + wave + " waveDifficulty: " + waveDifficulty);
+  //console.log("wave: " + wave + " waveDifficulty: " + waveDifficulty);
 
-  this.playerKills = 0;
+  //player1.kills = 0;
   //console.log("kills: " + playerKills);
 
   this.fireButtonHeld = 0;
@@ -92,13 +92,13 @@ GameState.prototype.create = function() {
 
     // Add the ship to the stage
     player1 = new ship(this.game.add.sprite(this.game.width / 2, this.game.height / 2, 'ship'));
-    
+
     /*this.ship.health = 6;//moved to ship.js
     //this.ship.setHealth(6);
     //this.ship.anchor.setTo(0.5, 0.5);
     //this.ship.angle = -90; // Point the ship up
     //this.ship.enableBody = true;*///all of this was moved to ship.js
-    
+
 
     //console.log(this.game.add);
     //first weapon, fires right relative to the ship
@@ -177,12 +177,26 @@ GameState.prototype.update = function () {
 
   game.physics.arcade.collide(this.ship, this.enemies);//TODO: add function to check if the player is invincible
 
+  console.log(this.wind);
+  //sets up the initial wave: randomizes the wind and generates 2 gunboats
+  //TODO: synchronize wind direction here with the direction of the whitecaps and "actual" wind
   if (this.wave === 0){
+    var randWind = Math.random();
+    if (randWind < 0.25){
+      this.wind = 'N';
+    } else if (randWind < 0.5){
+      this.wind = 'S';
+    } else if (randWind < 0.75){
+      this.wind = 'W';
+    } else {
+      this.wind = 'E';
+    }
     this.wave = 1;
     this.waveDifficulty = 3;
+    console.log(this.wind + " wind global");
     this.numEnemies = generateEnemies(this.waveDifficulty, this.wind, this.enemies, true);
   }
-  console.log(this.playerKills);
+  console.log(player1.getKills());
 
   //TODO: refactor into separate method
   //checks the direction the ship is going, and checks it agianst the wind to
@@ -372,12 +386,12 @@ GameState.prototype.update = function () {
     game.time.events.add(3000, this.weapon.resetShots());
     game.time.events.add(3000, this.weapon2.resetShots());
   }*/
-  if (playerKills >= 10){
+  if (player1.getKills() >= 10){
     this.weapon.bulletLifespan = 650;
     this.weapon2.bulletLifespan = 650;
   } else {
-    this.weapon.bulletLifespan = 200 + 50 * (playerKills);
-    this.weapon2.bulletLifespan = 200 + 50 * (playerKills);
+    this.weapon.bulletLifespan = 200 + 50 * (player1.getKills());
+    this.weapon2.bulletLifespan = 200 + 50 * (player1.getKills());
   }
 
     //forces the player to not hold down the fire button by reducing the fireRate
@@ -429,12 +443,14 @@ GameState.prototype.update = function () {
   if (this.numEnemies <= 0){
     this.wave++;
     this.waveDifficulty = this.waveDifficulty * 1.5;
+    console.log(this.wind + " wind global");
     this.numEnemies = generateEnemies(this.waveDifficulty, this.wind, this.enemies, false);
   }
 
 };
 
 function generateEnemies(waveDifficulty, wind, enemies, isFirstWave){
+  console.log(wind + " wind in generateEnemies");
   if (isFirstWave){
     initializeEnemy('gunboat', wind, enemies);
     initializeEnemy('gunboat', wind, enemies);
@@ -509,7 +525,7 @@ function generateEnemies(waveDifficulty, wind, enemies, isFirstWave){
 
     if (enemy.health <= 0){
       enemy.kill();
-      this.playerKills++;
+      player1.addKill();
       //play explosion and sound
       //spawn treasure
     }
@@ -731,19 +747,21 @@ function playerHitIsland(ship, island){
     //TODO: copy whatever the playerHitisland function does
     if (enemy.health <= 0){
       enemy.kill();
-      this.playerKills++;
+      player1.addKill();
       //TODO: spawn treasure, explosion, sound
     }
   }
 
   function initializeEnemy(type, wind, enemies) {
     //TODO: refactor random direction code into separate function
+    var debugEdge = 'Q';
     var x = 0;
     var y = 0;
     var xVelocity = 0;
     var yVelocity = 0;
     var angle = 0;
     var randDirection = Math.random();
+    console.log("wind is " + wind);
     switch(wind){
       case 'N': //should come from E, W, or N
         if (randDirection < 0.33){ // come from the east edge
@@ -751,13 +769,16 @@ function playerHitIsland(ship, island){
           x = this.width;
           angle = 180;
           xVelocity = this.enemyCrossWindSpeed[type];
+          debugEdge = 'E';
         } else if (randDirection < 0.66){ //come from the west edge
           y = Math.random() * this.height;
           xVelocity = this.enemyCrossWindSpeed[type];
+          debugEdge = 'W';
         } else { //come from the north edge
         x = Math.random() * this.width;
-        angle = -90;
+        angle = 90;
         yVelocity = this.enemyDownWindSpeed[type];
+        debugEdge = 'N';
       }
       break;
       case 'S': //should come come from E, W, or S
@@ -766,14 +787,17 @@ function playerHitIsland(ship, island){
           x = this.width;
           angle = 180;
           xVelocity = this.enemyCrossWindSpeed[type];
+          debugEdge = 'E';
         } else if (randDirection < 0.66){ //come from the west edge
           y = Math.random() * this.height;
           xVelocity = this.enemyCrossWindSpeed[type];
+          debugEdge = 'W';
         } else {   //come from the south edge
           x = Math.random() * this.width;
           y = this.height;
-          angle = 90;
+          angle = -90;
           yVelocity = 0 - this.enemyDownWindSpeed[type];
+          debugEdge = 'S';
         }
       break;
       case 'W'://should come from N, S, or W
@@ -781,14 +805,17 @@ function playerHitIsland(ship, island){
           x = Math.random() * this.width;
           angle = -90;
           yVelocity = this.enemyCrossWindSpeed[type];
+          debugEdge = 'N';
         } else if (randDirection < 0.66){ //come from the south edge
           x = Math.random() * this.width;
           y = this.height;
           angle = 90;
           yVelocity = 0 - this.enemyCrossWindSpeed[type];
+          debugEdge = 'S';
         } else { //come from the west edge
         y = Math.random() * this.height;
         xVelocity = this.enemyDownWindSpeed[type];
+        debugEdge = 'W';
       }
       break;
       default://east, should come from N,S, or E
@@ -796,18 +823,22 @@ function playerHitIsland(ship, island){
           x = Math.random() * this.width;
           angle = -90;
           yVelocity = this.enemyCrossWindSpeed[type];
+          debugEdge = 'N';
         } else if (randDirection < 0.66){ //come from the south edge
           x = Math.random() * this.width;
           y = this.height;
           angle = 90;
           yVelocity = 0 - this.enemyCrossWindSpeed[type];
+          debugEdge = 'S';
         } else {//come from the east edge
           y = Math.random() * this.height;
           x = this.width;
           angle = 180;
           xVelocity = this.enemyDownWindSpeed[type];
+          debugEdge = 'E';
         }
     }
+    console.log("wind is " + wind + " edge is " + debugEdge);
     var enemy = this.game.add.sprite(x, y, type);
     //TODO: add weapons to enemies depending on their type
     enemy.frame = 0;

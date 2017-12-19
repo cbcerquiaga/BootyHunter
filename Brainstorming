@@ -40,9 +40,11 @@ Power-ups
     -diamond (speed pts)
 2. Health- restores 1 health: seagull that flies around the map
 3. Full health- returns the ship to max health (6): pelican that flies around the map
-5. Invincibility- turns the ocean red and makes any ramming attack instantly fatal for the enemy: albatross that flies around the map
+5. Invincibility- turns the ocean red and makes any ramming attack instantly fatal for the enemy. Also lets the player spam the fire button: albatross that flies around the map
 6. Boarding pirate- once the ship is close to an enemy, a pirate jumps off of the player's ship onto the enemy,
    instantly killing it (not sure what to do with bosses) and automatically collecting the treasure it drops: parrot that flies around the map
+7. Accurate shot- removes bullet angle variance for a short time: duck? goose?
+
 
 UI
 1. Treasure map- It would be sweet if we made the web page have a tan frame around the game, and make it look like a treasure map.

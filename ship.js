@@ -3,6 +3,7 @@
 var ship = function (_sprite) {
     const MAX_SPEED = 850;
     this.health = 6;
+    this.kills = 0;
     this.sprite = _sprite;
     this.sprite.anchor.setTo(0.5, 0.5);
     this.sprite.angle = -90;
@@ -11,5 +12,13 @@ var ship = function (_sprite) {
         this.sprite.body.maxVelocity.setTo(MAX_SPEED, MAX_SPEED);
         this.sprite.body.collideWorldBounds = false;//lets the ship wrap around the world
         this.sprite.body.bounce.set(0.35);
+    }
+
+    this.getKills = function(){
+      return this.kills;
+    }
+
+    this.addKill = function(){
+      this.kills++;
     }
 }
