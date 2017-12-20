@@ -3,7 +3,7 @@
 //-----------------------------------------------------------------------------
 //BOOTYHUNTER: A SWASHBUCKLING ADVENTURE
 //Concept by Blake Erquiaga
-//Written by Blake Erquiaga, Dan Zweiner, Jason Watts, Liem Gearen
+//Written by Blake Erquiaga, Dan Zweiner, Jason Watts, Liem Gearen, GitHub user dcoollx
 //Special thanks to Dr. Thomas Houpt and Dr. Forrest Stonedahl
 
 //global variables
@@ -164,7 +164,7 @@ GameState.prototype.update = function () {
   //keeps a steady flow of whitecaps on the screen
   generateWhitecaps(1, 45, this.whitecaps);
   //collides whitecaps with the world
-  game.physics.arcade.overlap(player1, this.whitecaps, whiteCapHitShip);
+  game.physics.arcade.overlap(player1.sprite, this.whitecaps, whiteCapHitShip);
   game.physics.arcade.overlap(this.islands, this.whitecaps, whiteCapHitIsland);
   game.physics.arcade.overlap(this.enemies, this.whitecaps, whiteCapHitShip);
 //  game.physics.arcade.overlap(this.enemies, this.islands, enemyHitIsland);
@@ -175,9 +175,12 @@ GameState.prototype.update = function () {
   game.physics.arcade.overlap(this.enemies, this.weapon.bullets, enemyWasShot);
   game.physics.arcade.overlap(this.enemies, this.weapon2.bullets, enemyWasShot);
 
+  //  Collide the ship with the islands
+  game.physics.arcade.collide(player1.sprite, this.islands, playerHitIsland);
+
   game.physics.arcade.collide(this.ship, this.enemies);//TODO: add function to check if the player is invincible
 
-  console.log(this.wind);
+  console.log(player1.sprite.body.velocity.x + " " + player1.sprite.body.velocity.y);
   //sets up the initial wave: randomizes the wind and generates 2 gunboats
   //TODO: synchronize wind direction here with the direction of the whitecaps and "actual" wind
   if (this.wave === 0){
@@ -275,8 +278,7 @@ GameState.prototype.update = function () {
     player1.sprite.body.velocity.y -= 10;
   }
 
-    //  Collide the ship with the islands
-    game.physics.arcade.collide(player1.sprite, this.islands, playerHitIsland);
+
 
 
     if (this.game.time.fps !== 0) {
