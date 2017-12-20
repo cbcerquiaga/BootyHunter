@@ -40,7 +40,7 @@ GameState.prototype.preload = function() {
     this.game.load.spritesheet('ship', 'assets/boatLoRes.png', 38, 32);
     this.game.load.image('cannonball', 'assets/cannonball.png');
     this.game.load.image('whitecap', 'assets/whitecap.png');
-    this.game.load.spritesheet('gunboat', 'assets/gunBoat.png', 15, 19);
+    this.game.load.spritesheet('gunboat', 'assets/gunBoat.png', 25, 19);
     this.game.load.spritesheet('manowar', 'assets/manOwar.png', 59, 32);
     this.game.load.spritesheet('normal', 'assets/enemyBoatLoRes.png', 38, 32);
     this.game.load.spritesheet('dhow', 'assets/dhow.png', 40, 32);
@@ -197,7 +197,7 @@ GameState.prototype.update = function () {
     }
     this.wave = 1;
     this.waveDifficulty = 3;
-    console.log(this.wind + " wind global");
+    //console.log(this.wind + " wind global");
     this.numEnemies = generateEnemies(this.waveDifficulty, this.wind, this.enemies, true);
   }
   //keeps a steady flow of whitecaps on the screen
@@ -274,11 +274,19 @@ GameState.prototype.update = function () {
       this.ACCELERATION = 90;
   }
 
-  if (player1.sprite.body.velocity.x > this.MAX_SPEED){
-    player1.sprite.body.velocity.x -= 10;
+  if (Math.abs(player1.sprite.body.velocity.x) > this.MAX_SPEED){
+    if (player1.sprite.body.velocity.x > 0){
+      player1.sprite.body.velocity.x -= 10;
+    } else {
+      player1.sprite.body.velocity.x += 10;
+    }
   }
-  if (player1.sprite.body.velocity.y > this.MAX_SPEED){
-    player1.sprite.body.velocity.y -= 10;
+  if (Math.abs(player1.sprite.body.velocity.y) > this.MAX_SPEED){
+    if (player1.sprite.body.velocity.y > 0){
+      player1.sprite.body.velocity.y -= 10;
+    } else {
+      player1.sprite.body.velocity.y += 10;
+    }
   }
 
 
@@ -448,14 +456,14 @@ GameState.prototype.update = function () {
   if (this.numEnemies <= 0){
     this.wave++;
     this.waveDifficulty = this.waveDifficulty * 1.5;
-    console.log(this.wind + " wind global");
+    //console.log(this.wind + " wind global");
     this.numEnemies = generateEnemies(this.waveDifficulty, this.wind, this.enemies, false);
   }
 
 };
 
 function generateEnemies(waveDifficulty, wind, enemies, isFirstWave){
-  console.log(wind + " wind in generateEnemies");
+//  console.log(wind + " wind in generateEnemies");
   if (isFirstWave){
     initializeEnemy('gunboat', wind, enemies);
     initializeEnemy('gunboat', wind, enemies);
@@ -813,7 +821,7 @@ function playerHitIsland(ship, island){
           y = Math.random() * this.height;
           x = this.width;
           angle = 180;
-          xVelocity = this.enemyCrossWindSpeed[type];
+          xVelocity = 0 - this.enemyCrossWindSpeed[type];
         //  debugEdge = 'E';
         } else if (randDirection < 0.66){ //come from the west edge
           y = Math.random() * this.height;
@@ -831,7 +839,7 @@ function playerHitIsland(ship, island){
           y = Math.random() * this.height;
           x = this.width;
           angle = 180;
-          xVelocity = this.enemyCrossWindSpeed[type];
+          xVelocity = 0 - this.enemyCrossWindSpeed[type];
       //    debugEdge = 'E';
         } else if (randDirection < 0.66){ //come from the west edge
           y = Math.random() * this.height;
@@ -848,13 +856,13 @@ function playerHitIsland(ship, island){
       case 'W'://should come from N, S, or W
         if (randDirection < 0.33){ //come from the north edge
           x = Math.random() * this.width;
-          angle = -90;
+          angle = 90;
           yVelocity = this.enemyCrossWindSpeed[type];
         //  debugEdge = 'N';
         } else if (randDirection < 0.66){ //come from the south edge
           x = Math.random() * this.width;
           y = this.height;
-          angle = 90;
+          angle = -90;
           yVelocity = 0 - this.enemyCrossWindSpeed[type];
         //  debugEdge = 'S';
         } else { //come from the west edge
@@ -866,20 +874,20 @@ function playerHitIsland(ship, island){
       default://east, should come from N,S, or E
         if (randDirection < 0.33){ //come from the north edge
           x = Math.random() * this.width;
-          angle = -90;
+          angle = 90;
           yVelocity = this.enemyCrossWindSpeed[type];
         //  debugEdge = 'N';
         } else if (randDirection < 0.66){ //come from the south edge
           x = Math.random() * this.width;
           y = this.height;
-          angle = 90;
+          angle = -90;
           yVelocity = 0 - this.enemyCrossWindSpeed[type];
         //  debugEdge = 'S';
         } else {//come from the east edge
           y = Math.random() * this.height;
           x = this.width;
           angle = 180;
-          xVelocity = this.enemyDownWindSpeed[type];
+          xVelocity = 0 - this.enemyDownWindSpeed[type];
           //debugEdge = 'E';
         }
     }
