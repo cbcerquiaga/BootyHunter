@@ -4,6 +4,7 @@ var ship = function (_sprite) {
     const MAX_SPEED = 850;
     this.health = 6;
     this.kills = 0;
+    this.score = 0;
     this.sprite = _sprite;
     this.sprite.anchor.setTo(0.5, 0.5);
     this.sprite.angle = -90;
@@ -20,5 +21,13 @@ var ship = function (_sprite) {
 
     this.addKill = function(){
       this.kills++;
+    }
+
+    this.getScore = function(){
+      return this.score;
+    }
+
+    this.addScore = function(pickup){
+      this.score = this.score + pickup;
     }
 }

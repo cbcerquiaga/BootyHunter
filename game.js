@@ -9,9 +9,9 @@
 //global variables
 var player1;//represents playable character
 var width = 960, height = 650;
-//var playerKills = 0;
 var score = 0;
 var fireButtonHeld = 0;
+var treasureMinVal = {'silverCoin': 10, 'goldCoin': 80, 'emerald': 100, 'purpleGem': 150, 'diamond': 0};
 
 //wind global variables
 var wind = 'S'; //the direction the wind is coming from. N means the wind blows north to south, N,S,E,W
@@ -82,6 +82,10 @@ GameState.prototype.create = function() {
     //creates enemies group
     this.enemies = this.game.add.group();
     this.enemies.enableBody = true;
+
+    //creates treasures group
+    this.treasures = this.game.add.group();
+    this.treasures.enableBody = true;
 
     // Define motion constants
     this.ROTATION_SPEED = 180; // degrees/second
@@ -526,10 +530,10 @@ function generateEnemies(waveDifficulty, wind, enemies, isFirstWave){
     //play explosion sound
 
     if (enemy.health <= 0){
+      spawnTreasure(enemy.x, enemy.y, 4);//spawn treasure
       enemy.kill();
       player1.addKill();
       //play explosion and sound
-      //spawn treasure
     }
   }
 
@@ -748,10 +752,44 @@ function playerHitIsland(ship, island){
     enemy.health--;
     //TODO: copy whatever the playerHitisland function does
     if (enemy.health <= 0){
+      spawnTreasure(enemy.x, enemy.y, 4);//spawn treasure
       enemy.kill();
       player1.addKill();
-      //TODO: spawn treasure, explosion, sound
+      //TODO: explosion, sound
     }
+  }
+
+  //spawns treasure from a fallen enemy
+  function spawnTreasure(x, y, maxTreasure){
+    x += ((Math.random()>0.5?-1:1) * (Math.random() * 20));//shifts x between -20 and +20 pixels
+    y += ((Math.random()>0.5?-1:1) * (Math.random() * 20));//shifts y between -20 and 20 pixels
+    var numTreasure = Math.random() * maxTreasure; //spawn between 1 and the max number treasures
+    var treasureType = 0;
+    var treasure;
+    for (var i = 0; i < numTreasure; i++){
+      treasureType = Math.random();
+      if (treasureType < 0.04){ //4% chance
+        createTreasure('diamond', x, y);//spawn a diamond
+      } else if (treasureType < 0.12){ //8% chance
+        createTreasure('purpleGem', x, y);//spawn a purple gem
+      } else if (treasureType < 0.27){ //15% chance
+        createTreasure('emerald', x, y); //spawn an emerald
+      } else if (treasureType < 0.52){ //25% chance
+        createTreasure('goldCoin', x, y);//spawn a gold coin
+      } else { //nearly half the time
+        createTreasure('silverCoin', x, y);//spawn a silver coin
+      }
+    }
+  }
+
+  function createTreasure(type, x, y){
+    var treasure = this.game.add.sprite(x, y, type);
+    treasure.anchor.setTo(0.5, 0.5);
+    this.game.physics.enable(treasure, Phaser.Physics.ARCADE);
+    treasure.enableBody = true;
+    treasure.body.collideWorldBounds = false;
+    treasure.lifespan = 5000;//TODO: balance treasure lifespan
+    treasure.value = this.treasureMinVal[type];
   }
 
   function initializeEnemy(type, wind, enemies) {
@@ -854,7 +892,7 @@ function playerHitIsland(ship, island){
   //  enemy.body.bounce.set(0.25);
     enemy.health = this.enemyHealth[type];
     enemies.add(enemy);
-    this.numEnemies++;//doesn't work
+    this.numEnemies++;//TODO: make this work
   }
 
   function gameOverSequnce(score, wave, kills, bossesKilled) {
@@ -862,7 +900,7 @@ function playerHitIsland(ship, island){
 
       //TODO Kill ship
 
-      //TODO Change the current screen to an GameOver Screen with
+      //TODO Change the current screen to a GameOver Screen with
       //score, wave, kills and bossesKilled
   }
 
