@@ -22,7 +22,6 @@ var startWake = 0;
 //enemy global variables
 var wave;
 var numEnemies;
-var killedBosses = [];
 var enemyDownWindSpeed = {'gunboat': 100, 'manowar': 400, 'normal': 650, 'dhow': 850};
 var enemyCrossWindSpeed = {'gunboat': 60, 'manowar': 250, 'normal': 300, 'dhow': 500};
 var enemyUpWindSpeed = {'gunboat': 35, 'manowar': 100, 'normal': 150, 'dhow': 250};
@@ -50,6 +49,8 @@ GameState.prototype.preload = function() {
     this.game.load.image('emerald', 'assets/emerald.png');
     this.game.load.image('purpleGem', 'assets/purpleGem.png');
     this.game.load.image('diamond', 'assets/diamond.png');
+    this.game.load.image('kraken', 'assets/Kraken.png');
+    this.game.load.spritesheet('tentacle', 'assets/tentacles.png', 38, 8);
     console.log("Hello world");
 };
 
@@ -69,6 +70,10 @@ GameState.prototype.create = function() {
   //console.log("kills: " + playerKills);
 
   this.fireButtonHeld = 0;
+
+  //instantiates boss data
+    this.killedBosses = new Array();
+    this.allBosses = ['kraken'];
 
   //adds islands to map
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -189,12 +194,24 @@ GameState.prototype.update = function () {
   //console.log(player1.sprite.body.velocity.x + " " + player1.sprite.body.velocity.y);
   //if there are no enemies, then the game moves to the next wave
   console.log(this.enemies.countLiving());
+
   if (this.enemies.countLiving() <= 0){ //all enemies are dead, the wave is over
     //sets up the initial wave: randomizes the wind and generates 2 gunboats
     if (this.wave === 0){
       this.wave = 1;
       this.waveDifficulty = 2;
       generateEnemies(this.waveDifficulty, 2, this.wind, this.enemies, true);
+    } else if ((this.wave % 5 === 0) || this.wave >= 50){ //boss wave
+      if (this.allBosses.length - 1 <= this.killedBosses.length){
+        this.killedBosses = [];
+      }
+      //TODO: implement this with a hashmap for random access rather than fixed order
+      for (var i = 0; i < this.allBosses.length; i++){
+        var boss = this.allBosses[i];
+        if (this.allBosses[i], this.killedBosses.indexOf(boss) === -1){
+          bossWave(boss, this.weapon, this.weapon2, this.enemies);
+        }
+      }
     } else {
       this.wave++;
       this.waveDifficulty = this.waveDifficulty * 1.5;
@@ -231,7 +248,8 @@ GameState.prototype.update = function () {
 
   for (var i = 0; i < this.enemies.countLiving(); i++){
     var enemy = this.enemies.children[i];
-    console.log(enemy);
+    //console.log(enemy);
+    //if (enemy.type === 'gunboat'){
     enemy.frame = gunBoatCheckWind(enemy.angle, this.wind); //figure out the ship's orientation
     enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'gunboat'); //adjust the sprite accordingly
     var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
@@ -509,11 +527,11 @@ function generateEnemies(waveDifficulty, numEnemies, wind, enemies, isFirstWave)
     enemies.add(enemy);
     enemy = initializeEnemy('gunboat', wind, enemies);
     enemies.add(enemy);
-    console.log("live enemies after production: " + enemies.countLiving());
+    //console.log("live enemies after production: " + enemies.countLiving());
   } else {
-    console.log("not the first wave");
+    //console.log("not the first wave");
     for (var i = 0; i <= numEnemies; i++){
-    console.log("in the loop: " + enemies.countLiving());
+    //console.log("in the loop: " + enemies.countLiving());
     //TODO: find a way to weight the selection to favor a certain type of enemy if one of that type has already been added to the wave
       var shipChosen = false;
       if ((waveDifficulty) >= 10 && !shipChosen){ //difficulty value of the man o' war and dhow
@@ -637,8 +655,8 @@ function createIsland(x, y, radius1, radius2) {
 //Wants to spawn it at this.game.width/2 amd this.game.height/2, returns an array
 //if the place is no good, it calls itself. It searches in a clockwise spiral pattern.
 //TODO: figure out why the x and y values for both the checkBox and islands are 0, which leads to infinite recusrion because they "overlap"
- /*function findGoodPlace(islands, boxSize, x1, y1, tryDirection){
-   console.log("trying to find a good place");
+ function findGoodPlace(islands, boxSize, x1, y1, tryDirection){
+   //console.log("trying to find a good place");
    var array = new Array(); //0 is x1, 1 is y1
    //the "2" variables check down and to the right of the desired point
    var x2 = x1 + (boxSize/2);
@@ -652,14 +670,14 @@ function createIsland(x, y, radius1, radius2) {
    bmd.ctx.rect(x3,y2,boxSize,boxSize);
    var checkBox = this.game.add.sprite(x1, y1, bmd);
    game.physics.arcade.overlap(checkBox, islands, whiteCapHitShip);
-   console.log(checkBox);
+  // console.log(checkBox);
      for (var i = 0; i < islands.children.length; i++){//go through every island
        var island = islands.children[i];
-       console.log(i + " " + island);
+       //console.log(i + " " + island);
       //check to see if the points don't overlap with ALL the island
-      console.log(checkBox.overlap(island) + " " + island.overlap(checkBox));
+      //console.log(checkBox.overlap(island) + " " + island.overlap(checkBox));
       if (checkBox.overlap(island)){
-        console.log(checkBox + " " + island);
+        //console.log(checkBox + " " + island);
         checkBox.kill();
         //if they do, recurse
           switch(tryDirection){
@@ -680,11 +698,11 @@ function createIsland(x, y, radius1, radius2) {
      //if they don't, we're good. return the array.
    array[0] = x1;
    array[1] = y1;
-   console.log(array);
+   //console.log(array);
    checkBox.kill();
    return array;
  }
-*/
+
 
 //implements whitecaps, which are ocean waves that tell the player where the wind is coming from
 function generateWhitecaps(numWhiteCaps, speed, whitecaps, wind){
@@ -884,7 +902,7 @@ function playerHitIsland(ship, island){
         tempTreasures.push(treasure);
       }
     }
-    console.log(tempTreasures);
+    //console.log(tempTreasures);
   }
 
   function createTreasure(type, x, y){
@@ -1158,6 +1176,51 @@ function playerHitIsland(ship, island){
     //go through all the islands to see if one is in the way
     //if the island is off to the ship's right, turn left
     //otherwise, turn right
+  }
+
+  //calls the appropriate functions for each boss depending on what string is passed in
+  //TODO: add otehr bosses
+  function bossWave(type, weapon, weapon2, enemies){
+    console.log(type);
+    switch(type){
+      case 'ghost': //ghostShip(); break;
+      default://kraken
+      releaseKraken(weapon, weapon2, enemies);
+    }
+  }
+
+  //initializes the kraken boss
+  function releaseKraken(weapon, weapon2, enemies){
+    console.log("RELEASE THE KRAKEN");
+    //var placeArray = findGoodPlace(Math.Random() * this.width, Math.random() * this.height, this.islands);
+    var x = Math.random() * this.width;
+    var y = Math.random() * this.height;
+    console.log(x +  ", " + y);
+    var kraken = this.game.add.sprite(x, y, 'kraken');
+    this.game.physics.enable(kraken, Phaser.Physics.ARCADE);
+    kraken.enableBody = true;
+    kraken.anchor.setTo(0.5, 0.5);
+    kraken.body.immovable = true;
+    kraken.health = 6;
+    game.physics.arcade.collide(kraken, player1.sprite, moveKraken);
+    game.physics.arcade.overlap(kraken, weapon.bullets, moveKraken);
+    game.physics.arcade.overlap(kraken, weapon2.bullets, moveKraken);
+    enemies.add(kraken);
+    //TODO: add tentacles
+  }
+
+  function moveKraken(kraken, sprite){
+    console.log("We've moved to " + x + ", " + y);
+    kraken.health--;
+    if (kraken.health <= 0){
+      spawnTresure(kraken.x, kraken.y, 16);
+      kraken.kill();
+      this.wave++;
+    } else {
+        //var placeArray = findGoodPlace(Math.Random() * this.width, Math.random() * this.height, this.islands);
+      kraken.x = Math.random() * this.width;
+      kraken.y = Math.random() * this.height;
+    }
   }
 
   function gameOverSequnce(score, wave, kills, bossesKilled) {
