@@ -23,8 +23,8 @@ var startWake = 0;
 var wave;
 var numEnemies;
 var killedBosses = [];
-var enemyDownWindSpeed = {'gunboat': 100, 'manowar': 500, 'normal': 850, 'dhow': 950};
-var enemyCrossWindSpeed = {'gunboat': 60, 'manowar': 250, 'normal': 500, 'dhow': 600};
+var enemyDownWindSpeed = {'gunboat': 100, 'manowar': 400, 'normal': 650, 'dhow': 850};
+var enemyCrossWindSpeed = {'gunboat': 60, 'manowar': 250, 'normal': 300, 'dhow': 500};
 var enemyUpWindSpeed = {'gunboat': 35, 'manowar': 100, 'normal': 150, 'dhow': 250};
 var enemyHealth = {'gunboat': 1, 'manowar': 12, 'normal': 6, 'dhow': 3};
 var enemyDifficulty = {'gunboat': 1, 'manowar': 10, 'normal': 5, 'dhow': 10};
@@ -60,7 +60,7 @@ GameState.prototype.create = function() {
 
 
   //TODO: remove redundant code
-  this.numEnemies = 0;
+  this.numEnemies = 2;
   this.wave = 0;
   this.waveDifficulty = 2;
   //console.log("wave: " + wave + " waveDifficulty: " + waveDifficulty);
@@ -173,7 +173,7 @@ GameState.prototype.update = function () {
   game.physics.arcade.overlap(player1.sprite, this.whitecaps, whiteCapHitShip);
   game.physics.arcade.overlap(this.islands, this.whitecaps, whiteCapHitIsland);
   game.physics.arcade.overlap(this.enemies, this.whitecaps, whiteCapHitShip);
-//  game.physics.arcade.overlap(this.enemies, this.islands, enemyHitIsland);
+  game.physics.arcade.overlap(this.enemies, this.islands, enemyHitIsland);
 
   game.physics.arcade.overlap(this.islands, this.weapon.bullets, islandWasShot);
   game.physics.arcade.overlap(this.islands, this.weapon2.bullets, islandWasShot);
@@ -187,23 +187,35 @@ GameState.prototype.update = function () {
   game.physics.arcade.collide(this.ship, this.enemies);//TODO: add function to check if the player is invincible
 
   //console.log(player1.sprite.body.velocity.x + " " + player1.sprite.body.velocity.y);
-  //sets up the initial wave: randomizes the wind and generates 2 gunboats
-  if (this.wave === 0){
-    var randWind = Math.random();
-    if (randWind < 0.25){
-      this.wind = 'N';
-    } else if (randWind < 0.5){
-      this.wind = 'S';
-    } else if (randWind < 0.75){
-      this.wind = 'W';
+  //if there are no enemies, then the game moves to the next wave
+  console.log(this.enemies.countLiving());
+  if (this.enemies.countLiving() <= 0){ //all enemies are dead, the wave is over
+    //sets up the initial wave: randomizes the wind and generates 2 gunboats
+    if (this.wave === 0){
+      this.wave = 1;
+      this.waveDifficulty = 2;
+      generateEnemies(this.waveDifficulty, 2, this.wind, this.enemies, true);
     } else {
-      this.wind = 'E';
+      this.wave++;
+      this.waveDifficulty = this.waveDifficulty * 1.5;
+      this.numEnemies += Math.round(1.5 * this.wave);
+      console.log("Wave: " + this.wave + " Difficulty: " + this.waveDifficulty + "NumEnemies: " + this.numEnemies);
+      generateEnemies(Math.round(this.waveDifficulty), this.numEnemies, this.wind, this.enemies, false);
     }
-    this.wave = 1;
-    this.waveDifficulty = 3;
+      var randWind = Math.random();
+      if (randWind < 0.25){
+        this.wind = 'N';
+      } else if (randWind < 0.5){
+        this.wind = 'S';
+      } else if (randWind < 0.75){
+        this.wind = 'W';
+      } else {
+        this.wind = 'E';
+      }
+      //console.log(this.wind + " wind global");
     //console.log(this.wind + " wind global");
-    this.numEnemies = generateEnemies(this.waveDifficulty, this.wind, this.enemies, true);
   }
+
   //keeps a steady flow of whitecaps on the screen
   generateWhitecaps(1, 45, this.whitecaps, this.wind);
   //console.log(player1.getKills());
@@ -212,9 +224,23 @@ GameState.prototype.update = function () {
   //randomPowerUp();
   //washes up treasure once per wave
   if (numRandTreasure < this.wave){
-    console.log("We need more treasure!");
+    //console.log("We need more treasure!");
     numRandTreasure = randTreasure(numRandTreasure, this.wind, this.treasures);
   }
+
+
+  for (var i = 0; i < this.enemies.countLiving(); i++){
+    var enemy = this.enemies.children[i];
+    console.log(enemy);
+    enemy.frame = gunBoatCheckWind(enemy.angle, this.wind); //figure out the ship's orientation
+    enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'gunboat'); //adjust the sprite accordingly
+    var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
+    enemy.body.velocity.x = speedArray[0];
+    enemy.body.velocity.y = speedArray[1];
+    gunBoatAI(player1, this.wind); //the ship chases the player or runs away, turns to shoot
+    avoidIslands(this.islands); //the ship tries to avoid islands
+}
+
 
   //TODO: refactor into separate method
   //checks the direction the ship is going, and checks it agianst the wind to
@@ -316,6 +342,15 @@ GameState.prototype.update = function () {
     if (player1.sprite.x < 0) player1.sprite.x = this.game.width;
     if (player1.sprite.y > this.game.height) player1.sprite.y = 0;
     if (player1.sprite.y < 0) player1.sprite.y = this.game.height;
+
+    //keep the enemies on the screen
+    for (var i = 0; i < this.enemies.countLiving(); i++){
+      var enemy = this.enemies.children[i];
+      if (enemy.centerX > this.game.width) enemy.centerX = 0;
+      if (enemy.centerX < 0) enemy.centerY = this.game.width;
+      if (enemy.centerY > this.game.height) enemy.centerY = 0;
+      if (enemy.centerY < 0) enemy.centerY = this.game.height;
+    }
 
 
 
@@ -463,65 +498,56 @@ GameState.prototype.update = function () {
   }
 
 
-  //if there are no enemies, then the game moves to the next wave
-
-  if (this.numEnemies <= 0){
-    this.wave++;
-    this.waveDifficulty = this.waveDifficulty * 1.5;
-    //console.log(this.wind + " wind global");
-    this.numEnemies = generateEnemies(this.waveDifficulty, this.wind, this.enemies, false);
-  }
-
 };
 
-function generateEnemies(waveDifficulty, wind, enemies, isFirstWave){
+function generateEnemies(waveDifficulty, numEnemies, wind, enemies, isFirstWave){
 //  console.log(wind + " wind in generateEnemies");
+  var enemy;
+  //TODO: figure out if this is redundant or efficient
   if (isFirstWave){
-    initializeEnemy('gunboat', wind, enemies);
-    initializeEnemy('gunboat', wind, enemies);
-    return 2;
+    enemy = initializeEnemy('gunboat', wind, enemies);
+    enemies.add(enemy);
+    enemy = initializeEnemy('gunboat', wind, enemies);
+    enemies.add(enemy);
+    console.log("live enemies after production: " + enemies.countLiving());
   } else {
-  var newNumEnemies = 0;
-  for (var i = 0; i <= waveDifficulty; i++){
+    console.log("not the first wave");
+    for (var i = 0; i <= numEnemies; i++){
+    console.log("in the loop: " + enemies.countLiving());
     //TODO: find a way to weight the selection to favor a certain type of enemy if one of that type has already been added to the wave
-    var shipChosen = false;
-    if ((waveDifficulty - i) >= 10 && !shipChosen){ //difficulty value of the man o' war and dhow
+      var shipChosen = false;
+      if ((waveDifficulty) >= 10 && !shipChosen){ //difficulty value of the man o' war and dhow
         var useThisSprite = Math.random()>0.5?true:false; //TODO: balance frequency of selecting hardest available enemy
         if (useThisSprite){
           shipChosen = true;
           var useDhow =  Math.random()>0.5?true:false; //determines whether to use dhow or man o' war
           if (useDhow){//create a dhow
-            initializeEnemy('dhow', wind, enemies);
+            enemy = initializeEnemy('dhow', wind);
+            enemies.add(enemy);
             i += 10;
-            this.newNumEnemies++;
-            break;
           } else {// create a man o war
-            initializeEnemy('manowar', wind, enemies);
+            enemy = initializeEnemy('manowar', wind);
+            enemies.add(enemy);
             i +=10;
-            this.newNumEnemies++;
-            break;
           }
         }
     }
-    if ((waveDifficulty - i) >= 5 && !shipChosen){
+    if ((waveDifficulty) >= 5 && !shipChosen){
       var useThisSprite = Math.random()>0.5?true:false;//TODO: balance freequency of selecting hardest available enemy
       if (useThisSprite){
         shipChosen = true;
-        initializeEnemy('normal', wind, enemies);
+        enemy = initializeEnemy('normal', wind);
+        enemies.add(enemy);
         i += 5;
-        this.newNumEnemies++;
-        break;
       }
     }
     if (!shipChosen){//no other ship was chosen and/or the remaining difficulty value is too low
       shipChosen = true;
-      initializeEnemy('gunboat', wind, enemies);
+      enemy = initializeEnemy('gunboat', wind);
+      enemies.add(enemy);
       i ++;
-      this.newNumEnemies++;
-      break;
     }
   }
-  return newNumEnemies;
 }
 }
 
@@ -832,6 +858,35 @@ function playerHitIsland(ship, island){
     }
   }
 
+  //spawns treasure from a fallen enemy
+  function spawnTreasure(x, y, maxTreasure){
+    x += ((Math.random()>0.5?-1:1) * (Math.random() * 20));//shifts x between -20 and +20 pixels
+    y += ((Math.random()>0.5?-1:1) * (Math.random() * 20));//shifts y between -20 and 20 pixels
+    var numTreasure = Math.random() * maxTreasure; //spawn between 1 and the max number treasures
+    var treasureType = 0;
+    var tempTreasures = new Array();
+    for (var i = 0; i < numTreasure; i++){
+      treasureType = Math.random();
+      if (treasureType < 0.04){ //4% chance
+        var treasure = createTreasure('diamond', x, y);//spawn a diamond
+        tempTreasures.push(treasure);
+      } else if (treasureType < 0.12){ //8% chance
+        var treasure = createTreasure('purpleGem', x, y);//spawn a purple gem
+        tempTreasures.push(treasure);
+      } else if (treasureType < 0.27){ //15% chance
+        var treasure = createTreasure('emerald', x, y); //spawn an emerald
+        tempTreasures.push(treasure);
+      } else if (treasureType < 0.52){ //25% chance
+        var treasure = createTreasure('goldCoin', x, y);//spawn a gold coin
+        tempTreasures.push(treasure);
+      } else { //nearly half the time
+        var treasure = createTreasure('silverCoin', x, y);//spawn a silver coin
+        tempTreasures.push(treasure);
+      }
+    }
+    console.log(tempTreasures);
+  }
+
   function createTreasure(type, x, y){
     var treasure = this.game.add.sprite(x, y, type);
     treasure.anchor.setTo(0.5, 0.5);
@@ -843,7 +898,7 @@ function playerHitIsland(ship, island){
     return treasure;
   }
 
-  function initializeEnemy(type, wind, enemies) {
+  function initializeEnemy(type, wind) {
     //TODO: refactor random direction code into separate function
   //  var debugEdge = 'Q';
     var x = 0;
@@ -941,42 +996,14 @@ function playerHitIsland(ship, island){
     enemy.body.velocity.y = yVelocity;
   //  enemy.body.bounce.set(0.25);
     enemy.health = this.enemyHealth[type];
-    enemies.add(enemy);
-    this.numEnemies++;//TODO: make this work
+    return enemy;
   }
-
-  //spawns treasure from a fallen enemy
-  function spawnTreasure(x, y, maxTreasure){
-    x += ((Math.random()>0.5?-1:1) * (Math.random() * 20));//shifts x between -20 and +20 pixels
-    y += ((Math.random()>0.5?-1:1) * (Math.random() * 20));//shifts y between -20 and 20 pixels
-    var numTreasure = Math.random() * maxTreasure; //spawn between 1 and the max number treasures
-    var tempTreasures = new Array();
-    for (var i = 0; i < numTreasure; i++){
-      tempTreasures.push(generateTreasure(x,y));
-    }
-    console.log(tempTreasures);
-  }
-
-  function generateTreasure(x,y){
-    chance = Math.random();
-    if (chance < 0.04){ //4% chance
-      return createTreasure('diamond', x, y);//spawn a diamond
-    } else if (chance < 0.12){ //8% chance
-      return createTreasure('purpleGem', x, y);//spawn a purple gem
-    } else if (chance < 0.27){ //15% chance
-      return createTreasure('emerald', x, y); //spawn an emerald
-    } else if (chance < 0.52){ //25% chance
-      return createTreasure('goldCoin', x, y);//spawn a gold coin
-    } else { //nearly half the time
-      return createTreasure('silverCoin', x, y);//spawn a silver coin
-  }
-}
 
   function randTreasure(numRandTreasure, wind, tempTreasures){
     var chance = Math.random() * Math.random(); //something between 0 and 1, but likely very small
     var x, y, xVelocity, yVelocity = 0;
-    console.log(chance);
-    if (chance > 0.98){
+    //console.log(chance);
+    if (chance > 0.98){//TODO: balance this time
       //time to spawn treasure
       switch(wind){ //the treasure always comes from the wind direction
         case 'N':
@@ -998,13 +1025,139 @@ function playerHitIsland(ship, island){
         xVelocity = -45;
       }
       //TODO: refactor code from this and spawnTreasure into a separeate function
-      var treasure = generateTreasure(x,y);
+      var treasureType = Math.random();
+      var treasure;
+      if (treasureType < 0.04){ //4% chance
+        treasure = createTreasure('diamond', x, y);//spawn a diamond
+        //tempTreasures.push(treasure);
+      } else if (treasureType < 0.12){ //8% chance
+        treasure = createTreasure('purpleGem', x, y);//spawn a purple gem
+        //tempTreasures.push(treasure);
+      } else if (treasureType < 0.27){ //15% chance
+        treasure = createTreasure('emerald', x, y); //spawn an emerald
+        //tempTreasures.push(treasure);
+      } else if (treasureType < 0.52){ //25% chance
+        treasure = createTreasure('goldCoin', x, y);//spawn a gold coin
+        //tempTreasures.push(treasure);
+      } else { //nearly half the time
+        treasure = createTreasure('silverCoin', x, y);//spawn a silver coin
+        //tempTreasures.push(treasure);//TODO: make addingto the group not a bug
+    }
       treasure.body.velocity.x = xVelocity;
       treasure.body.velocity.y = yVelocity;
       return numRandTreasure + 1;
     } else {
       return numRandTreasure;
     }
+  }
+
+  function gunBoatCheckWind(angle, wind){
+    var startWake = 0;
+    var direction = 'D';
+    if (angle >= 45 && angle <135){ //ship pointing south
+        direction = checkWind('S', wind);
+        switch(direction){
+          case 'D': startWake = 0; break;
+          case 'P': startWake = 6; break;
+          case 'S': startWake = 3; break;
+          default:
+            startWake = 9;
+      }
+    } else if ((angle >= 135 && angle <225) || (angle >= -225 && angle < -135)){//ship pointing west
+        direction = checkWind('W', wind);
+        switch(direction){
+          case 'D': startWake = 0; break;
+          case 'P': startWake = 6; break;
+          case 'S': startWake = 3; break;
+          default:
+            startWake = 9;
+      }
+    } else if ((angle < -45 && angle >= -135)|| (angle < 315 && angle >= 225)){//ship pointing north
+        direction = checkWind('N', wind);
+        switch(direction){
+          case 'D': startWake = 0; break;
+          case 'P': startWake = 6; break;
+          case 'S': startWake = 3; break;
+          default:
+            startWake = 9;
+      }
+    } else {//east
+        direction = checkWind('E', wind);
+        switch(direction){
+          case 'D': startWake = 0; break;
+          case 'P': startWake = 6; break;
+          case 'S': startWake = 3; break;
+          default:
+            startWake = 9;
+      }
+    }
+      return startWake;
+  }
+
+
+  function enemyMaxSpeed(wake, maxSpeed, type){
+    if (wake <=2){ //D
+        if (maxSpeed > this.enemyUpWindSpeed[type]){
+          maxSpeed = maxSpeed - 10;
+        } else {
+          maxSpeed = this.enemyUpWindSpeed[type];
+        }
+    } else if (wake <= 8){ //P or S
+      if (maxSpeed < this.enemyDownWindSpeed[type]){
+        maxSpeed += 20;
+      } else {
+        maxSpeed = this.enemyDownWindSpeed[type];
+      }
+    } else { //U
+      if (maxSpeed < this.enemyCrossWindSpeed[type]){
+        maxSpeed += 10;
+      } else if (maxSpeed > this.enemyCrossWindSpeed[type]){
+        maxSpeed -= 10;
+      } else {
+        maxSpeed = this.enemyCrossWindSpeed[type];
+      }
+    }
+    return maxSpeed;
+  }
+
+  function enemyActualSpeed(maxSpeed, xVelocity, yVelocity){
+        if (Math.abs(xVelocity) > maxSpeed){
+          if (xVelocity > 0){
+            xVelocity -= 10;
+          } else {
+            xVelocity += 10;
+          }
+        }
+        if (Math.abs(yVelocity) > maxSpeed){
+          if (yVelocity > 0){
+            yVelocity -= 10;
+          } else {
+            yVelocity += 10;
+          }
+        }
+        var speedArray = new Array();
+        speedArray.push(xVelocity);
+        speedArray.push(yVelocity);
+        return speedArray;
+  }
+
+  //TODO: fill out this stub
+  //makes the gunboat perform very simple behaviors- take the shortest route to chase the player, and turn to shoot when in range
+  function gunBoatAI(player, wind){
+    //find the direct distance to the player
+    //find the round the world distance to the player
+    //if one of those distances is within firing range, call a turnAndShoot() function
+    //if one of those distances is less than half the other, go that way
+    //if one of the directions is upwind, don't go that way
+    //if one of the directions is downwind, go that way
+    //otherwise, go the direct way
+  }
+
+  //TODO: fill out this stub
+  function avoidIslands(islands){
+    //go through all the islands to see if one is in the way
+    //if the island is off to the ship's right, turn left
+    //otherwise, turn right
   }
 
   function gameOverSequnce(score, wave, kills, bossesKilled) {
