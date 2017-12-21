@@ -3,7 +3,7 @@
 //-----------------------------------------------------------------------------
 //BOOTYHUNTER: A SWASHBUCKLING ADVENTURE
 //Concept by Blake Erquiaga
-//Written by Blake Erquiaga, Dan Zweiner, Jason Watts, Liem Gearen, GitHub user dcoollx
+//Written by Blake Erquiaga, Dan Zweiner, Jason Watts, Liem Gearen, David Queen
 //Special thanks to Dr. Thomas Houpt and Dr. Forrest Stonedahl
 
 //global variables
@@ -12,6 +12,7 @@ var width = 960, height = 650;
 var score = 0;
 var fireButtonHeld = 0;
 var treasureMinVal = {'silverCoin': 10, 'goldCoin': 80, 'emerald': 100, 'purpleGem': 150, 'diamond': 0};
+var numRandTreasure = 0;
 
 //wind global variables
 var wind = 'S'; //the direction the wind is coming from. N means the wind blows north to south, N,S,E,W
@@ -95,7 +96,10 @@ GameState.prototype.create = function() {
     this.wake = this.startWake; // starting wake sprite
 
     // Add the ship to the stage
-    player1 = new ship(this.game.add.sprite(this.game.width / 2, this.game.height / 2, 'ship'));
+    //checks if there is an island in the center of the map, moves the ship elsewhere until a suitable place is found
+  //  var place = findGoodPlace(this.islands, 38, this.game.width/2, this.game.height/2, 'S'); //the number is how big of a square in pixels we need for the ship
+  //  player1 = new ship(this.game.add.sprite(place[0], place[1], 'ship'));
+  player1 = new ship(this.game.add.sprite(this.game.width/2, this.game.height/2, 'ship'));
 
     /*this.ship.health = 6;//moved to ship.js
     //this.ship.setHealth(6);
@@ -203,6 +207,14 @@ GameState.prototype.update = function () {
   //keeps a steady flow of whitecaps on the screen
   generateWhitecaps(1, 45, this.whitecaps, this.wind);
   //console.log(player1.getKills());
+
+  //randomly adds powerups
+  //randomPowerUp();
+  //washes up treasure once per wave
+  if (numRandTreasure < this.wave){
+    console.log("We need more treasure!");
+    numRandTreasure = randTreasure(numRandTreasure, this.wind, this.treasures);
+  }
 
   //TODO: refactor into separate method
   //checks the direction the ship is going, and checks it agianst the wind to
@@ -594,6 +606,60 @@ function createIsland(x, y, radius1, radius2) {
 }
 
 
+//Commented out for now because it breaks the game
+//finds a good place to spawn the player's ship initially.
+//Wants to spawn it at this.game.width/2 amd this.game.height/2, returns an array
+//if the place is no good, it calls itself. It searches in a clockwise spiral pattern.
+//TODO: figure out why the x and y values for both the checkBox and islands are 0, which leads to infinite recusrion because they "overlap"
+ /*function findGoodPlace(islands, boxSize, x1, y1, tryDirection){
+   console.log("trying to find a good place");
+   var array = new Array(); //0 is x1, 1 is y1
+   //the "2" variables check down and to the right of the desired point
+   var x2 = x1 + (boxSize/2);
+   var y2 = y1 + (boxSize/2);
+   //the "3" variable check up and to the left of the desired point
+   var x3 = x1 - (boxSize/2);
+   var y3 = y1 - (boxSize/2);
+
+   //create a rectangle to check the overlap with each island
+   var bmd = this.game.add.bitmapData(boxSize,boxSize);
+   bmd.ctx.rect(x3,y2,boxSize,boxSize);
+   var checkBox = this.game.add.sprite(x1, y1, bmd);
+   game.physics.arcade.overlap(checkBox, islands, whiteCapHitShip);
+   console.log(checkBox);
+     for (var i = 0; i < islands.children.length; i++){//go through every island
+       var island = islands.children[i];
+       console.log(i + " " + island);
+      //check to see if the points don't overlap with ALL the island
+      console.log(checkBox.overlap(island) + " " + island.overlap(checkBox));
+      if (checkBox.overlap(island)){
+        console.log(checkBox + " " + island);
+        checkBox.kill();
+        //if they do, recurse
+          switch(tryDirection){
+            case 'N':
+              array = findGoodPlace(islands, boxSize, x1, y3 - boxSize, 'E');
+            break;
+            case 'S':
+              array = findGoodPlace(islands, boxSize, x1, y2 + boxSize, 'W');
+            break;
+            case 'W':
+              array = findGoodPlace(islands, boxSize, x3 - boxSize, 'N');
+            break;
+            default://east
+              array = findGoodPlace(islands, boxSize, x2 + boxSize, y1, 'S');
+        }
+      }
+     }
+     //if they don't, we're good. return the array.
+   array[0] = x1;
+   array[1] = y1;
+   console.log(array);
+   checkBox.kill();
+   return array;
+ }
+*/
+
 //implements whitecaps, which are ocean waves that tell the player where the wind is coming from
 function generateWhitecaps(numWhiteCaps, speed, whitecaps, wind){
   var makeOrNot = Math.random()>0.02?false:true; //keeps the screen from being completely full of them
@@ -906,6 +972,58 @@ function playerHitIsland(ship, island){
     enemy.health = this.enemyHealth[type];
     enemies.add(enemy);
     this.numEnemies++;//TODO: make this work
+  }
+
+  function randTreasure(numRandTreasure, wind, tempTreasures){
+    var chance = Math.random() * Math.random(); //something between 0 and 1, but likely very small
+    var x, y, xVelocity, yVelocity = 0;
+    console.log(chance);
+    if (chance > 0.98){
+      //time to spawn treasure
+      switch(wind){ //the treasure always comes from the wind direction
+        case 'N':
+          x = Math.random() * this.width;
+          yVelocity = 45;
+        break;
+        case 'S':
+          x = Math.random() * this.width;
+          y = this.height;
+          yVelocity = -45;
+        break;
+        case 'W':
+          y = Math.random() * this.width;
+          xVelocity = 45;
+        break;
+        default://east
+        x = this.width;
+        y = Math.random() * this.width;
+        xVelocity = -45;
+      }
+      //TODO: refactor code from this and spawnTreasure into a separeate function
+      var treasureType = Math.random();
+      var treasure;
+      if (treasureType < 0.04){ //4% chance
+        treasure = createTreasure('diamond', x, y);//spawn a diamond
+        //tempTreasures.push(treasure);
+      } else if (treasureType < 0.12){ //8% chance
+        treasure = createTreasure('purpleGem', x, y);//spawn a purple gem
+        //tempTreasures.push(treasure);
+      } else if (treasureType < 0.27){ //15% chance
+        treasure = createTreasure('emerald', x, y); //spawn an emerald
+        //tempTreasures.push(treasure);
+      } else if (treasureType < 0.52){ //25% chance
+        treasure = createTreasure('goldCoin', x, y);//spawn a gold coin
+        //tempTreasures.push(treasure);
+      } else { //nearly half the time
+        treasure = createTreasure('silverCoin', x, y);//spawn a silver coin
+        //tempTreasures.push(treasure);
+    }
+      treasure.body.velocity.x = xVelocity;
+      treasure.body.velocity.y = yVelocity;
+      return numRandTreasure + 1;
+    } else {
+      return numRandTreasure;
+    }
   }
 
   function gameOverSequnce(score, wave, kills, bossesKilled) {
