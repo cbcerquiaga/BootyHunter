@@ -832,35 +832,6 @@ function playerHitIsland(ship, island){
     }
   }
 
-  //spawns treasure from a fallen enemy
-  function spawnTreasure(x, y, maxTreasure){
-    x += ((Math.random()>0.5?-1:1) * (Math.random() * 20));//shifts x between -20 and +20 pixels
-    y += ((Math.random()>0.5?-1:1) * (Math.random() * 20));//shifts y between -20 and 20 pixels
-    var numTreasure = Math.random() * maxTreasure; //spawn between 1 and the max number treasures
-    var treasureType = 0;
-    var tempTreasures = new Array();
-    for (var i = 0; i < numTreasure; i++){
-      treasureType = Math.random();
-      if (treasureType < 0.04){ //4% chance
-        var treasure = createTreasure('diamond', x, y);//spawn a diamond
-        tempTreasures.push(treasure);
-      } else if (treasureType < 0.12){ //8% chance
-        var treasure = createTreasure('purpleGem', x, y);//spawn a purple gem
-        tempTreasures.push(treasure);
-      } else if (treasureType < 0.27){ //15% chance
-        var treasure = createTreasure('emerald', x, y); //spawn an emerald
-        tempTreasures.push(treasure);
-      } else if (treasureType < 0.52){ //25% chance
-        var treasure = createTreasure('goldCoin', x, y);//spawn a gold coin
-        tempTreasures.push(treasure);
-      } else { //nearly half the time
-        var treasure = createTreasure('silverCoin', x, y);//spawn a silver coin
-        tempTreasures.push(treasure);
-      }
-    }
-    console.log(tempTreasures);
-  }
-
   function createTreasure(type, x, y){
     var treasure = this.game.add.sprite(x, y, type);
     treasure.anchor.setTo(0.5, 0.5);
@@ -974,6 +945,33 @@ function playerHitIsland(ship, island){
     this.numEnemies++;//TODO: make this work
   }
 
+  //spawns treasure from a fallen enemy
+  function spawnTreasure(x, y, maxTreasure){
+    x += ((Math.random()>0.5?-1:1) * (Math.random() * 20));//shifts x between -20 and +20 pixels
+    y += ((Math.random()>0.5?-1:1) * (Math.random() * 20));//shifts y between -20 and 20 pixels
+    var numTreasure = Math.random() * maxTreasure; //spawn between 1 and the max number treasures
+    var tempTreasures = new Array();
+    for (var i = 0; i < numTreasure; i++){
+      tempTreasures.push(generateTreasure(x,y));
+    }
+    console.log(tempTreasures);
+  }
+
+  function generateTreasure(x,y){
+    chance = Math.random();
+    if (chance < 0.04){ //4% chance
+      return createTreasure('diamond', x, y);//spawn a diamond
+    } else if (chance < 0.12){ //8% chance
+      return createTreasure('purpleGem', x, y);//spawn a purple gem
+    } else if (chance < 0.27){ //15% chance
+      return createTreasure('emerald', x, y); //spawn an emerald
+    } else if (chance < 0.52){ //25% chance
+      return createTreasure('goldCoin', x, y);//spawn a gold coin
+    } else { //nearly half the time
+      return createTreasure('silverCoin', x, y);//spawn a silver coin
+  }
+}
+
   function randTreasure(numRandTreasure, wind, tempTreasures){
     var chance = Math.random() * Math.random(); //something between 0 and 1, but likely very small
     var x, y, xVelocity, yVelocity = 0;
@@ -1000,24 +998,7 @@ function playerHitIsland(ship, island){
         xVelocity = -45;
       }
       //TODO: refactor code from this and spawnTreasure into a separeate function
-      var treasureType = Math.random();
-      var treasure;
-      if (treasureType < 0.04){ //4% chance
-        treasure = createTreasure('diamond', x, y);//spawn a diamond
-        //tempTreasures.push(treasure);
-      } else if (treasureType < 0.12){ //8% chance
-        treasure = createTreasure('purpleGem', x, y);//spawn a purple gem
-        //tempTreasures.push(treasure);
-      } else if (treasureType < 0.27){ //15% chance
-        treasure = createTreasure('emerald', x, y); //spawn an emerald
-        //tempTreasures.push(treasure);
-      } else if (treasureType < 0.52){ //25% chance
-        treasure = createTreasure('goldCoin', x, y);//spawn a gold coin
-        //tempTreasures.push(treasure);
-      } else { //nearly half the time
-        treasure = createTreasure('silverCoin', x, y);//spawn a silver coin
-        //tempTreasures.push(treasure);
-    }
+      var treasure = generateTreasure(x,y);
       treasure.body.velocity.x = xVelocity;
       treasure.body.velocity.y = yVelocity;
       return numRandTreasure + 1;
