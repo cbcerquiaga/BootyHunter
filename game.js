@@ -39,6 +39,7 @@ GameState.prototype.preload = function() {
   //  this.game.load.spritesheet('ship', 'assets/gfx/ship.png', 32, 32);
     this.game.load.spritesheet('ship', 'assets/boatLoRes.png', 38, 32);
     this.game.load.image('cannonball', 'assets/cannonball.png');
+    this.game.load.image('treasureChest', 'assets/treasureChest.png');
     this.game.load.image('whitecap', 'assets/whitecap.png');
     this.game.load.spritesheet('gunboat', 'assets/gunBoat.png', 25, 19);
     this.game.load.spritesheet('manowar', 'assets/manOwar.png', 59, 32);
@@ -58,7 +59,7 @@ GameState.prototype.preload = function() {
 GameState.prototype.create = function() {
     // Set stage background color
 //    this.game.stage.backgroundColor = 0x111111;
-
+  var scoreIndicator = this.game.add.sprite(16, 22, 'treasureChest');
 
   //TODO: remove redundant code
   this.numEnemies = 2;
@@ -70,6 +71,11 @@ GameState.prototype.create = function() {
   //console.log("kills: " + playerKills);
 
   this.fireButtonHeld = 0;
+
+  //creates treasures group
+  this.treasures = this.game.add.group();
+  this.treasures.enableBody = true;
+  console.log("treasures after instantiation: " + this.treasures);
 
   //instantiates boss data
     this.killedBosses = new Array();
@@ -89,9 +95,6 @@ GameState.prototype.create = function() {
     this.enemies = this.game.add.group();
     this.enemies.enableBody = true;
 
-    //creates treasures group
-    this.treasures = this.game.add.group();
-    this.treasures.enableBody = true;
 
     // Define motion constants
     this.ROTATION_SPEED = 180; // degrees/second
@@ -101,11 +104,40 @@ GameState.prototype.create = function() {
     this.wake = this.startWake; // starting wake sprite
 
     // Add the ship to the stage
-    //checks if there is an island in the center of the map, moves the ship elsewhere until a suitable place is found
-  //  var place = findGoodPlace(this.islands, 38, this.game.width/2, this.game.height/2, 'S'); //the number is how big of a square in pixels we need for the ship
-  //  player1 = new ship(this.game.add.sprite(place[0], place[1], 'ship'));
-  player1 = new ship(this.game.add.sprite(this.game.width/2, this.game.height/2, 'ship'));
+    var place = new Array();
+    var searchDirection = 'S'
+    var searchDistance = 10;
+    player1 = new ship(this.game.add.sprite(this.game.width/2, this.game.height/2, 'ship'));
+    //makes sure the ship isn't overlapping with any islands
+    console.log(player1.sprite.overlap(island));
+    /*for (var i = 0; i < this.islands.children.length; i++){
+      var island = this.islands.children[i];
+      game.physics.arcade.collide(player1.sprite, island);
 
+      while (player1.sprite.overlap(island) === true){
+        switch(searchDirection){
+          case 'N':
+            player1.y -= searchDistance;
+            searchDistance += 10;
+            searchDirection = 'W';
+          break;
+          case 'S':
+            player1.y += searchDistance;
+            searchDistance += 10;
+            searchDirection = 'E';
+          break;
+          case 'W':
+            player1.x -= searchDistance;
+            searchDistance += 10;
+            searchDirection = 'S';
+          break;
+          default://east
+            player1.x += searchDistance;
+            searchDistance += 10;
+            searchDirection = 'N';
+        }
+      }
+    }*/
     /*this.ship.health = 6;//moved to ship.js
     //this.ship.setHealth(6);
     //this.ship.anchor.setTo(0.5, 0.5);
@@ -178,22 +210,34 @@ GameState.prototype.update = function () {
   game.physics.arcade.overlap(player1.sprite, this.whitecaps, whiteCapHitShip);
   game.physics.arcade.overlap(this.islands, this.whitecaps, whiteCapHitIsland);
   game.physics.arcade.overlap(this.enemies, this.whitecaps, whiteCapHitShip);
-  game.physics.arcade.overlap(this.enemies, this.islands, enemyHitIsland);
 
   game.physics.arcade.overlap(this.islands, this.weapon.bullets, islandWasShot);
   game.physics.arcade.overlap(this.islands, this.weapon2.bullets, islandWasShot);
-
   game.physics.arcade.overlap(this.enemies, this.weapon.bullets, enemyWasShot);
   game.physics.arcade.overlap(this.enemies, this.weapon2.bullets, enemyWasShot);
 
-  //  Collide the ship with the islands
-  game.physics.arcade.collide(player1.sprite, this.islands, playerHitIsland);
+  game.physics.arcade.overlap(player1.sprite, this.treasures, collectTreasure);
+  game.physics.arcade.collide(this.treasures, this.enemies);
+  game.physics.arcade.collide(this.treasures, this.islands);
 
-  game.physics.arcade.collide(this.ship, this.enemies);//TODO: add function to check if the player is invincible
+  //  Collide the player and enemy ships with the islands
+  game.physics.arcade.collide(player1.sprite, this.islands, playerHitIsland);
+  game.physics.arcade.collide(this.enemies, this.islands, enemyHitIsland);
+
+  game.physics.arcade.collide(player1.sprite, this.enemies, shipsCollided);//TODO: add function to check if the player is invincible
+  game.physics.arcade.collide(this.enemies, this.enemies, shipsCollided);
 
   //console.log(player1.sprite.body.velocity.x + " " + player1.sprite.body.velocity.y);
   //if there are no enemies, then the game moves to the next wave
-  console.log(this.enemies.countLiving());
+  //console.log(this.enemies.countLiving());
+
+
+  //score
+  var scoreString = player1.getScore().toString();
+  var scoreText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#FFF' });
+  scoreText.text = scoreString;
+
+
 
   if (this.enemies.countLiving() <= 0){ //all enemies are dead, the wave is over
     //sets up the initial wave: randomizes the wind and generates 2 gunboats
@@ -242,7 +286,11 @@ GameState.prototype.update = function () {
   //washes up treasure once per wave
   if (numRandTreasure < this.wave){
     //console.log("We need more treasure!");
-    numRandTreasure = randTreasure(numRandTreasure, this.wind, this.treasures);
+    var treasure = randTreasure(numRandTreasure, this.wind);
+    if (treasure != undefined){
+      numRandTreasure++;
+      this.treasures.add(treasure);
+    }
   }
 
 
@@ -362,10 +410,10 @@ GameState.prototype.update = function () {
     if (player1.sprite.y < 0) player1.sprite.y = this.game.height;
 
     //keep the enemies on the screen
-    for (var i = 0; i < this.enemies.countLiving(); i++){
+    for (var i = 0; i < this.enemies.children.length; i++){
       var enemy = this.enemies.children[i];
       if (enemy.centerX > this.game.width) enemy.centerX = 0;
-      if (enemy.centerX < 0) enemy.centerY = this.game.width;
+      if (enemy.centerX < 0) enemy.centerX = this.game.width;
       if (enemy.centerY > this.game.height) enemy.centerY = 0;
       if (enemy.centerY < 0) enemy.centerY = this.game.height;
     }
@@ -586,6 +634,7 @@ function generateEnemies(waveDifficulty, numEnemies, wind, enemies, isFirstWave)
   }
 
   function enemyWasShot(enemy, bullet){
+    console.log("this.treasures in enemyWasShot: " + this.treasures);
     bullet.kill();
     enemy.health--;
     console.log("bang! " + enemy.health);
@@ -645,64 +694,8 @@ function createIsland(x, y, radius1, radius2) {
     island.body.immovable = true;
     //island.body.loadpolygon()
     return island;
+  }
 }
-
-}
-
-
-//Commented out for now because it breaks the game
-//finds a good place to spawn the player's ship initially.
-//Wants to spawn it at this.game.width/2 amd this.game.height/2, returns an array
-//if the place is no good, it calls itself. It searches in a clockwise spiral pattern.
-//TODO: figure out why the x and y values for both the checkBox and islands are 0, which leads to infinite recusrion because they "overlap"
- function findGoodPlace(islands, boxSize, x1, y1, tryDirection){
-   //console.log("trying to find a good place");
-   var array = new Array(); //0 is x1, 1 is y1
-   //the "2" variables check down and to the right of the desired point
-   var x2 = x1 + (boxSize/2);
-   var y2 = y1 + (boxSize/2);
-   //the "3" variable check up and to the left of the desired point
-   var x3 = x1 - (boxSize/2);
-   var y3 = y1 - (boxSize/2);
-
-   //create a rectangle to check the overlap with each island
-   var bmd = this.game.add.bitmapData(boxSize,boxSize);
-   bmd.ctx.rect(x3,y2,boxSize,boxSize);
-   var checkBox = this.game.add.sprite(x1, y1, bmd);
-   game.physics.arcade.overlap(checkBox, islands, whiteCapHitShip);
-  // console.log(checkBox);
-     for (var i = 0; i < islands.children.length; i++){//go through every island
-       var island = islands.children[i];
-       //console.log(i + " " + island);
-      //check to see if the points don't overlap with ALL the island
-      //console.log(checkBox.overlap(island) + " " + island.overlap(checkBox));
-      if (checkBox.overlap(island)){
-        //console.log(checkBox + " " + island);
-        checkBox.kill();
-        //if they do, recurse
-          switch(tryDirection){
-            case 'N':
-              array = findGoodPlace(islands, boxSize, x1, y3 - boxSize, 'E');
-            break;
-            case 'S':
-              array = findGoodPlace(islands, boxSize, x1, y2 + boxSize, 'W');
-            break;
-            case 'W':
-              array = findGoodPlace(islands, boxSize, x3 - boxSize, 'N');
-            break;
-            default://east
-              array = findGoodPlace(islands, boxSize, x2 + boxSize, y1, 'S');
-        }
-      }
-     }
-     //if they don't, we're good. return the array.
-   array[0] = x1;
-   array[1] = y1;
-   //console.log(array);
-   checkBox.kill();
-   return array;
- }
-
 
 //implements whitecaps, which are ocean waves that tell the player where the wind is coming from
 function generateWhitecaps(numWhiteCaps, speed, whitecaps, wind){
@@ -876,6 +869,13 @@ function playerHitIsland(ship, island){
     }
   }
 
+  function shipsCollided(ship1, ship2){
+    if ((Math.abs(ship1.body.velocity.x) + Math.abs(ship1.body.velocity.y) + Math.abs(ship2.body.velocity.x) + Math.abs(ship2.body.velocity.y) ) >= 300){
+      ship1.health--;
+      ship2.health--;
+    }
+  }
+
   //spawns treasure from a fallen enemy
   function spawnTreasure(x, y, maxTreasure){
     x += ((Math.random()>0.5?-1:1) * (Math.random() * 20));//shifts x between -20 and +20 pixels
@@ -902,10 +902,12 @@ function playerHitIsland(ship, island){
         tempTreasures.push(treasure);
       }
     }
+    return tempTreasures;
     //console.log(tempTreasures);
   }
 
   function createTreasure(type, x, y){
+    console.log("this.treasures in createTreasure: " + this.treasures);
     var treasure = this.game.add.sprite(x, y, type);
     treasure.anchor.setTo(0.5, 0.5);
     this.game.physics.enable(treasure, Phaser.Physics.ARCADE);
@@ -916,9 +918,29 @@ function playerHitIsland(ship, island){
     return treasure;
   }
 
+  function collectTreasure(player, treasure){
+    switch(treasure.type){
+      case 'silverCoin': player1.addScore(10); break;
+      case 'goldCoin': player1.addScore(80); break;
+      case 'emerald':
+        var score = 100 + Math.round((0.1 * (Math.abs(player1.sprite.body.velocity.x) + Math.abs(player1.sprite.body.velocity.y))));
+        player1.addScore(score);
+        break;
+      case 'purpleGem':
+        var score = 100 + Math.round((0.2 * (Math.abs(player1.sprite.body.velocity.x) + Math.abs(player1.sprite.body.velocity.y))));
+        player1.addScore(score);
+        break;
+      default://diamond
+        var score = Math.round(Math.abs(player1.sprite.body.velocity.x) + Math.abs(player1.sprite.body.velocity.y));
+        player1.addScore(score);
+    }
+    treasure.kill();
+    console.log("Score: " + player1.getScore());
+  }
+
   function initializeEnemy(type, wind) {
     //TODO: refactor random direction code into separate function
-  //  var debugEdge = 'Q';
+    //  var debugEdge = 'Q';
     var x = 0;
     var y = 0;
     var xVelocity = 0;
@@ -1017,11 +1039,11 @@ function playerHitIsland(ship, island){
     return enemy;
   }
 
-  function randTreasure(numRandTreasure, wind, tempTreasures){
+  function randTreasure(numRandTreasure, wind){
     var chance = Math.random() * Math.random(); //something between 0 and 1, but likely very small
     var x, y, xVelocity, yVelocity = 0;
     //console.log(chance);
-    if (chance > 0.98){//TODO: balance this time
+    if (chance > 0.98){//TODO: balance this time. 0.98 normal, 0.2 for testing
       //time to spawn treasure
       switch(wind){ //the treasure always comes from the wind direction
         case 'N':
@@ -1042,31 +1064,24 @@ function playerHitIsland(ship, island){
         y = Math.random() * this.width;
         xVelocity = -45;
       }
-      //TODO: refactor code from this and spawnTreasure into a separeate function
       var treasureType = Math.random();
       var treasure;
       if (treasureType < 0.04){ //4% chance
         treasure = createTreasure('diamond', x, y);//spawn a diamond
-        //tempTreasures.push(treasure);
       } else if (treasureType < 0.12){ //8% chance
         treasure = createTreasure('purpleGem', x, y);//spawn a purple gem
-        //tempTreasures.push(treasure);
       } else if (treasureType < 0.27){ //15% chance
         treasure = createTreasure('emerald', x, y); //spawn an emerald
-        //tempTreasures.push(treasure);
       } else if (treasureType < 0.52){ //25% chance
         treasure = createTreasure('goldCoin', x, y);//spawn a gold coin
-        //tempTreasures.push(treasure);
       } else { //nearly half the time
         treasure = createTreasure('silverCoin', x, y);//spawn a silver coin
-        //tempTreasures.push(treasure);//TODO: make addingto the group not a bug
     }
+      treasure.lifetime = 9001;
       treasure.body.velocity.x = xVelocity;
       treasure.body.velocity.y = yVelocity;
-      return numRandTreasure + 1;
-    } else {
-      return numRandTreasure;
     }
+    return treasure;
   }
 
   function gunBoatCheckWind(angle, wind){
@@ -1210,7 +1225,7 @@ function playerHitIsland(ship, island){
   }
 
   function moveKraken(kraken, sprite){
-    console.log("We've moved to " + x + ", " + y);
+    console.log("We've moved to " + kraken.x + ", " + kraken.y);
     kraken.health--;
     if (kraken.health <= 0){
       spawnTresure(kraken.x, kraken.y, 16);
@@ -1234,7 +1249,7 @@ function playerHitIsland(ship, island){
 
 
 GameState.prototype.render =function() {
-  this.weapon.debug();
+
 }
 
 /*TODO: Long-term goals
