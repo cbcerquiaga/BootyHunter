@@ -22,8 +22,8 @@ var startWake = 0;
 //enemy global variables
 var wave;
 var numEnemies;
-var enemyDownWindSpeed = {'gunboat': 100, 'manowar': 400, 'normal': 650, 'dhow': 850};
-var enemyCrossWindSpeed = {'gunboat': 60, 'manowar': 250, 'normal': 300, 'dhow': 500};
+var enemyDownWindSpeed = {'gunboat': 100, 'manowar': 400, 'normal': 650, 'dhow': 500};
+var enemyCrossWindSpeed = {'gunboat': 60, 'manowar': 250, 'normal': 300, 'dhow': 850};//the dhow goes faster across the wind than down
 var enemyUpWindSpeed = {'gunboat': 35, 'manowar': 100, 'normal': 150, 'dhow': 250};
 var enemyHealth = {'gunboat': 1, 'manowar': 12, 'normal': 6, 'dhow': 3};
 var enemyDifficulty = {'gunboat': 1, 'manowar': 10, 'normal': 5, 'dhow': 10};
@@ -297,16 +297,48 @@ GameState.prototype.update = function () {
 
   for (var i = 0; i < this.enemies.countLiving(); i++){
     var enemy = this.enemies.children[i];
-    //console.log(enemy);
-    //if (enemy.type === 'gunboat'){
-    enemy.frame = gunBoatCheckWind(enemy.angle, this.wind); //figure out the ship's orientation
-    enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'gunboat'); //adjust the sprite accordingly
-    var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
-    enemy.body.velocity.x = speedArray[0];
-    enemy.body.velocity.y = speedArray[1];
-    gunBoatAI(enemy, player1, this.wind); //the ship chases the player or runs away, turns to shoot
-    avoidIslands(this.islands); //the ship tries to avoid islands
-}
+    var oldXSpeed = enemy.body.velocity.x;
+    var oldYSpeed = enemy.body.velocity.y;
+      console.log(enemy + " in loop");
+      if (enemy.type === 'gunboat'){
+        enemy.frame = squareSailCheckWind(enemy.angle, this.wind); //figure out the ship's orientation
+        enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'gunboat'); //adjust the sprite accordingly
+        var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
+        enemy.body.velocity.x = speedArray[0];
+        enemy.body.velocity.y = speedArray[1];
+        gunBoatAI(enemy, this.wind); //the ship chases the player or runs away, turns to shoot
+        avoidIslands(enemy, this.islands); //the ship tries to avoid islands
+      } else if (enemy.type === 'normal'){
+        enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
+        enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'normal');
+        var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
+        enemy.body.velocity.x = speedArray[0];
+        enemy.body.velocity.y = speedArray[1];
+        normalAI(enemy, this.wind);
+        avoidIslands(enemy, this.islands);
+      } else if (enemy.type === 'manOwar'){
+        enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
+        enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'manOwar');
+        var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
+        enemy.body.velocity.x = speedArray[0];
+        enemy.body.velocity.y = speedArray[1];
+        manOwarAI(enemy, this.wind);
+        avoidIslands(enemy, this.islands);
+      } else if (enemy.type === 'dhow'){
+        enemy.frame = dhowCheckWind(enemy.angle, this.wind);
+        enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'normal');
+        var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
+        enemy.body.velocity.x = speedArray[0];
+        enemy.body.velocity.y = speedArray[1];
+        normalAI(enemy, this.wind);
+        avoidIslands(enemy, this.islands);
+      } else {//boss
+
+      }
+      if (Math.abs(enemy.body.velocity.x) > oldXSpeed || Math.abs(enemy.body.velocity.y) > oldYSpeed){
+        enemy.frame += 2;
+    }
+  }
 
 
   //TODO: refactor into separate method
@@ -903,6 +935,7 @@ function playerHitIsland(ship, island){
         tempTreasures.push(treasure);
       }
     }
+    game.physics.arcade.overlap(player1.sprite, treasure, collectTreasure);
     return tempTreasures;
     //console.log(tempTreasures);
   }
@@ -1187,20 +1220,19 @@ function playerHitIsland(ship, island){
     return treasure;
   }
 
-  function gunBoatCheckWind(angle, wind){
+  function squareSailCheckWind(angle, wind){
     var startWake = 0;
-    var direction = 'D';
     if (angle >= 45 && angle <135){ //ship pointing south
-        direction = checkWind('S', wind);
+        var direction = checkWind('S', wind);
         switch(direction){
-          case 'D': startWake = 0; break;
+          case 'D': startWake = 0;
+          break;
           case 'P': startWake = 6; break;
           case 'S': startWake = 3; break;
-          default:
-            startWake = 9;
+          default:  startWake = 9;
       }
     } else if ((angle >= 135 && angle <225) || (angle >= -225 && angle < -135)){//ship pointing west
-        direction = checkWind('W', wind);
+        var direction = checkWind('W', wind);
         switch(direction){
           case 'D': startWake = 0; break;
           case 'P': startWake = 6; break;
@@ -1209,7 +1241,7 @@ function playerHitIsland(ship, island){
             startWake = 9;
       }
     } else if ((angle < -45 && angle >= -135)|| (angle < 315 && angle >= 225)){//ship pointing north
-        direction = checkWind('N', wind);
+        var direction = checkWind('N', wind);
         switch(direction){
           case 'D': startWake = 0; break;
           case 'P': startWake = 6; break;
@@ -1218,13 +1250,98 @@ function playerHitIsland(ship, island){
             startWake = 9;
       }
     } else {//east
-        direction = checkWind('E', wind);
+        var direction = checkWind('E', wind);
         switch(direction){
           case 'D': startWake = 0; break;
           case 'P': startWake = 6; break;
           case 'S': startWake = 3; break;
           default:
             startWake = 9;
+      }
+    }
+      return startWake;
+  }
+
+  //TODO: fix this for the special scenarios of the dhow spritesheet
+  //TODO: fix dhow spritesheet
+  function dhowCheckWind(angle, wind){
+    var startWake = 0;
+    var direction = 'D';
+    if (angle >= 45 && angle <135){ //ship pointing south
+        direction = checkWind('S', wind);
+        switch(direction){
+          case 'D':
+          //if (angle is sw){
+          //startWake = 0;//starboard downwind
+          //} else {
+          //startWake = 3;//port downwind
+          //}
+          break;
+          case 'P': startWake = 6; break;
+          case 'S': startWake = 9; break;
+          default:
+            //if (angle is sw){
+            //startWake = 6;
+            //} else {
+            //startWake = 9;
+            //}
+      }
+    } else if ((angle >= 135 && angle <225) || (angle >= -225 && angle < -135)){//ship pointing west
+        direction = checkWind('W', wind);
+        switch(direction){
+          case 'D':
+          //if (angle is nw){
+          //startWake = 0;//starboard downwind
+          //} else {
+          //startWake = 3;//port downwind
+          //}
+          break;
+          case 'P': startWake = 6; break;
+          case 'S': startWake = 3; break;
+          default:
+          //if (angle is nw){
+          //startWake = 6;//port upwind
+          //} else {
+          //startWake = 9;//starboard upwind
+          //}
+      }
+    } else if ((angle < -45 && angle >= -135)|| (angle < 315 && angle >= 225)){//ship pointing north
+        direction = checkWind('N', wind);
+        switch(direction){
+          case 'D':
+          //if (angle is sw){
+          //startWake = 0;//starboard downwind
+          //} else {
+          //startWake = 3;//port downwind
+          //}
+          break;
+          case 'P': startWake = 6; break;
+          case 'S': startWake = 3; break;
+          default:
+          //if (angle is ne){
+          //startWake = 6;//port upwind
+          //} else {
+          //startWake = 9;//starboard upwind
+          //}
+      }
+    } else {//east
+        direction = checkWind('E', wind);
+        switch(direction){
+          case 'D':
+          //if (angle is se){
+          //startWake = 0;//starboard downwind
+          //} else {//angle is ne
+          //startWake = 3;//port downwind
+          //}
+          break;
+          case 'P': startWake = 6; break;
+          case 'S': startWake = 3; break;
+          default:
+          //if (angle is se){
+          //startWake = 6;//port upwind
+          //} else {
+          //startWake = 9;//starboard upwind
+          //}
       }
     }
       return startWake;
@@ -1279,21 +1396,23 @@ function playerHitIsland(ship, island){
 
   //TODO: fill out this stub
   //makes the gunboat perform very simple behaviors- take the shortest route to chase the player, and turn to shoot when in range
-  function gunBoatAI(gunboat, player, wind){
-    var straightDistance = game.physics.arcade.distanceBetween(player, gunboat);//find the direct distance to the player
+  function gunBoatAI(gunboat, wind){
+    console.log(enemy);
+    var straightDistance = game.physics.arcade.distanceBetween(player1.sprite, gunboat);//find the direct distance to the player
     //find the round the world distance to the player
-    var roundDistance = ((this.width - player.x) + (gunboat.x) + (this.height - player.y) + (gunboat.y));
+    var roundDistance = ((this.width - player1.sprite.x) + (gunboat.x) + (this.height - player1.sprite.y) + (gunboat.y));
     //find the angle if the ship were to go directly
     var targetAngle = this.game.math.angleBetween(
         gunboat.x, gunboat.y,
-        player.x, player.y
+        player1.sprite.x, player1.sprite.y
     );
+    console.log("Direct: " + straightDistance + " Da Gama: " + roundDistance);
     var routeDirection = 'Q';
     //if one of those distances is within firing range, call a turnAndShoot() function
     if (straightDistance <= 250){
-      turnAndShoot(gunboat, player, targetAngle);
+      turnAndShoot(gunboat, targetAngle);
     } else if (roundDistance <= 250){
-      turnAndShoot(gunboat, player, targetAngle);
+      turnAndShoot(gunboat, targetAngle);
     }
     //if one of those distances is less than half the other, go that way
     if ((straightDistance * 2) < roundDistance){
@@ -1304,32 +1423,33 @@ function playerHitIsland(ship, island){
     //if directly sends you upwind, go around the world, otherwise go directly
     } else if (targetAngle >= 45 && targetAngle <135){ //south
       if (wind === 'S'){ //upwind
-        //go around the world
+        navigate(gunboat, 0 - targetAngle);//go around the world
       } else {
-        //go directly
+        navigate(gunboat, targetAngle);//go directly
       }
     } else if ((targetAngle >= 135 && targetAngle <225) || (targetAngle >= -225 && targetAngle < -135)){//west
       if (wind === 'W'){ //upwind
-        //g oaround the world
+        navigate(gunboat, 0 - targetAngle); //go around the world
       } else {
-        //go directly
+        navigate(gunboat, targetAngle);//go directly
       }
     } else if ((targetAngle < -45 && targetAngle >= -135)|| (targetAngle < 315 && targetAngle >= 225)){//north
       if (wind === 'N'){//upwind
-        //go around the world
+        navigate(gunboat, 0 - targetAngle);//go around the world
       } else {
-        //go directly
+        navigate(gunboat, targetAngle);//go directly
       }
     } else {//east
       if (wind === 'E'){//upwind
-        //go around the world
+        navigate(gunboat, 0 - targetAngle);//go around the world
       } else {
-        //go directly
+        navigate(gunboat, targetAngle);//go directly
       }
     }
   }
 
-  function turnAndShoot(enemy, player, targetAngle){
+  function turnAndShoot(enemy, targetAngle){
+    console.log("Turn rate in turn and shoot: " + enemy.TURN_RATE);
     // Gradually (this.TURN_RATE) aim the missile towards the target angle
     if (this.rotation !== targetAngle) {
       // Calculate difference between the current angle and targetAngle
@@ -1355,16 +1475,30 @@ function playerHitIsland(ship, island){
   }
 
   // Calculate velocity vector based on this.rotation and this.SPEED
-  enemy.body.velocity.x = Math.cos(enemy.rotation) * enemy.SPEED;
-  enemy.body.velocity.y = Math.sin(enemy.rotation) * enemy.SPEED;
+  enemy.body.velocity.x = Math.cos(enemy.rotation) * enemy.maxSpeed;
+  enemy.body.velocity.y = Math.sin(enemy.rotation) * enemy.maxSpeed;
     //if (player is in range, off to the side or off to the side and off the bow){
     //shoot the guns
     //}
   }
 
+  function navigate(enemy, targetAngle){
+    console.log("Turn rate in navigate: " + enemy.TURN_RATE);
+    if (enemy.angle != targetAngle){
+      var delta = targetAngle - enemy.rotation;
+      if (delta > 0){
+        //turn clockwise
+        enemy.angle += enemy.TURN_RATE;
+      } else {
+          // Turn counter-clockwise
+          enemy.angle -= enemy.TURN_RATE;
+      }
+    }
+  }
+
 
   //TODO: fill out this stub
-  function avoidIslands(islands){
+  function avoidIslands(enemy, islands){
     //go through all the islands to see if one is in the way
     //if the island is off to the ship's right, turn left
     //otherwise, turn right
