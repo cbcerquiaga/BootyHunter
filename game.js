@@ -27,6 +27,7 @@ var enemyCrossWindSpeed = {'gunboat': 60, 'manowar': 250, 'normal': 300, 'dhow':
 var enemyUpWindSpeed = {'gunboat': 35, 'manowar': 100, 'normal': 150, 'dhow': 250};
 var enemyHealth = {'gunboat': 1, 'manowar': 12, 'normal': 6, 'dhow': 3};
 var enemyDifficulty = {'gunboat': 1, 'manowar': 10, 'normal': 5, 'dhow': 10};
+var enemyTurnRate = {'gunboat': 120, 'manowar': 135, 'normal': 180, 'dhow': 240};
 var waveDifficulty;
 
 //-----------------------------------------------------------------------------
@@ -303,7 +304,7 @@ GameState.prototype.update = function () {
     var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
     enemy.body.velocity.x = speedArray[0];
     enemy.body.velocity.y = speedArray[1];
-    gunBoatAI(player1, this.wind); //the ship chases the player or runs away, turns to shoot
+    gunBoatAI(enemy, player1, this.wind); //the ship chases the player or runs away, turns to shoot
     avoidIslands(this.islands); //the ship tries to avoid islands
 }
 
@@ -1028,6 +1029,7 @@ function playerHitIsland(ship, island){
     //TODO: add weapons to enemies depending on their type
     enemy.frame = 0;
     enemy.anchor.setTo(0.5, 0.5);
+    enemy.TURN_RATE = this.enemyTurnRate[type];
     enemy.angle = angle;
     this.game.physics.enable(enemy, Phaser.Physics.ARCADE);// What are these "this" refering to???
     enemy.enableBody = true;
@@ -1036,7 +1038,108 @@ function playerHitIsland(ship, island){
     enemy.body.velocity.y = yVelocity;
   //  enemy.body.bounce.set(0.25);
     enemy.health = this.enemyHealth[type];
+    addWeapons(enemy);
     return enemy;
+  }
+
+  function addWeapons(enemy){
+    switch(enemy.type){
+      case 'gunboat': //TODO: balance this
+        var LWeapon = this.game.add.weapon(100, 'cannonball');
+        LWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+        LWeapon.bulletLifespan = 250;
+        LWeapon.bulletSpeed = 600;
+        LWeapon.fireRate = 300;
+        LWeapon.bulletAngleVariance = 10;
+        LWeapon.bulletCollideWorldBounds = false;
+        LWeapon.bulletWorldWrap = true;
+        LWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, near the back
+        //second weapon, fires right relative to the ship
+        var RWeapon = this.game.add.weapon(100, 'cannonball');
+        RWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+        RWeapon.bulletLifespan = 250;
+        RWeapon.bulletSpeed = 600;
+        RWeapon.fireRate = 300;
+        RWeapon.bulletAngleVariance = 10;
+        RWeapon.bulletCollideWorldBounds = false;
+        RWeapon.bulletWorldWrap = true;
+        RWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, near the back
+      break;
+      case 'normal':
+        var RWeapon = this.game.add.weapon(100, 'cannonball');
+        RWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+        RWeapon.bulletLifespan = 450;
+        RWeapon.bulletSpeed = 600;
+        RWeapon.fireRate = 10;
+        RWeapon.bulletAngleVariance = 10;
+        RWeapon.bulletCollideWorldBounds = false;
+        RWeapon.bulletWorldWrap = true;
+        RWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun
+        //second weapon, fires left relative to the ship
+        var LWeapon = this.game.add.weapon(100, 'cannonball');
+        LWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+        LWeapon.bulletLifespan = 450;
+        LWeapon.bulletSpeed = 600;
+        LWeapon.fireRate = 10;
+        LWeapon.bulletAngleVariance = 10;
+        LWeapon.bulletCollideWorldBounds = false;
+        LWeapon.bulletWorldWrap = true;
+        LWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun
+      break;
+      case 'manOwar': //four guns?
+        var LWeapon1 = this.game.add.weapon(100, 'cannonball');
+        LWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+        LWeapon.bulletLifespan = 650;
+        LWeapon.bulletSpeed = 600;
+        LWeapon.fireRate = 10;
+        LWeapon.bulletAngleVariance = 10;
+        LWeapon.bulletCollideWorldBounds = false;
+        LWeapon.bulletWorldWrap = true;
+        LWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, mnore forward
+        //second weapon, fires right relative to the ship
+        var RWeapon1 = this.game.add.weapon(100, 'cannonball');
+        RWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+        RWeapon.bulletLifespan = 650;
+        RWeapon.bulletSpeed = 600;
+        RWeapon.fireRate = 10;
+        RWeapon.bulletAngleVariance = 10;
+        RWeapon.bulletCollideWorldBounds = false;
+        RWeapon.bulletWorldWrap = true;
+        RWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, more forward
+        //third weapon, fires left relative to the ship
+        var LWeapon2 = this.game.add.weapon(100, 'cannonball');
+        LWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+        LWeapon.bulletLifespan = 650;
+        LWeapon.bulletSpeed = 600;
+        LWeapon.fireRate = 10;
+        LWeapon.bulletAngleVariance = 10;
+        LWeapon.bulletCollideWorldBounds = false;
+        LWeapon.bulletWorldWrap = true;
+        LWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, more aft
+        //fourth weapon, fires right relative to the ship
+        var RWeapon2 = this.game.add.weapon(100, 'cannonball');
+        RWeapon2.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+        RWeapon2.bulletLifespan = 650;
+        RWeapon2.bulletSpeed = 600;
+        RWeapon2.fireRate = 10;
+        RWeapon2.bulletAngleVariance = 10;
+        RWeapon2.bulletCollideWorldBounds = false;
+        RWeapon2.bulletWorldWrap = true;
+        RWeapon2.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, more aft
+      break;
+      default://dhow
+        var FWeapon = this.game.add.weapon(100, 'cannonball');
+        FWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+        FWeapon.bulletLifespan = 650;
+        FWeapon.bulletSpeed = 250; //TODO: figure out the appropriate speed with the ship's speed
+        FWeapon.bulletInheritSpriteSpeed = true;
+        FWeapon.fireRate = 10;
+        FWeapon.bulletAngleVariance = 3;
+        FWeapon.bulletCollideWorldBounds = false;
+        FWeapon.bulletWorldWrap = true;
+        FWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, near the bow
+        //TODO: give the weapon tothe dhow
+    }
   }
 
   function randTreasure(numRandTreasure, wind){
@@ -1176,15 +1279,89 @@ function playerHitIsland(ship, island){
 
   //TODO: fill out this stub
   //makes the gunboat perform very simple behaviors- take the shortest route to chase the player, and turn to shoot when in range
-  function gunBoatAI(player, wind){
-    //find the direct distance to the player
+  function gunBoatAI(gunboat, player, wind){
+    var straightDistance = game.physics.arcade.distanceBetween(player, gunboat);//find the direct distance to the player
     //find the round the world distance to the player
+    var roundDistance = ((this.width - player.x) + (gunboat.x) + (this.height - player.y) + (gunboat.y));
+    //find the angle if the ship were to go directly
+    var targetAngle = this.game.math.angleBetween(
+        gunboat.x, gunboat.y,
+        player.x, player.y
+    );
+    var routeDirection = 'Q';
     //if one of those distances is within firing range, call a turnAndShoot() function
+    if (straightDistance <= 250){
+      turnAndShoot(gunboat, player, targetAngle);
+    } else if (roundDistance <= 250){
+      turnAndShoot(gunboat, player, targetAngle);
+    }
     //if one of those distances is less than half the other, go that way
-    //if one of the directions is upwind, don't go that way
-    //if one of the directions is downwind, go that way
-    //otherwise, go the direct way
+    if ((straightDistance * 2) < roundDistance){
+      //go directly
+    } else if ((roundDistance * 2) < straightDistance){
+      //go around the world
+
+    //if directly sends you upwind, go around the world, otherwise go directly
+    } else if (targetAngle >= 45 && targetAngle <135){ //south
+      if (wind === 'S'){ //upwind
+        //go around the world
+      } else {
+        //go directly
+      }
+    } else if ((targetAngle >= 135 && targetAngle <225) || (targetAngle >= -225 && targetAngle < -135)){//west
+      if (wind === 'W'){ //upwind
+        //g oaround the world
+      } else {
+        //go directly
+      }
+    } else if ((targetAngle < -45 && targetAngle >= -135)|| (targetAngle < 315 && targetAngle >= 225)){//north
+      if (wind === 'N'){//upwind
+        //go around the world
+      } else {
+        //go directly
+      }
+    } else {//east
+      if (wind === 'E'){//upwind
+        //go around the world
+      } else {
+        //go directly
+      }
+    }
   }
+
+  function turnAndShoot(enemy, player, targetAngle){
+    // Gradually (this.TURN_RATE) aim the missile towards the target angle
+    if (this.rotation !== targetAngle) {
+      // Calculate difference between the current angle and targetAngle
+      var delta = targetAngle - enemy.rotation;
+
+      // Keep it in range from -180 to 180 to make the most efficient turns.
+      if (delta > Math.PI) delta -= Math.PI * 2;
+      if (delta < -Math.PI) delta += Math.PI * 2;
+
+      if (delta > 0) {
+        // Turn clockwise
+        enemy.angle += enemy.TURN_RATE;
+      } else {
+          // Turn counter-clockwise
+          enemy.angle -= enemy.TURN_RATE;
+      }
+
+      //TODO: Change this to make the ship not quite hit the player, but keep a short distance
+      // Just set angle to target angle if they are close
+      if (Math.abs(delta) < this.game.math.degToRad(enemy.TURN_RATE)) {
+        enemy.rotation = targetAngle;
+      }
+  }
+
+  // Calculate velocity vector based on this.rotation and this.SPEED
+  enemy.body.velocity.x = Math.cos(enemy.rotation) * enemy.SPEED;
+  enemy.body.velocity.y = Math.sin(enemy.rotation) * enemy.SPEED;
+    //if (player is in range, off to the side or off to the side and off the bow){
+    //shoot the guns
+    //}
+  }
+
 
   //TODO: fill out this stub
   function avoidIslands(islands){
