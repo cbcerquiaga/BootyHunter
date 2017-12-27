@@ -575,25 +575,39 @@ GameState.prototype.update = function () {
       //maybe a fun historically accurate pirate fact too
       break;
     case 1:
-      this.game.stage.backgroundColor = 0x0d2344//very dark sea
+      if (this.game.stage.backgroundColor != 0x0d2344) {
+          this.game.stage.backgroundColor = 0x0d2344
+      }
       break;
     case 2:
-      this.game.stage.backgroundColor = 0x0b2c5e// dark sea, #0b2c5e
+      if (this.game.stage.backgroundColor != 0x0b2c5e) {
+        this.game.stage.backgroundColor = 0x0b2c5e// dark sea, #0b2c5e
+      }
       break;
     case 3:
-      this.game.stage.backgroundColor = 0x124375//moderately dark sea
+      if (this.game.stage.backgroundColor != 0x124375) {
+        this.game.stage.backgroundColor = 0x124375//moderately dark sea
+      }
       break;
     case 4:
-      this.game.stage.backgroundColor = 0x136875//dark blue-green sea
+      if (this.game.stage.backgroundColor != 0x136875){
+        this.game.stage.backgroundColor = 0x136875//dark blue-green sea
+      }
       break;
     case 5:
-      this.game.stage.backgroundColor = 0x14899b;//blue-green sea
+      if(this.game.stage.backgroundColor != 0x14899b){
+        this.game.stage.backgroundColor = 0x14899b;//blue-green sea
+      }
       break;
     case "invincible":
-      this.game.stage.backgroundColor = 0xb52012;//invincibility power-up, red sea
+      if(this.game.stage.backgroundColor != 0xb52012){
+        this.game.stage.backgroundColor = 0xb52012;//invincibility power-up, red sea
+      }
       break;
     default://default health is 6.
-      this.game.stage.backgroundColor = 0x019ab2;// caribbean teal sea
+      if(this.game.stage.backgroundColor != 0x019ab2){
+        this.game.stage.backgroundColor = 0x019ab2;// caribbean teal sea
+      }
   }
 
 
@@ -812,8 +826,8 @@ function initializeWhitecap(whitecap, angle){
   whitecap.enableBody = true;
   this.game.physics.enable(whitecap, Phaser.Physics.ARCADE);
   whitecap.body.collideWorldBounds = false;
-  whitecap.body.width = 75;
-  whitecap.body.height = 56;
+  whitecap.body.width = 55;
+  whitecap.body.height = 4;
   return whitecap;
 
   //in case we want to have animated whitecaps instead of static ones
