@@ -23,6 +23,10 @@ var ship = function (_sprite) {
       this.kills++;
     }
 
+    this.resetKills = function(){
+      this.kills = 0;
+    }
+
     this.getScore = function(){
       return this.score;
     }

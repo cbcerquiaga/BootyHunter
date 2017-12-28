@@ -884,8 +884,8 @@ function whiteCapHitShip(ship, whitecap){
 
 //damages the ship, after crashing into an island
 function playerHitIsland(ship, island){
-    //ship.damage(1);
     player1.health--;
+    player1.resetKills();
     //TODO: add sound for when the player is hit
     //TODO: add "explosion" of water/sand pixels?
     //console.log("We've been hit, Captain! " + ship.health);
@@ -1075,105 +1075,6 @@ function playerHitIsland(ship, island){
     return enemy;
   }
 
-  function addWeapons(enemy){
-    switch(enemy.type){
-      case 'gunboat': //TODO: balance this
-        var LWeapon = this.game.add.weapon(100, 'cannonball');
-        LWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-        LWeapon.bulletLifespan = 250;
-        LWeapon.bulletSpeed = 600;
-        LWeapon.fireRate = 300;
-        LWeapon.bulletAngleVariance = 10;
-        LWeapon.bulletCollideWorldBounds = false;
-        LWeapon.bulletWorldWrap = true;
-        LWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, near the back
-        //second weapon, fires right relative to the ship
-        var RWeapon = this.game.add.weapon(100, 'cannonball');
-        RWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-        RWeapon.bulletLifespan = 250;
-        RWeapon.bulletSpeed = 600;
-        RWeapon.fireRate = 300;
-        RWeapon.bulletAngleVariance = 10;
-        RWeapon.bulletCollideWorldBounds = false;
-        RWeapon.bulletWorldWrap = true;
-        RWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, near the back
-      break;
-      case 'normal':
-        var RWeapon = this.game.add.weapon(100, 'cannonball');
-        RWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-        RWeapon.bulletLifespan = 450;
-        RWeapon.bulletSpeed = 600;
-        RWeapon.fireRate = 10;
-        RWeapon.bulletAngleVariance = 10;
-        RWeapon.bulletCollideWorldBounds = false;
-        RWeapon.bulletWorldWrap = true;
-        RWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun
-        //second weapon, fires left relative to the ship
-        var LWeapon = this.game.add.weapon(100, 'cannonball');
-        LWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-        LWeapon.bulletLifespan = 450;
-        LWeapon.bulletSpeed = 600;
-        LWeapon.fireRate = 10;
-        LWeapon.bulletAngleVariance = 10;
-        LWeapon.bulletCollideWorldBounds = false;
-        LWeapon.bulletWorldWrap = true;
-        LWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun
-      break;
-      case 'manOwar': //four guns?
-        var LWeapon1 = this.game.add.weapon(100, 'cannonball');
-        LWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-        LWeapon.bulletLifespan = 650;
-        LWeapon.bulletSpeed = 600;
-        LWeapon.fireRate = 10;
-        LWeapon.bulletAngleVariance = 10;
-        LWeapon.bulletCollideWorldBounds = false;
-        LWeapon.bulletWorldWrap = true;
-        LWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, mnore forward
-        //second weapon, fires right relative to the ship
-        var RWeapon1 = this.game.add.weapon(100, 'cannonball');
-        RWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-        RWeapon.bulletLifespan = 650;
-        RWeapon.bulletSpeed = 600;
-        RWeapon.fireRate = 10;
-        RWeapon.bulletAngleVariance = 10;
-        RWeapon.bulletCollideWorldBounds = false;
-        RWeapon.bulletWorldWrap = true;
-        RWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, more forward
-        //third weapon, fires left relative to the ship
-        var LWeapon2 = this.game.add.weapon(100, 'cannonball');
-        LWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-        LWeapon.bulletLifespan = 650;
-        LWeapon.bulletSpeed = 600;
-        LWeapon.fireRate = 10;
-        LWeapon.bulletAngleVariance = 10;
-        LWeapon.bulletCollideWorldBounds = false;
-        LWeapon.bulletWorldWrap = true;
-        LWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, more aft
-        //fourth weapon, fires right relative to the ship
-        var RWeapon2 = this.game.add.weapon(100, 'cannonball');
-        RWeapon2.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-        RWeapon2.bulletLifespan = 650;
-        RWeapon2.bulletSpeed = 600;
-        RWeapon2.fireRate = 10;
-        RWeapon2.bulletAngleVariance = 10;
-        RWeapon2.bulletCollideWorldBounds = false;
-        RWeapon2.bulletWorldWrap = true;
-        RWeapon2.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, more aft
-      break;
-      default://dhow
-        var FWeapon = this.game.add.weapon(100, 'cannonball');
-        FWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-        FWeapon.bulletLifespan = 650;
-        FWeapon.bulletSpeed = 250; //TODO: figure out the appropriate speed with the ship's speed
-        FWeapon.bulletInheritSpriteSpeed = true;
-        FWeapon.fireRate = 10;
-        FWeapon.bulletAngleVariance = 3;
-        FWeapon.bulletCollideWorldBounds = false;
-        FWeapon.bulletWorldWrap = true;
-        FWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, near the bow
-        //TODO: give the weapon tothe dhow
-    }
-  }
 
   function randTreasure(numRandTreasure, wind){
     var chance = Math.random() * Math.random(); //something between 0 and 1, but likely very small
@@ -1533,6 +1434,24 @@ function playerHitIsland(ship, island){
     game.physics.arcade.overlap(kraken, weapon2.bullets, moveKraken);
     enemies.add(kraken);
     //TODO: add tentacles
+    var tentacles = this.game.add.group();
+    ETentacle1 = new ship(this.game.add.sprite(this.game.width, Math.random() * this.game.height, 'tentacles'));
+    ETentacle2 = new ship(this.game.add.sprite(this.game.width, Math.random() * this.game.height, 'tentacles'));
+    tentacles.add(ETentacle1);
+    tentacles.add(ETentacle2);
+    WTentacle1 = new ship(this.game.add.sprite(0, Math.random() * this.game.height, 'tentacles'));
+    WTentacle2 = new ship(this.game.add.sprite(0, Math.random() * this.game.height, 'tentacles'));
+    tentacles.add(WTentacle1);
+    tentacles.add(WTentacle2);
+    STentacle1 = new ship(this.game.add.sprite(Math.random() * this.game.width, this.game.height, 'tentacles'));
+    STentacle2 = new ship(this.game.add.sprite(Math.random() * this.game.width, this.game.height, 'tentacles'));
+    tentacles.add(STentacle1);
+    tentacles.add(STentacle2);
+    NTentacle1 = new ship(this.game.add.sprite(Math.random() * this.game.height, 0, 'tentacles'));
+    NTentacle2 = new ship(this.game.add.sprite(Math.random() * this.game.height, 0, 'tentacles'));
+    tentacles.add(NTentacle1);
+    tentacles.add(NTentacle2);
+
   }
 
   function moveKraken(kraken, sprite){
@@ -1541,6 +1460,7 @@ function playerHitIsland(ship, island){
     if (kraken.health <= 0){
       spawnTresure(kraken.x, kraken.y, 16);
       kraken.kill();
+      tentacles.killAll();
       this.wave++;
     } else {
         //var placeArray = findGoodPlace(Math.Random() * this.width, Math.random() * this.height, this.islands);
