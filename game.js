@@ -900,6 +900,7 @@ function whiteCapHitShip(ship, whitecap){
 function playerHitIsland(ship, island){
     //ship.damage(1);
     player1.health--;
+    player1.resetKills();
     //TODO: add sound for when the player is hit
     //TODO: add "explosion" of water/sand pixels?
     //console.log("We've been hit, Captain! " + ship.health);
