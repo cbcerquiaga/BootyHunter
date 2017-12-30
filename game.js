@@ -13,6 +13,7 @@ var score = 0;
 var fireButtonHeld = 0;
 var treasureMinVal = {'silverCoin': 10, 'goldCoin': 80, 'emerald': 100, 'purpleGem': 150, 'diamond': 0};
 var numRandTreasure = 0;
+var alreadyTreasure = false;
 
 //wind global variables
 var wind = 'S'; //the direction the wind is coming from. N means the wind blows north to south, N,S,E,W
@@ -53,6 +54,10 @@ GameState.prototype.preload = function() {
     this.game.load.image('diamond', 'assets/diamond.png');
     this.game.load.image('kraken', 'assets/Kraken.png');
     this.game.load.spritesheet('tentacle', 'assets/tentacles.png', 38, 8);
+    this.game.load.image('seagull', 'assets/seagull.png');
+    this.game.load.image('pelican', 'assets/pelican.png');
+    this.game.load.image('albatross', 'assets/albatross.png');
+    this.game.load.image('parrot', 'assets/parrot.png');
     console.log("Hello world");
 };
 
@@ -91,6 +96,10 @@ GameState.prototype.create = function() {
     //creates whitecaps group
     this.whitecaps = this.game.add.group();
     this.whitecaps.enableBody = true;
+
+    //creates powerups group
+    this.powerups = this.game.add.group();
+    this.powerups.enableBody = true;
 
     //creates enemies group
     this.enemies = this.game.add.group();
@@ -221,6 +230,8 @@ GameState.prototype.update = function () {
   game.physics.arcade.collide(this.treasures, this.enemies);
   game.physics.arcade.collide(this.treasures, this.islands);
 
+  game.physics.arcade.overlap(player1.sprite, this.powerups, collectPowerUp);
+
   //  Collide the player and enemy ships with the islands
   game.physics.arcade.collide(player1.sprite, this.islands, playerHitIsland);
   game.physics.arcade.collide(this.enemies, this.islands, enemyHitIsland);
@@ -279,11 +290,12 @@ GameState.prototype.update = function () {
   }
 
   //keeps a steady flow of whitecaps on the screen
-  generateWhitecaps(1, 45, this.whitecaps, this.wind);
+  generateWhitecaps(45, this.whitecaps, this.wind);
   //console.log(player1.getKills());
 
   //randomly adds powerups
-  //randomPowerUp();
+  this.alreadyTreasure = randomPowerUp(this.powerups, this.alreadyTreasure);
+
   //washes up treasure once per wave
   if (numRandTreasure < this.wave){
     //console.log("We need more treasure!");
@@ -299,7 +311,7 @@ GameState.prototype.update = function () {
     var enemy = this.enemies.children[i];
     var oldXSpeed = enemy.body.velocity.x;
     var oldYSpeed = enemy.body.velocity.y;
-      console.log(enemy + " in loop");
+      //console.log(enemy + " in loop");
       if (enemy.type === 'gunboat'){
         enemy.frame = squareSailCheckWind(enemy.angle, this.wind); //figure out the ship's orientation
         enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'gunboat'); //adjust the sprite accordingly
@@ -696,6 +708,18 @@ function generateEnemies(waveDifficulty, numEnemies, wind, enemies, isFirstWave)
     }
   }
 
+  function collectPowerUp(player, powerup){
+    var type = powerup.key;
+    switch(type){
+      case 'seagull': player1.addHealth(1); break;
+      case 'pelican': player1.addHealth(6); break;
+      case 'parrot': player1.sprite.health = "invincible"; break; //TODO: make this work
+      default://albatross
+      //TODO: add boarding pirate function
+    }
+    powerup.kill();
+  }
+
 
 function generateIslands(width, height, maxIslands, maxSize, tank, islands) {
   var numIslands = Math.random() * maxIslands;
@@ -745,12 +769,11 @@ function createIsland(x, y, radius1, radius2) {
 }
 
 //implements whitecaps, which are ocean waves that tell the player where the wind is coming from
-function generateWhitecaps(numWhiteCaps, speed, whitecaps, wind){
+function generateWhitecaps(speed, whitecaps, wind){
   var makeOrNot = Math.random()>0.02?false:true; //keeps the screen from being completely full of them
    if (makeOrNot){
     switch(wind){//find the wind direction
       case 'N':
-      for (var i = 0; i < numWhiteCaps; i++){
           game.time.events.add(Math.random() * 10000, function(){
             var x = Math.random() * this.width;
             var y = 0;
@@ -764,10 +787,8 @@ function generateWhitecaps(numWhiteCaps, speed, whitecaps, wind){
             whitecap = initializeWhitecap(whitecap, angle); //add whitecap, correct angle
             whitecaps.add(whitecap);
           });
-      }
       break;
       case 'S':
-      for (var i = 0; i < numWhiteCaps; i++){
           game.time.events.add(Math.random() * 10000, function(){
             var x = Math.random() * this.width;
             var y = this.height;
@@ -781,10 +802,8 @@ function generateWhitecaps(numWhiteCaps, speed, whitecaps, wind){
             whitecap = initializeWhitecap(whitecap, angle); //add whitecap, correct angle
             whitecaps.add(whitecap);
           });
-        }
       break;
       case 'W':
-      for (var i = 0; i < numWhiteCaps; i++){
           game.time.events.add(Math.random() * 10000, function(){
             var x = 0;
             var y = Math.random() * this.height;
@@ -798,10 +817,8 @@ function generateWhitecaps(numWhiteCaps, speed, whitecaps, wind){
             whitecap = initializeWhitecap(whitecap, angle); //add whitecap, correct angle
             whitecaps.add(whitecap);
           });
-        }
         break;
       default: //east
-      for (var i = 0; i < numWhiteCaps; i++){
           game.time.events.add(Math.random() * 10000, function(){
             var x = this.width;
             var y = Math.random() * this.height;
@@ -815,8 +832,7 @@ function generateWhitecaps(numWhiteCaps, speed, whitecaps, wind){
             whitecap = initializeWhitecap(whitecap, angle); //add whitecap, correct angle
             whitecaps.add(whitecap);
     });//end of delay
-  }//end of loop
-}//end of switch
+  }//end of switch
 }//end of conditional
 
 function initializeWhitecap(whitecap, angle){
@@ -837,6 +853,68 @@ function initializeWhitecap(whitecap, angle){
 }
 
 }
+
+  //creates a randomly selected powerup which will fly around the screen
+  function randomPowerUp(powerups, alreadyTreasure){
+    if (!alreadyTreasure){
+      var randVal = Math.random() * Math.random();
+      if (randVal > 0.94){//TODO: balance this
+        var powerup;
+        var side = Math.random();
+        if (randVal < 0.97){ //1 health, 50% chance
+          powerup = initializePowerup('seagull', side);
+        } else if (randVal < 0.98){ //full health
+          powerup = initializePowerup('pelican', side);
+        } else if (randVal <0.99){ //invincibility
+          powerup = initializePowerup('parrot', side);
+        } else { //boarding pirate
+          powerup = initializePowerup('albatross', side);
+        }
+        powerups.add(powerup);
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
+
+    function initializePowerup(type, side){
+      var powerup;
+      var x, y, angle, xSpeed, ySpeed = 0;
+      if (side < 0.25){ //north
+        x = Math.random() * this.width;
+        y = 0;
+        angle = 90;
+        ySpeed = 45;
+      } else if (side < 0.5){ //west
+        x = 0;
+        y = Math.random() * this.height;
+        angle = 0;
+        xSpeed = 45;
+      } else if (0.75){ //south
+        x = Math.random() * this.width;
+        y = this.height;
+        angle = -90;
+        ySpeed = -45;
+      } else { //east
+        x = this.width;
+        y = Math.random() * this.height;
+        angle = 180;
+        xSpeed = -45;
+      }
+      powerup = this.game.add.sprite(x, y, type);
+      this.game.physics.enable(powerup, Phaser.Physics.ARCADE);
+      powerup.body.collideWorldBounds = false;
+      powerup.enableBody = true;
+      powerup.anchor.setTo(0.5, 0.5);
+      powerup.body.velocity.x = xSpeed;
+      powerup.body.velocity.y = ySpeed;
+      powerup.angle = angle;
+      return powerup;
+    }
+  }
+
 
 
 
@@ -883,7 +961,6 @@ function whiteCapHitIsland(island, whitecap){
     //var explosion = explosions.getFirstExists(false);
     //explosion.play('whitecapSound', 10, false, true);
     //explosion_sound.play("",0,.5,false,true);
-//  generateWhitecaps(1,45, this.whitecaps);
 }
 
 function whiteCapHitShip(ship, whitecap){
@@ -893,7 +970,6 @@ function whiteCapHitShip(ship, whitecap){
     //var explosion = explosions.getFirstExists(false);
     //explosion.play('whitecapSound', 10, false, true);
     //explosion_sound.play("",0,.5,false,true);
-//  generateWhitecaps(1,45, this.whitecaps);
 }
 
 //damages the ship, after crashing into an island

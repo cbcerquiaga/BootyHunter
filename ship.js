@@ -34,4 +34,8 @@ var ship = function (_sprite) {
     this.addScore = function(pickup){
       this.score = this.score + pickup;
     }
+
+    this.addHealth = function(value){
+      this.health += value;
+    }
 }
