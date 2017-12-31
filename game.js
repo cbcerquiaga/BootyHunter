@@ -176,6 +176,16 @@ GameState.prototype.create = function() {
     this.weapon2.bulletCollideWorldBounds = false;
     this.weapon2.bulletWorldWrap = true;
     this.weapon2.trackSprite(player1.sprite, 0, 0, false);//TODO: shift over to actual position of gun
+    //boarding pirate, can only be used when hasPirate === true
+    //TODO: make the andle point towards the nearest enemy
+    this.boarder = this.game.add.weapon(1, 'parrot'); //TODO: add pirate sprite and animation
+    this.boarder.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+    this.boarder.bulletLifespan = 650;
+    this.boarder.bulletSpeed = 100;
+    this.boarder.bulletInheritSpriteSpeed = true;
+    this.boarder.bulletCollideWorldBounds = false;
+    this.boarder.bulletWorldWrap = true;
+    this.boarder.trackSprite(player1.sprite, 0, 0, false);
 
     // Enable physics on the ship
     this.game.physics.enable(player1.sprite, Phaser.Physics.ARCADE);
@@ -216,6 +226,7 @@ GameState.prototype.create = function() {
 GameState.prototype.update = function () {
     this.weapon.fireAngle = player1.sprite.angle + 90; //make the shots fire sideways
     this.weapon2.fireAngle = player1.sprite.angle - 90;
+    this.boarder.fireAngle = player1.sprite.angle;//TODO: point towards nearest enemy
   //collides whitecaps with the world
   game.physics.arcade.overlap(player1.sprite, this.whitecaps, whiteCapHitShip);
   game.physics.arcade.overlap(this.islands, this.whitecaps, whiteCapHitIsland);
@@ -223,8 +234,10 @@ GameState.prototype.update = function () {
 
   game.physics.arcade.overlap(this.islands, this.weapon.bullets, islandWasShot);
   game.physics.arcade.overlap(this.islands, this.weapon2.bullets, islandWasShot);
+  game.physics.arcade.overlap(this.islands, this.boarder.bullets, islandWasShot);
   game.physics.arcade.overlap(this.enemies, this.weapon.bullets, enemyWasShot);
   game.physics.arcade.overlap(this.enemies, this.weapon2.bullets, enemyWasShot);
+  game.physics.arcade.overlap(this.enemies, this.boarder.bullets, enemyBoarded);
 
   game.physics.arcade.overlap(player1.sprite, this.treasures, collectTreasure);
   game.physics.arcade.collide(this.treasures, this.enemies);
@@ -246,9 +259,8 @@ GameState.prototype.update = function () {
 
   //score
   var scoreString = player1.getScore().toString();
-  var scoreText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#FFF' });
-  scoreText.text = scoreString;
-
+  this.scoreText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#FFF' });
+  this.scoreText.text = scoreString;
 
 
   if (this.enemies.countLiving() <= 0){ //all enemies are dead, the wave is over
@@ -516,13 +528,12 @@ GameState.prototype.update = function () {
       player1.sprite.frame = this.wake;
 
     }  else if (this.input.keyboard.isDown(Phaser.Keyboard.DOWN) || this.input.keyboard.isDown(Phaser.Keyboard.S)) {
-
-		// break...
-      //  player1.sprite.body.acceleration.setTo(0, 0);
-        // player1.sprite.body.velocity.setTo(0, 0);
-
-        // Show the frame from the spritesheet with the engine off
-      //  player1.sprite.frame = 0;
+      //console.log("pressing DOWN " + player1.getPirate());
+          if (player1.getPirate()){
+            //console.log("prepare the boarding party!");
+            this.boarder.fire();
+            player1.removePirate();
+          }
 
 	} else {
         // Otherwise, stop thrusting
@@ -544,19 +555,6 @@ GameState.prototype.update = function () {
         this.fireButtonHeld = 0;
   }
 
-  //modifies weapon effectiveness based on the number of playerKills
-  /*if (playerKills > 14){//maybe 34 and 100 instead of 14 and 41?
-    this.weapon.fireLimit = 41;
-    this.weapon2.fireLimit = 41;
-  } else {
-    this.weapon.fireLimit = 3* (playerKills + 1);
-    this.weapon2.fireLimit = 3 * (playerKills + 1);
-  }
-  //since both weapons fire at the same time, we only need to check the one weapon's shots
-  if (this.weapon.shots === this.weapon.fireLimit){
-    game.time.events.add(3000, this.weapon.resetShots());
-    game.time.events.add(3000, this.weapon2.resetShots());
-  }*/
   if (player1.getKills() >= 10){
     this.weapon.bulletLifespan = 650;
     this.weapon2.bulletLifespan = 650;
@@ -708,6 +706,13 @@ function generateEnemies(waveDifficulty, numEnemies, wind, enemies, isFirstWave)
     }
   }
 
+  function enemyBoarded(enemy, boarder){
+    boarder.kill();
+    enemy.kill();
+    player1.addKill();
+    //TODO: spawn and then immediately collect treasure
+  }
+
   function collectPowerUp(player, powerup){
     var type = powerup.key;
     switch(type){
@@ -715,7 +720,8 @@ function generateEnemies(waveDifficulty, numEnemies, wind, enemies, isFirstWave)
       case 'pelican': player1.addHealth(6); break;
       case 'parrot': player1.sprite.health = "invincible"; break; //TODO: make this work
       default://albatross
-      //TODO: add boarding pirate function
+        player1.addPirate();
+    //  console.log("The player has a pirate? " + player1.getPirate());
     }
     powerup.kill();
   }
@@ -861,8 +867,8 @@ function initializeWhitecap(whitecap, angle){
       if (randVal > 0.94){//TODO: balance this
         var powerup;
         var side = Math.random();
-        if (randVal < 0.97){ //1 health, 50% chance
-          powerup = initializePowerup('seagull', side);
+        if (randVal > 0.97){ //1 health, 50% chance, 0.97 normal, .2 for testing
+          powerup = initializePowerup('seagull', side);//seagull
         } else if (randVal < 0.98){ //full health
           powerup = initializePowerup('pelican', side);
         } else if (randVal <0.99){ //invincibility

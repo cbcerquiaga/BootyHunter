@@ -5,6 +5,7 @@ var ship = function (_sprite) {
     this.health = 6;
     this.kills = 0;
     this.score = 0;
+    this.hasPirate = false; //true for testing
     this.sprite = _sprite;
     this.sprite.anchor.setTo(0.5, 0.5);
     this.sprite.angle = -90;
@@ -36,6 +37,22 @@ var ship = function (_sprite) {
     }
 
     this.addHealth = function(value){
+      if ((this.health + this.value) >= 6){
+        this.health = 6;
+      } else {
       this.health += value;
+      }
+    }
+
+    this.addPirate = function(){
+      this.hasPirate = true;
+    }
+
+    this.removePirate = function(){
+      this.hasPirate = false;
+    }
+
+    this.getPirate = function(){
+      return this.hasPirate;
     }
 }
