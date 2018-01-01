@@ -58,6 +58,7 @@ GameState.prototype.preload = function() {
     this.game.load.image('pelican', 'assets/pelican.png');
     this.game.load.image('albatross', 'assets/albatross.png');
     this.game.load.image('parrot', 'assets/parrot.png');
+    this.game.load.image('gameOver', 'assets/gameOver.png');
     console.log("Hello world");
 };
 
@@ -66,6 +67,7 @@ GameState.prototype.create = function() {
     // Set stage background color
 //    this.game.stage.backgroundColor = 0x111111;
   var scoreIndicator = this.game.add.sprite(16, 22, 'treasureChest');
+  this.scoreText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#FFF' });
 
   //TODO: remove redundant code
   this.numEnemies = 2;
@@ -259,7 +261,6 @@ GameState.prototype.update = function () {
 
   //score
   var scoreString = player1.getScore().toString();
-  this.scoreText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#FFF' });
   this.scoreText.text = scoreString;
 
 
@@ -267,25 +268,24 @@ GameState.prototype.update = function () {
     //sets up the initial wave: randomizes the wind and generates 2 gunboats
     if (this.wave === 0){
       this.wave = 1;
-      this.waveDifficulty = 2;
-      generateEnemies(this.waveDifficulty, 2, this.wind, this.enemies, true);
-    } else if ((this.wave % 5 === 0) || this.wave >= 50){ //boss wave
+      generateEnemies(this.wave, 2, this.wind, this.enemies, true);
+    } else if (this.wave === 5 || this.wave === 15 || this.wave === 25 || this.wave === 35 || this.wave === 45 || this.wave >= 55){ //boss wave
       if (this.allBosses.length - 1 <= this.killedBosses.length){
         this.killedBosses = [];
       }
       //TODO: implement this with a hashmap for random access rather than fixed order
       for (var i = 0; i < this.allBosses.length; i++){
-        var boss = this.allBosses[i];
-        if (this.allBosses[i], this.killedBosses.indexOf(boss) === -1){
-          bossWave(boss, this.weapon, this.weapon2, this.enemies);
+        var bossType = this.allBosses[i];
+        if (this.allBosses[i], this.killedBosses.indexOf(bossType) === -1){
+          var boss = bossWave(bossType);
+          this.enemies.add(boss);
         }
       }
     } else {
       this.wave++;
-      this.waveDifficulty = this.waveDifficulty * 1.5;
       this.numEnemies += Math.round(1.5 * this.wave);
-      console.log("Wave: " + this.wave + " Difficulty: " + this.waveDifficulty + "NumEnemies: " + this.numEnemies);
-      generateEnemies(Math.round(this.waveDifficulty), this.numEnemies, this.wind, this.enemies, false);
+      console.log("Wave: " + this.wave + "NumEnemies: " + this.numEnemies);
+      generateEnemies(this.wave, this.numEnemies, this.wind, this.enemies, false);
     }
       var randWind = Math.random();
       if (randWind < 0.25){
@@ -576,12 +576,13 @@ GameState.prototype.update = function () {
 
 
   //changes the color of the ocean depending on the health of the player.
-  if(player1.health < 1) {
-    player1.health = 1;
+  if(player1.health < 0) {
+    player1.health = 0;
   }
   switch(player1.health){
     case 0:
       console.log("You'd be dead if this game was finished");//run game over sequence...show score, kills ,wave,
+      gameOverSequence(player1.getScore(), this.wave, player1.getKills(), this.bossesKilled);
       //maybe a fun historically accurate pirate fact too
       break;
     case 1:
@@ -623,7 +624,7 @@ GameState.prototype.update = function () {
 
 };
 
-function generateEnemies(waveDifficulty, numEnemies, wind, enemies, isFirstWave){
+function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
 //  console.log(wind + " wind in generateEnemies");
   var enemy;
   //TODO: figure out if this is redundant or efficient
@@ -639,7 +640,7 @@ function generateEnemies(waveDifficulty, numEnemies, wind, enemies, isFirstWave)
     //console.log("in the loop: " + enemies.countLiving());
     //TODO: find a way to weight the selection to favor a certain type of enemy if one of that type has already been added to the wave
       var shipChosen = false;
-      if ((waveDifficulty) >= 10 && !shipChosen){ //difficulty value of the man o' war and dhow
+      if ((wave) >= 4 && !shipChosen){ //difficulty value of the man o' war and dhow
         var useThisSprite = Math.random()>0.5?true:false; //TODO: balance frequency of selecting hardest available enemy
         if (useThisSprite){
           shipChosen = true;
@@ -655,13 +656,13 @@ function generateEnemies(waveDifficulty, numEnemies, wind, enemies, isFirstWave)
           }
         }
     }
-    if ((waveDifficulty) >= 5 && !shipChosen){
+    if ((waveDifficulty) >= 2 && !shipChosen){
       var useThisSprite = Math.random()>0.5?true:false;//TODO: balance freequency of selecting hardest available enemy
       if (useThisSprite){
         shipChosen = true;
         enemy = initializeEnemy('normal', wind);
         enemies.add(enemy);
-        i += 5;
+        i += 2;
       }
     }
     if (!shipChosen){//no other ship was chosen and/or the remaining difficulty value is too low
@@ -691,12 +692,15 @@ function generateEnemies(waveDifficulty, numEnemies, wind, enemies, isFirstWave)
   }
 
   function enemyWasShot(enemy, bullet){
-    console.log("this.treasures in enemyWasShot: " + this.treasures);
+    //console.log("this.treasures in enemyWasShot: " + this.treasures);
     bullet.kill();
     enemy.health--;
     console.log("bang! " + enemy.health);
     //TODO: add explosion
     //play explosion sound
+    if (enemy.type === 'kraken' && enemy.health > 0){
+      moveKraken(enemy);
+    }
 
     if (enemy.health <= 0){
       spawnTreasure(enemy.x, enemy.y, 4);//spawn treasure
@@ -867,14 +871,14 @@ function initializeWhitecap(whitecap, angle){
       if (randVal > 0.94){//TODO: balance this
         var powerup;
         var side = Math.random();
-        if (randVal > 0.97){ //1 health, 50% chance, 0.97 normal, .2 for testing
+        if (randVal > 0.97){ //1 health 0.97 normal, .2 for testing
           powerup = initializePowerup('seagull', side);//seagull
-        } else if (randVal < 0.98){ //full health
-          powerup = initializePowerup('pelican', side);
-        } else if (randVal <0.99){ //invincibility
-          powerup = initializePowerup('parrot', side);
-        } else { //boarding pirate
+        } else if (randVal < 0.98){ //boarding pirate
           powerup = initializePowerup('albatross', side);
+        } else if (randVal < 0.99){ //invincibility
+          powerup = initializePowerup('parrot', side);
+        } else { //full health
+          powerup = initializePowerup('pelican', side);
         }
         powerups.add(powerup);
         return true;
@@ -1603,17 +1607,19 @@ function playerHitIsland(ship, island){
 
   //calls the appropriate functions for each boss depending on what string is passed in
   //TODO: add otehr bosses
-  function bossWave(type, weapon, weapon2, enemies){
+  function bossWave(type){
     console.log(type);
+    var boss;
     switch(type){
-      case 'ghost': //ghostShip(); break;
+      case 'ghost': // boss = ghostShip(); break;
       default://kraken
-      releaseKraken(weapon, weapon2, enemies);
+      boss = releaseKraken();
     }
+    return boss;
   }
 
   //initializes the kraken boss
-  function releaseKraken(weapon, weapon2, enemies){
+  function releaseKraken(){
     console.log("RELEASE THE KRAKEN");
     //var placeArray = findGoodPlace(Math.Random() * this.width, Math.random() * this.height, this.islands);
     var x = Math.random() * this.width;
@@ -1625,34 +1631,31 @@ function playerHitIsland(ship, island){
     kraken.anchor.setTo(0.5, 0.5);
     kraken.body.immovable = true;
     kraken.health = 6;
-    game.physics.arcade.collide(kraken, player1.sprite, moveKraken);
-    game.physics.arcade.overlap(kraken, weapon.bullets, moveKraken);
-    game.physics.arcade.overlap(kraken, weapon2.bullets, moveKraken);
-    enemies.add(kraken);
+    return kraken;
     //TODO: add tentacles
   }
 
-  function moveKraken(kraken, sprite){
+  function moveKraken(kraken){
     console.log("We've moved to " + kraken.x + ", " + kraken.y);
-    kraken.health--;
-    if (kraken.health <= 0){
-      spawnTresure(kraken.x, kraken.y, 16);
-      kraken.kill();
-      this.wave++;
-    } else {
-        //var placeArray = findGoodPlace(Math.Random() * this.width, Math.random() * this.height, this.islands);
-      kraken.x = Math.random() * this.width;
-      kraken.y = Math.random() * this.height;
-    }
+    //var placeArray = findGoodPlace(Math.Random() * this.width, Math.random() * this.height, this.islands);
+    kraken.x = Math.random() * this.width;
+    kraken.y = Math.random() * this.height;
   }
 
-  function gameOverSequnce(score, wave, kills, bossesKilled) {
+  function gameOverSequence(score, wave, kills, bossesKilled) {
       //TODO Explosion sprite
 
-      //TODO Kill ship
-
+      player1.sprite.kill();
+      game.paused = true;
       //TODO Change the current screen to a GameOver Screen with
       //score, wave, kills and bossesKilled
+      var gameOverScreen = this.game.add.sprite(this.width/2, this.height/2, 'gameOver');
+      gameOverScreen.anchor.setTo(0.5, 0.5);
+      var gameOverText =  game.add.text(this.width/2 - 90, this.height/4 - 20, 'GAME OVER', { fontSize: '32px', fill: '#000' });
+      var scoreText = game.add.text(this.width/2 - 300, this.height/4 + 20, "You collected " + score + " doubloons worth of treasure", { fontSize: '16px', fill: '#000' });
+      var waveText = game.add.text(this.width/2 - 300, this.height/4 + 40, "You made it to wave " + wave, { fontSize: '16px', fill: '#000' });
+      var factText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#000' });
+      var bossText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#000' });
   }
 
 
