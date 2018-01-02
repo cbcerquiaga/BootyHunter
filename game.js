@@ -8,6 +8,7 @@
 
 //global variables
 var player1;//represents playable character
+var storage1;//stores things like the wave count and the
 var width = 960, height = 650;
 var score = 0;
 var fireButtonHeld = 0;
@@ -71,19 +72,12 @@ GameState.prototype.create = function() {
 
   //TODO: remove redundant code
   this.numEnemies = 2;
-  this.wave = 0;
-  this.waveDifficulty = 2;
   //console.log("wave: " + wave + " waveDifficulty: " + waveDifficulty);
 
   //player1.kills = 0;
   //console.log("kills: " + playerKills);
 
   this.fireButtonHeld = 0;
-
-  //creates treasures group
-  this.treasures = this.game.add.group();
-  this.treasures.enableBody = true;
-  console.log("treasures after instantiation: " + this.treasures);
 
   //instantiates boss data
     this.killedBosses = new Array();
@@ -120,6 +114,8 @@ GameState.prototype.create = function() {
     var searchDirection = 'S'
     var searchDistance = 10;
     player1 = new ship(this.game.add.sprite(this.game.width/2, this.game.height/2, 'ship'));
+    var treasureGroup = this.game.add.group();
+    storage1 = new  storage(treasureGroup);
     //makes sure the ship isn't overlapping with any islands
     console.log(player1.sprite.overlap(island));
     /*for (var i = 0; i < this.islands.children.length; i++){
@@ -241,9 +237,9 @@ GameState.prototype.update = function () {
   game.physics.arcade.overlap(this.enemies, this.weapon2.bullets, enemyWasShot);
   game.physics.arcade.overlap(this.enemies, this.boarder.bullets, enemyBoarded);
 
-  game.physics.arcade.overlap(player1.sprite, this.treasures, collectTreasure);
-  game.physics.arcade.collide(this.treasures, this.enemies);
-  game.physics.arcade.collide(this.treasures, this.islands);
+  game.physics.arcade.overlap(player1.sprite, storage1.getTreasures(), collectTreasure);
+  game.physics.arcade.collide(storage1.getTreasures(), this.enemies);
+  game.physics.arcade.collide(storage1.getTreasures(), this.islands);
 
   game.physics.arcade.overlap(player1.sprite, this.powerups, collectPowerUp);
 
@@ -266,10 +262,10 @@ GameState.prototype.update = function () {
 
   if (this.enemies.countLiving() <= 0){ //all enemies are dead, the wave is over
     //sets up the initial wave: randomizes the wind and generates 2 gunboats
-    if (this.wave === 0){
-      this.wave = 1;
-      generateEnemies(this.wave, 2, this.wind, this.enemies, true);
-    } else if (this.wave === 5 || this.wave === 15 || this.wave === 25 || this.wave === 35 || this.wave === 45 || this.wave >= 55){ //boss wave
+    if (storage1.getWave() === 0){
+      storage1.nextWave();
+      generateEnemies(storage1.getWave(), 2, this.wind, this.enemies, true);
+    } else if (storage1.getWave() === 5 || storage1.getWave() === 15 || storage1.getWave() === 25 || storage1.getWave() === 35 || storage1.getWave() === 45 || storage1.getWave() >= 55){ //boss wave
       if (this.allBosses.length - 1 <= this.killedBosses.length){
         this.killedBosses = [];
       }
@@ -282,10 +278,10 @@ GameState.prototype.update = function () {
         }
       }
     } else {
-      this.wave++;
-      this.numEnemies += Math.round(1.5 * this.wave);
-      console.log("Wave: " + this.wave + "NumEnemies: " + this.numEnemies);
-      generateEnemies(this.wave, this.numEnemies, this.wind, this.enemies, false);
+      storage1.nextWave();
+      this.numEnemies += Math.round(1.5 * storage1.getWave());
+      console.log("Wave: " + storage1.getWave() + "NumEnemies: " + this.numEnemies);
+      generateEnemies(storage1.getWave(), this.numEnemies, this.wind, this.enemies, false);
     }
       var randWind = Math.random();
       if (randWind < 0.25){
@@ -309,12 +305,12 @@ GameState.prototype.update = function () {
   this.alreadyTreasure = randomPowerUp(this.powerups, this.alreadyTreasure);
 
   //washes up treasure once per wave
-  if (numRandTreasure < this.wave){
+  if (numRandTreasure < storage1.getWave()){
     //console.log("We need more treasure!");
     var treasure = randTreasure(numRandTreasure, this.wind);
     if (treasure != undefined){
       numRandTreasure++;
-      this.treasures.add(treasure);
+      storage1.addTreasure(treasure);
     }
   }
 
@@ -582,7 +578,7 @@ GameState.prototype.update = function () {
   switch(player1.health){
     case 0:
       console.log("You'd be dead if this game was finished");//run game over sequence...show score, kills ,wave,
-      gameOverSequence(player1.getScore(), this.wave, player1.getKills(), this.bossesKilled);
+      gameOverSequence(player1.getScore(), storage1.getWave(), player1.getKills(), this.bossesKilled);
       //maybe a fun historically accurate pirate fact too
       break;
     case 1:
@@ -692,15 +688,22 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
   }
 
   function enemyWasShot(enemy, bullet){
-    //console.log("this.treasures in enemyWasShot: " + this.treasures);
     bullet.kill();
     enemy.health--;
     console.log("bang! " + enemy.health);
     //TODO: add explosion
     //play explosion sound
-    if (enemy.type === 'kraken' && enemy.health > 0){
-      moveKraken(enemy);
-    }
+    if (enemy.type === 'kraken'){
+      if (enemy.health > 0){
+        moveKraken(enemy);
+        return 0;
+      } else {
+        spawnTreasure(enemy.x, enemy.y, 10);
+        enemy.kill();
+        player1.addKill();
+        storage1.nextWave();
+      }
+    } else {
 
     if (enemy.health <= 0){
       spawnTreasure(enemy.x, enemy.y, 4);//spawn treasure
@@ -708,13 +711,20 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
       player1.addKill();
       //play explosion and sound
     }
+    }
   }
 
   function enemyBoarded(enemy, boarder){
+    var retVal = 0;
     boarder.kill();
+    if (enemy.type === 'kraken'){retVal = 1;}
     enemy.kill();
     player1.addKill();
-    //TODO: spawn and then immediately collect treasure
+    var booty = spawnTreasure(enemy.x, enemy.y, 6);
+    for (var i = 0; i < booty.length; i++){
+      collectTreasure(player1, booty[i]);
+    }
+    return retVal;
   }
 
   function collectPowerUp(player, powerup){
@@ -871,14 +881,16 @@ function initializeWhitecap(whitecap, angle){
       if (randVal > 0.94){//TODO: balance this
         var powerup;
         var side = Math.random();
-        if (randVal > 0.97){ //1 health 0.97 normal, .2 for testing
-          powerup = initializePowerup('seagull', side);//seagull
-        } else if (randVal < 0.98){ //boarding pirate
-          powerup = initializePowerup('albatross', side);
-        } else if (randVal < 0.99){ //invincibility
-          powerup = initializePowerup('parrot', side);
-        } else { //full health
-          powerup = initializePowerup('pelican', side);
+        if (randVal > 0.96){ //1 health 0.97 normal, .2 for testing
+          randVal = Math.random();
+        if (randVal < 0.5){ //50% chance
+          powerup = initializePowerup('seagull', side);//seagull, 1 health
+        } else if (randVal < 0.65){ //15% chance
+          powerup = initializePowerup('albatross', side);// albatross, boarding pirate
+        } else if (randVal < 0.80){ //15% chance
+          powerup = initializePowerup('parrot', side);//parrot, invincibility
+        } else {//20% chance
+          powerup = initializePowerup('pelican', side);//pelican, full health
         }
         powerups.add(powerup);
         return true;
@@ -917,6 +929,7 @@ function initializeWhitecap(whitecap, angle){
       this.game.physics.enable(powerup, Phaser.Physics.ARCADE);
       powerup.body.collideWorldBounds = false;
       powerup.enableBody = true;
+      powerup.lifespan = 30000;
       powerup.anchor.setTo(0.5, 0.5);
       powerup.body.velocity.x = xSpeed;
       powerup.body.velocity.y = ySpeed;
@@ -924,6 +937,7 @@ function initializeWhitecap(whitecap, angle){
       return powerup;
     }
   }
+}
 
 
 
@@ -1016,33 +1030,30 @@ function playerHitIsland(ship, island){
     y += ((Math.random()>0.5?-1:1) * (Math.random() * 20));//shifts y between -20 and 20 pixels
     var numTreasure = Math.random() * maxTreasure; //spawn between 1 and the max number treasures
     var treasureType = 0;
-    var tempTreasures = new Array();
     for (var i = 0; i < numTreasure; i++){
       treasureType = Math.random();
       if (treasureType < 0.04){ //4% chance
         var treasure = createTreasure('diamond', x, y);//spawn a diamond
-        tempTreasures.push(treasure);
+        storage1.addTreasure(treasure);
       } else if (treasureType < 0.12){ //8% chance
         var treasure = createTreasure('purpleGem', x, y);//spawn a purple gem
-        tempTreasures.push(treasure);
+        storage1.addTreasure(treasure);
       } else if (treasureType < 0.27){ //15% chance
         var treasure = createTreasure('emerald', x, y); //spawn an emerald
-        tempTreasures.push(treasure);
+        storage1.addTreasure(treasure);
       } else if (treasureType < 0.52){ //25% chance
         var treasure = createTreasure('goldCoin', x, y);//spawn a gold coin
-        tempTreasures.push(treasure);
+        storage1.addTreasure(treasure);
       } else { //nearly half the time
         var treasure = createTreasure('silverCoin', x, y);//spawn a silver coin
-        tempTreasures.push(treasure);
+        storage1.addTreasure(treasure);
       }
     }
     game.physics.arcade.overlap(player1.sprite, treasure, collectTreasure);
-    return tempTreasures;
     //console.log(tempTreasures);
   }
 
   function createTreasure(type, x, y){
-    console.log("this.treasures in createTreasure: " + this.treasures);
     var treasure = this.game.add.sprite(x, y, type);
     treasure.anchor.setTo(0.5, 0.5);
     this.game.physics.enable(treasure, Phaser.Physics.ARCADE);
