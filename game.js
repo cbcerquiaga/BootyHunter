@@ -31,6 +31,7 @@ var enemyUpWindSpeed = {'gunboat': 35, 'manowar': 100, 'normal': 150, 'dhow': 25
 var enemyHealth = {'gunboat': 1, 'manowar': 12, 'normal': 6, 'dhow': 3};
 var enemyDifficulty = {'gunboat': 1, 'manowar': 10, 'normal': 5, 'dhow': 10};
 var enemyTurnRate = {'gunboat': 120, 'manowar': 135, 'normal': 180, 'dhow': 240};
+var enemyTreasureDrop = {'gunboat': 4, 'manowar': 8, 'normal': 6, 'dhow': 8}
 var waveDifficulty;
 
 //-----------------------------------------------------------------------------
@@ -251,7 +252,7 @@ GameState.prototype.update = function () {
   game.physics.arcade.collide(player1.sprite, this.islands, playerHitIsland);
   game.physics.arcade.collide(this.enemies, this.islands, enemyHitIsland);
 
-  game.physics.arcade.collide(player1.sprite, this.enemies, shipsCollided);//TODO: add function to check if the player is invincible
+  game.physics.arcade.collide(player1.sprite, this.enemies, playerHitShip);//TODO: add function to check if the player is invincible
   game.physics.arcade.collide(this.enemies, this.enemies, shipsCollided);
 
   //console.log(player1.sprite.body.velocity.x + " " + player1.sprite.body.velocity.y);
@@ -366,6 +367,23 @@ GameState.prototype.update = function () {
     }
   }
 
+  //console.log("I am invincible in the update function! " + player1.getIsInvincible());
+  if (player1.getIsInvincible()){
+    console.log("I cannot hurt again until " + player1.getInvincibilityTime());
+    if (player1.getInvincibilityTime() > 0){
+      player1.lessTime();
+    } else {
+      player1.toggleInvincible();
+    }
+  }
+
+  if (player1.getHealth() === "invincible"){
+    if (player1.getRestoreOldHealthTime() > 0){
+      player1.lessRestoreOldHealthTime();
+    } else {
+      player1.restoreOldHealth();
+    }
+  }
 
   //TODO: refactor into separate method
   //checks the direction the ship is going, and checks it agianst the wind to
@@ -578,10 +596,10 @@ GameState.prototype.update = function () {
 
 
   //changes the color of the ocean depending on the health of the player.
-  if(player1.health < 0) {
-    player1.health = 0;
+  if(player1.getHealth() < 0) {
+    player1.getHealth() = 0;
   }
-  switch(player1.health){
+  switch(player1.getHealth()){
     case 0:
       console.log("You'd be dead if this game was finished");//run game over sequence...show score, kills ,wave,
       gameOverSequence(player1.getScore(), storage1.getWave(), player1.getKills(), this.bossesKilled);
@@ -740,7 +758,10 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
     switch(type){
       case 'seagull': player1.addHealth(1); break;
       case 'pelican': player1.addHealth(6); break;
-      case 'parrot': player1.sprite.health = "invincible"; break; //TODO: make this work
+      case 'parrot':
+      player1.setHealth("invincible");
+      player1.setRestoreOldHealthTime(500); //TODO: balance this
+       break;
       default://albatross
         player1.addPirate();
     //  console.log("The player has a pirate? " + player1.getPirate());
@@ -889,7 +910,7 @@ function initializeWhitecap(whitecap, angle){
       if (randVal > 0.94){//TODO: balance this
         var powerup;
         var side = Math.random();
-        if (randVal > 0.96){ //1 health 0.97 normal, .2 for testing
+        if (randVal > 0.96){ //1 health 0.96 normal, .2 for testing
           randVal = Math.random();
         if (randVal < 0.5){ //50% chance
           powerup = initializePowerup('seagull', side);//seagull, 1 health
@@ -1006,13 +1027,18 @@ function whiteCapHitShip(ship, whitecap){
 
 //damages the ship, after crashing into an island
 function playerHitIsland(ship, island){
-    //ship.damage(1);
-    player1.health--;
-    player1.resetKills();
-    //TODO: add sound for when the player is hit
-    //TODO: add "explosion" of water/sand pixels?
-    //console.log("We've been hit, Captain! " + ship.health);
+    if (player1.getIsInvincible() === false) { //We only damage the player if not invincible
+      player1.damage();
+      player1.resetKills();
+      player1.toggleInvincible();
+      console.log("I am invincible! " + player1.getIsInvincible());
+      //and then we add a timer to restore the player to a vulnerable state. The normal game timer didn't work, so I came up with this which uses update frames
+      player1.setInvincibilityTime(100); //TODO: balance this time
+      //TODO: add sound for when the player is hit
+      //TODO: add "explosion" of water/sand pixels?
+      //console.log("We've been hit, Captain! " + player1.getHealth());
   }
+}
 
   function enemyHitIsland(enemy, island){
     enemy.health--;
@@ -1025,10 +1051,41 @@ function playerHitIsland(ship, island){
     }
   }
 
+  function playerHitShip(player, ship){
+    if (player1.getHealth() === "invincible"){
+      ship.health--;
+    } else {
+      if (!player1.getIsInvincible()){ //TODO: add check for if the enemy is invincible
+      //TODO: add key to check so different bosses have different abilities
+      if ((Math.abs(player1.sprite.body.velocity.x) + Math.abs(player1.sprite.body.velocity.y) + Math.abs(ship.body.velocity.x) + Math.abs(ship.body.velocity.y) ) >= 300){
+        player1.damage();
+        player1.toggleInvincible();
+        player1.setInvincibilityTime(100);
+        ship.health--;
+        if (ship.health <= 0){
+          spawnTreasure(ship.x, ship.y, 4);//TODO: use mapped enemytreasureDrop values
+          ship.kill();
+          player1.addKill();
+        }
+      }
+    }
+    }
+  }
+
   function shipsCollided(ship1, ship2){
     if ((Math.abs(ship1.body.velocity.x) + Math.abs(ship1.body.velocity.y) + Math.abs(ship2.body.velocity.x) + Math.abs(ship2.body.velocity.y) ) >= 300){
       ship1.health--;
       ship2.health--;
+    }
+    if (ship1.health <= 0){
+      spawnTreasure(ship1.x, ship1.y, 4);//TODO: use mapped enemytreasureDrop values
+      ship1.kill();
+      player1.addKill();
+    }
+    if (ship2.health <= 0){
+      spawnTreasure(ship2.x, ship2.y, 4);//TODO: use mapped enemytreasureDrop values
+      ship2.kill();
+      player1.addKill();
     }
   }
 
@@ -1075,7 +1132,7 @@ function playerHitIsland(ship, island){
   }
 
   function collectTreasure(player, treasure){
-    switch(treasure.type){
+    switch(treasure.key){
       case 'silverCoin': player1.addScore(10); break;
       case 'goldCoin': player1.addScore(80); break;
       case 'emerald':
@@ -1544,7 +1601,7 @@ function playerHitIsland(ship, island){
         gunboat.x, gunboat.y,
         player1.sprite.x, player1.sprite.y
     );
-    console.log("Direct: " + straightDistance + " Da Gama: " + roundDistance);
+    //console.log("Direct: " + straightDistance + " Da Gama: " + roundDistance);
     var routeDirection = 'Q';
     //if one of those distances is within firing range, call a turnAndShoot() function
     if (straightDistance <= 250){

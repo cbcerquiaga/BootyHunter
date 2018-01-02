@@ -3,8 +3,12 @@
 var ship = function (_sprite) {
     const MAX_SPEED = 850;
     this.health = 6;
+    this.oldHealth = 6;
     this.kills = 0;
     this.score = 0;
+    this.isInvincible = false;
+    this.invincibilityTime = 0;
+    this.restoreOldHealthTime = 0;
     this.hasPirate = false; //true for testing
     this.sprite = _sprite;
     this.sprite.anchor.setTo(0.5, 0.5);
@@ -44,6 +48,27 @@ var ship = function (_sprite) {
       }
     }
 
+    this.getHealth = function(){
+      return this.health;
+    }
+
+    this.damage = function(){
+      if (this.health >= 0 || this.health < 0){
+        this.health--;
+      }
+    }
+
+    this.setHealth = function(value){
+      if (value === "invincible"){
+        this.oldHealth = this.health;
+      }
+      this.health = value;
+    }
+
+    this.restoreOldHealth = function(){
+      this.health = this.oldHealth;
+    }
+
     this.addPirate = function(){
       this.hasPirate = true;
     }
@@ -54,5 +79,37 @@ var ship = function (_sprite) {
 
     this.getPirate = function(){
       return this.hasPirate;
+    }
+
+    this.getIsInvincible = function(){
+      return this.isInvincible;
+    }
+
+    this.toggleInvincible = function() {
+      this.isInvincible = !this.isInvincible;
+    }
+
+    this.getInvincibilityTime = function(){
+      return this.invincibilityTime;
+    }
+
+    this.setInvincibilityTime = function(value){
+      this.invincibilityTime = value;
+    }
+
+    this.lessTime = function(){
+      this.invincibilityTime--;
+    }
+
+    this.setRestoreOldHealthTime = function(value){
+      this.restoreOldHealthTime = value;
+    }
+
+    this.getRestoreOldHealthTime = function(){
+      return this.restoreOldHealthTime;
+    }
+
+    this.lessRestoreOldHealthTime = function(){
+      this.restoreOldHealthTime--;
     }
 }
