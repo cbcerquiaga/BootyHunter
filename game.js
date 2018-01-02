@@ -8,7 +8,8 @@
 
 //global variables
 var player1;//represents playable character
-var storage1;//stores things like the wave count and the
+var storage1;//stores things like the wave count and the treasures group
+var enemyWeapons;
 var width = 960, height = 650;
 var score = 0;
 var fireButtonHeld = 0;
@@ -116,6 +117,9 @@ GameState.prototype.create = function() {
     player1 = new ship(this.game.add.sprite(this.game.width/2, this.game.height/2, 'ship'));
     var treasureGroup = this.game.add.group();
     storage1 = new  storage(treasureGroup);
+    var weaponGroup = {};
+    enemyWeapons = new enemyWeapons(weaponGroup);
+
     //makes sure the ship isn't overlapping with any islands
     console.log(player1.sprite.overlap(island));
     /*for (var i = 0; i < this.islands.children.length; i++){
@@ -553,12 +557,12 @@ GameState.prototype.update = function () {
         this.fireButtonHeld = 0;
   }
 
-  if (player1.getKills() >= 10){
+  if (player1.getKills() >= 45){
     this.weapon.bulletLifespan = 650;
     this.weapon2.bulletLifespan = 650;
   } else {
-    this.weapon.bulletLifespan = 200 + 50 * (player1.getKills());
-    this.weapon2.bulletLifespan = 200 + 50 * (player1.getKills());
+    this.weapon.bulletLifespan = 200 + 10 * (player1.getKills());
+    this.weapon2.bulletLifespan = 200 + 10 * (player1.getKills());
   }
 
     //forces the player to not hold down the fire button by reducing the fireRate
@@ -1190,7 +1194,8 @@ function playerHitIsland(ship, island){
   }
 
   function addWeapons(enemy){
-    switch(enemy.type){
+    var weaponArray = new Array();
+    switch(enemy.key){
       case 'gunboat': //TODO: balance this
         var LWeapon = this.game.add.weapon(100, 'cannonball');
         LWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
@@ -1211,6 +1216,10 @@ function playerHitIsland(ship, island){
         RWeapon.bulletCollideWorldBounds = false;
         RWeapon.bulletWorldWrap = true;
         RWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, near the back
+
+        weaponArray.push(RWeapon);
+        weaponArray.push(LWeapon);
+        enemyWeapons.addWeapon(enemy, weaponArray);
       break;
       case 'normal':
         var RWeapon = this.game.add.weapon(100, 'cannonball');
@@ -1232,6 +1241,10 @@ function playerHitIsland(ship, island){
         LWeapon.bulletCollideWorldBounds = false;
         LWeapon.bulletWorldWrap = true;
         LWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun
+
+        weaponArray.push(RWeapon);
+        weaponArray.push(LWeapon);
+        enemyWeapons.addWeapon(enemy, weaponArray);
       break;
       case 'manOwar': //four guns?
         var LWeapon1 = this.game.add.weapon(100, 'cannonball');
@@ -1273,6 +1286,12 @@ function playerHitIsland(ship, island){
         RWeapon2.bulletCollideWorldBounds = false;
         RWeapon2.bulletWorldWrap = true;
         RWeapon2.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, more aft
+
+        weaponArray.push(RWeapon1);
+        weaponArray.push(LWeapon1);
+        weaponArray.push(RWeapon2);
+        weaponArray.push(LWeapon2);
+        enemyWeapons.addWeapon(enemy, weaponArray);
       break;
       default://dhow
         var FWeapon = this.game.add.weapon(100, 'cannonball');
@@ -1285,7 +1304,8 @@ function playerHitIsland(ship, island){
         FWeapon.bulletCollideWorldBounds = false;
         FWeapon.bulletWorldWrap = true;
         FWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, near the bow
-        //TODO: give the weapon tothe dhow
+        weaponArray.push(FWeapon);
+        enemyWeapons.addWeapon(enemy, FWeapon);
     }
   }
 
@@ -1563,7 +1583,7 @@ function playerHitIsland(ship, island){
   }
 
   function turnAndShoot(enemy, targetAngle){
-    console.log("Turn rate in turn and shoot: " + enemy.TURN_RATE);
+    //console.log("Turn rate in turn and shoot: " + enemy.TURN_RATE);
     // Gradually (this.TURN_RATE) aim the missile towards the target angle
     if (this.rotation !== targetAngle) {
       // Calculate difference between the current angle and targetAngle
@@ -1585,6 +1605,11 @@ function playerHitIsland(ship, island){
       // Just set angle to target angle if they are close
       if (Math.abs(delta) < this.game.math.degToRad(enemy.TURN_RATE)) {
         enemy.rotation = targetAngle;
+        var weapon;
+        for (var i = 0; i < enemyWeapons.getWeapons(enemy).length; i++){
+          weapon = enemyWeapons.getWeapons(enemy)[i];
+          weapon.fire();
+        }
       }
   }
 
@@ -1597,7 +1622,7 @@ function playerHitIsland(ship, island){
   }
 
   function navigate(enemy, targetAngle){
-    console.log("Turn rate in navigate: " + enemy.TURN_RATE);
+    //console.log("Turn rate in navigate: " + enemy.TURN_RATE);
     if (enemy.angle != targetAngle){
       var delta = targetAngle - enemy.rotation;
       if (delta > 0){

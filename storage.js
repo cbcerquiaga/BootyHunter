@@ -1,5 +1,10 @@
 /// <reference path="phaser.min.js"/>
 /*the above line is just to help intellisense to detect auto completes. it has no meaning outside of MS visual studios*/
+
+/**
+Utility class for accessing global variables more easily in game.js. It would be
+better to make this into several classes, but this is easier.
+*/
 var storage = function (treasureGroup) {
     this.wave = 0;
     this.treasures = treasureGroup;
