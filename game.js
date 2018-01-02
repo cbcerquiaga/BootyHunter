@@ -726,9 +726,11 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
     if (enemy.type === 'kraken'){retVal = 1;}
     enemy.kill();
     player1.addKill();
-    var booty = spawnTreasure(enemy.x, enemy.y, 6);
-    for (var i = 0; i < booty.length; i++){
-      collectTreasure(player1, booty[i]);
+    var bootyLength = Math.random() * 6;
+    var booty;
+    for (var i = 0; i < bootyLength; i++){
+      booty = spawnTreasure(enemy.x, enemy.y, 1);
+      collectTreasure(player1, booty);
     }
     return retVal;
   }
@@ -1056,7 +1058,9 @@ function playerHitIsland(ship, island){
       }
     }
     game.physics.arcade.overlap(player1.sprite, treasure, collectTreasure);
-    //console.log(tempTreasures);
+
+    //only for the boarding pirate
+    return treasure;
   }
 
   function createTreasure(type, x, y){
