@@ -317,10 +317,12 @@ GameState.prototype.update = function () {
 
   for (var i = 0; i < this.enemies.countLiving(); i++){
     var enemy = this.enemies.children[i];
+    //console.log(enemy + " looping through living enemies.");
     var oldXSpeed = enemy.body.velocity.x;
     var oldYSpeed = enemy.body.velocity.y;
       //console.log(enemy + " in loop");
-      if (enemy.type === 'gunboat'){
+      if (enemy.key === 'gunboat'){
+        //console.log("it's a gunboat");
         enemy.frame = squareSailCheckWind(enemy.angle, this.wind); //figure out the ship's orientation
         enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'gunboat'); //adjust the sprite accordingly
         var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
@@ -328,7 +330,7 @@ GameState.prototype.update = function () {
         enemy.body.velocity.y = speedArray[1];
         gunBoatAI(enemy, this.wind); //the ship chases the player or runs away, turns to shoot
         avoidIslands(enemy, this.islands); //the ship tries to avoid islands
-      } else if (enemy.type === 'normal'){
+      } else if (enemy.key === 'normal'){
         enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
         enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'normal');
         var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
@@ -336,7 +338,7 @@ GameState.prototype.update = function () {
         enemy.body.velocity.y = speedArray[1];
         normalAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
-      } else if (enemy.type === 'manOwar'){
+      } else if (enemy.key === 'manOwar'){
         enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
         enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'manOwar');
         var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
@@ -344,7 +346,7 @@ GameState.prototype.update = function () {
         enemy.body.velocity.y = speedArray[1];
         manOwarAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
-      } else if (enemy.type === 'dhow'){
+      } else if (enemy.key === 'dhow'){
         enemy.frame = dhowCheckWind(enemy.angle, this.wind);
         enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'normal');
         var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
@@ -1509,7 +1511,7 @@ function playerHitIsland(ship, island){
   //TODO: fill out this stub
   //makes the gunboat perform very simple behaviors- take the shortest route to chase the player, and turn to shoot when in range
   function gunBoatAI(gunboat, wind){
-    console.log(enemy);
+    //console.log(gunboat + " in the Gunboat AI function");
     var straightDistance = game.physics.arcade.distanceBetween(player1.sprite, gunboat);//find the direct distance to the player
     //find the round the world distance to the player
     var roundDistance = ((this.width - player1.sprite.x) + (gunboat.x) + (this.height - player1.sprite.y) + (gunboat.y));
