@@ -378,7 +378,9 @@ GameState.prototype.update = function () {
   }
 
   if (player1.getHealth() === "invincible"){
+    console.log("Polly wants a cracker!");
     if (player1.getRestoreOldHealthTime() > 0){
+      console.log(player1.getRestoreOldHealthTime() + " more updates ")
       player1.lessRestoreOldHealthTime();
     } else {
       player1.restoreOldHealth();
@@ -606,23 +608,23 @@ GameState.prototype.update = function () {
       //maybe a fun historically accurate pirate fact too
       break;
     case 1:
-      if (this.game.stage.backgroundColor != 0x0d2344) {
-          this.game.stage.backgroundColor = 0x0d2344
+      if (this.game.stage.backgroundColor != 0x638e93) {
+          this.game.stage.backgroundColor = 0x638e93; //very grey sea, formerly very dark sea 0x0d2344
       }
       break;
     case 2:
-      if (this.game.stage.backgroundColor != 0x0b2c5e) {
-        this.game.stage.backgroundColor = 0x0b2c5e// dark sea, #0b2c5e
+      if (this.game.stage.backgroundColor != 0x4f878e) {
+        this.game.stage.backgroundColor = 0x4f878e //tealish grey sea, formerly dark sea, #0b2c5e
       }
       break;
     case 3:
-      if (this.game.stage.backgroundColor != 0x124375) {
-        this.game.stage.backgroundColor = 0x124375//moderately dark sea
+      if (this.game.stage.backgroundColor != 0x35717a) {
+        this.game.stage.backgroundColor = 0x35717a;//greyish teal sea, formerly 0x124375 moderately dark sea
       }
       break;
     case 4:
       if (this.game.stage.backgroundColor != 0x136875){
-        this.game.stage.backgroundColor = 0x136875//dark blue-green sea
+        this.game.stage.backgroundColor = 0x136875;//dark blue-green sea
       }
       break;
     case 5:
@@ -689,7 +691,7 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
       shipChosen = true;
       enemy = initializeEnemy('gunboat', wind);
       enemies.add(enemy);
-      i ++;
+      i++;
     }
   }
 }
@@ -826,7 +828,7 @@ function generateWhitecaps(speed, whitecaps, wind){
           game.time.events.add(Math.random() * 10000, function(){
             var x = Math.random() * this.width;
             var y = 0;
-            var angle = 0;
+            var angle = 180;
             var xSpeed = 0;
             var ySpeed = speed;
             var whitecap = this.game.add.sprite(x, y, 'whitecap');

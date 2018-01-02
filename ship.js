@@ -65,6 +65,10 @@ var ship = function (_sprite) {
       this.health = value;
     }
 
+    this.getOldHealth = function(){
+      return this.oldHealth;
+    }
+
     this.restoreOldHealth = function(){
       this.health = this.oldHealth;
     }
