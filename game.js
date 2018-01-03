@@ -119,7 +119,8 @@ GameState.prototype.create = function() {
     var treasureGroup = this.game.add.group();
     var enemies = this.game.add.group();
     enemies.enableBody = true;
-    storage1 = new  storage(treasureGroup, enemies);
+    var tentacleGroup = this.game.add.group();
+    storage1 = new storage(treasureGroup, enemies, tentacleGroup);
     var weaponGroup = {};
     enemyWeapons = new enemyWeapons(weaponGroup);
 
@@ -236,6 +237,7 @@ GameState.prototype.update = function () {
   game.physics.arcade.overlap(player1.sprite, this.whitecaps, whiteCapHitShip);
   game.physics.arcade.overlap(this.islands, this.whitecaps, whiteCapHitIsland);
   game.physics.arcade.overlap(storage1.getEnemies(), this.whitecaps, whiteCapHitShip);
+  game.physics.arcade.overlap(player1.sprite, storage1.getTentacleGroup(), tentacleGrabbedPlayer)
 
   game.physics.arcade.overlap(this.islands, this.weapon.bullets, islandWasShot);
   game.physics.arcade.overlap(this.islands, this.weapon2.bullets, islandWasShot);
@@ -281,7 +283,7 @@ GameState.prototype.update = function () {
         var bossType = this.allBosses[i];
         if (this.allBosses[i], this.killedBosses.indexOf(bossType) === -1){
           var boss = bossWave(bossType);
-          storage1.getEnemies().add(boss);
+          storage1.addEnemy(boss);
         }
       }
     } else {
@@ -290,15 +292,19 @@ GameState.prototype.update = function () {
       console.log("Wave: " + storage1.getWave() + "NumEnemies: " + this.numEnemies);
       generateEnemies(storage1.getWave(), this.numEnemies, this.wind, storage1.getEnemies(), false);
     }
-      var randWind = Math.random();
-      if (randWind < 0.25){
-        this.wind = 'N';
-      } else if (randWind < 0.5){
-        this.wind = 'S';
-      } else if (randWind < 0.75){
-        this.wind = 'W';
-      } else {
-        this.wind = 'E';
+
+      //randomizes wind once every three waves
+      if (storage1.getWave() % 3 === 0){
+        var randWind = Math.random();
+        if (randWind < 0.25){
+          this.wind = 'N';
+        } else if (randWind < 0.5){
+          this.wind = 'S';
+        } else if (randWind < 0.75){
+          this.wind = 'W';
+        } else {
+          this.wind = 'E';
+        }
       }
       //console.log(this.wind + " wind global");
     //console.log(this.wind + " wind global");
@@ -321,6 +327,10 @@ GameState.prototype.update = function () {
     }
   }
 
+  for (var i = 0; i < storage1.getTentacleGroup().children.length; i++){
+    var tentacle = storage1.getTentacleGroup().children[i];
+    tentacleAI(tentacle);
+  }
 
   for (var i = 0; i < storage1.getEnemies().countLiving(); i++){
     var enemy = storage1.getEnemies().children[i];
@@ -343,7 +353,7 @@ GameState.prototype.update = function () {
         var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
         enemy.body.velocity.x = speedArray[0];
         enemy.body.velocity.y = speedArray[1];
-        normalAI(enemy, this.wind);
+        //normalAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
       } else if (enemy.key === 'manOwar'){
         enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
@@ -351,7 +361,7 @@ GameState.prototype.update = function () {
         var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
         enemy.body.velocity.x = speedArray[0];
         enemy.body.velocity.y = speedArray[1];
-        manOwarAI(enemy, this.wind);
+        //manOwarAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
       } else if (enemy.key === 'dhow'){
         enemy.frame = dhowCheckWind(enemy.angle, this.wind);
@@ -359,7 +369,7 @@ GameState.prototype.update = function () {
         var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
         enemy.body.velocity.x = speedArray[0];
         enemy.body.velocity.y = speedArray[1];
-        normalAI(enemy, this.wind);
+        //dhowAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
       } else {//boss
 
@@ -499,6 +509,16 @@ GameState.prototype.update = function () {
       if (enemy.centerY > this.game.height) enemy.centerY = 0;
       if (enemy.centerY < 0) enemy.centerY = this.game.height;
     }
+
+    //keep kraken tentacles on the screen
+    for (var i = 0; i < storage1.getTentacleGroup().children.length; i++){
+      var tentacle = storage1.getTentacleGroup().children[i];
+      if (tentacle.centerX > this.game.width) tentacle.centerX = 0;
+      if (tentacle.centerX < 0) tentacle.centerX = this.game.width;
+      if (tentacle.centerY > this.game.height) tentacle.centerY = 0;
+      if (tentacle.centerY < 0) tentacle.centerY = this.game.height;
+    }
+
 
 
 
@@ -772,6 +792,20 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
     //  console.log("The player has a pirate? " + player1.getPirate());
     }
     powerup.kill();
+  }
+
+  function tentacleGrabbedPlayer(player, tentacle){
+    if (player1.getIsInvincible() === false) { //We only damage the player if not invincible
+      player1.damage();
+      player1.resetKills();
+      player1.toggleInvincible();
+      console.log("I am invincible! " + player1.getIsInvincible());
+      //and then we add a timer to restore the player to a vulnerable state. The normal game timer didn't work, so I came up with this which uses update frames
+      player1.setInvincibilityTime(100); //TODO: balance this time
+      tentacle.grabbedPlayer = true; //now in the update() function we need to check for tentacles with this value and make them latch onto the player sprite
+      //TODO: add sound for when the player is hit
+      //TODO: add "explosion" of wood and/or water
+  }
   }
 
 
@@ -1719,7 +1753,7 @@ function playerHitIsland(ship, island){
   */
 
   function navigate(enemy, targetAngle){
-    console.log("navigating");
+    //console.log("navigating");
     //console.log("Turn rate in turn and shoot: " + enemy.TURN_RATE);
     // Gradually (this.TURN_RATE) aim the missile towards the target angle
     if (this.rotation !== targetAngle) {
@@ -1762,7 +1796,7 @@ function playerHitIsland(ship, island){
       if (enemy.angle - ray.angle >= 0){
         navigate(enemy, ray.angle + 10);
       } else {
-        navigate (enemy, ray.angle - 10);
+        navigate(enemy, ray.angle - 10);
       }
     }
   }
@@ -1802,6 +1836,28 @@ var closestIntersection = null;
 return closestIntersection;
 };
 
+  function tentacleAI(tentacle){
+    if (!tentacle.grabbedPlayer){
+      var straightDistance = game.physics.arcade.distanceBetween(player1.sprite, tentacle);//find the direct distance to the player
+      //find the round the world distance to the player
+      var roundDistance = ((this.width - player1.sprite.x) + (tentalce.x) + (this.height - tenta.sprite.y) + (tentacle.y));
+      //find the angle if the ship were to go directly
+      var targetAngle = this.game.math.angleBetween(
+        tentacle.x, tentalce.y,
+        player1.sprite.x, player1.sprite.y
+      );
+      if (straightDistance <= roundDistance){
+        navigate(tentacle, targetAngle);
+      } else {
+        navigate (tentacle, 0 - targetAngle);
+      }
+    } else { //the tentacle has grabbed the player
+      tentacle.x = player1.x;
+      tentacle.y = player.y;
+    }
+  }
+
+
   //calls the appropriate functions for each boss depending on what string is passed in
   //TODO: add otehr bosses
   function bossWave(type){
@@ -1828,6 +1884,7 @@ return closestIntersection;
     kraken.anchor.setTo(0.5, 0.5);
     kraken.body.immovable = true;
     kraken.health = 6;
+    generateTentacles(x, y);
     return kraken;
     //TODO: add tentacles
   }
@@ -1837,7 +1894,57 @@ return closestIntersection;
     //var placeArray = findGoodPlace(Math.Random() * this.width, Math.random() * this.height, this.islands);
     kraken.x = Math.random() * this.width;
     kraken.y = Math.random() * this.height;
+    generateTentacles(x, y);
   }
+
+  function generateTentacles(x, y){
+    var tentacleGroup = this.game.add.group();
+    for (var i = 0; i < 8; i++){
+      var tentacle = this.game.add.sprite(x, y, 'tentacle');
+      this.game.physics.enable(tentacle, Phaser.Physics.ARCADE);
+      tentacle.enableBody = true;
+      tentacle.anchor.setTo(0.5, 0.5);
+      tentacle.angle = 45 * i;
+      tentacle.maxSpeed = 400;
+      tentacle.collideWorldBounds = false;
+      tentacle.body.velocity.x = findTentacleXSpeed(i, tentacle.maxSpeed);
+      tentacle.body.velocity.y = findTentacleYSpeed(i, tentacle.maxSpeed);
+      tentacle.frame = Math.floor(Math.random() * 3);
+      tentacle.grabbedPlayer = false;
+      tentacle.TURN_RATE = 12;
+      tentacleGroup.add(tentacle);
+    }
+    storage1.addTentacleGroup(tentacleGroup);
+  }
+
+  function findTentacleXSpeed(i, maxSpeed){
+    if (i === 0 || i === 4){
+      return 0;
+    } else if (i === 1 || i === 3){
+      return maxSpeed/2;
+    } else if (i === 2){
+      return maxSpeed;
+    } else if (i === 5 || i === 7){
+      return 0 - maxSpeed/2;
+    } else {//6
+      return 0 - maxSpeed;
+    }
+  }
+
+  function findTentacleYSpeed(i, maxSpeed){
+    if (i === 0){
+      return maxSpeed;
+    } else if (i === 4){
+      return 0 - maxSpeed;
+    } else if (i === 2 || i === 6){
+      return 0;
+    } else if (i === 1 || i === 7){
+      return maxSpeed/2;
+    } else if (i === 3 || i === 5){
+      return 0 - maxSpeed/2;
+    }
+  }
+
 
   function gameOverSequence(score, wave, kills, bossesKilled) {
       //TODO Explosion sprite
