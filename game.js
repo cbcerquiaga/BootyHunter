@@ -62,7 +62,8 @@ GameState.prototype.preload = function() {
     this.game.load.image('albatross', 'assets/albatross.png');
     this.game.load.image('parrot', 'assets/parrot.png');
     this.game.load.image('gameOver', 'assets/gameOver.png');
-    console.log("Hello world");
+    game.load.text('pirateFacts', 'PirateFacts.txt');
+  //  console.log("Hello world");
 };
 
 // Setup the example
@@ -369,7 +370,7 @@ GameState.prototype.update = function () {
 
   //console.log("I am invincible in the update function! " + player1.getIsInvincible());
   if (player1.getIsInvincible()){
-    console.log("I cannot hurt again until " + player1.getInvincibilityTime());
+    //console.log("I cannot hurt again until " + player1.getInvincibilityTime());
     if (player1.getInvincibilityTime() > 0){
       player1.lessTime();
     } else {
@@ -380,9 +381,10 @@ GameState.prototype.update = function () {
   if (player1.getHealth() === "invincible"){
     console.log("Polly wants a cracker!");
     if (player1.getRestoreOldHealthTime() > 0){
-      console.log(player1.getRestoreOldHealthTime() + " more updates ")
+      //console.log(player1.getRestoreOldHealthTime() + " more updates ")
       player1.lessRestoreOldHealthTime();
     } else {
+      console.log("Polly got her cracker " + player1.getOldHealth());
       player1.restoreOldHealth();
     }
   }
@@ -1614,9 +1616,10 @@ function playerHitIsland(ship, island){
     //if one of those distances is less than half the other, go that way
     if ((straightDistance * 2) < roundDistance){
       //go directly
+      navigate(gunboat, targetAngle);
     } else if ((roundDistance * 2) < straightDistance){
       //go around the world
-
+      naviagate(gunboat, 0 - targetAngle);
     //if directly sends you upwind, go around the world, otherwise go directly
     } else if (targetAngle >= 45 && targetAngle <135){ //south
       if (wind === 'S'){ //upwind
@@ -1645,7 +1648,36 @@ function playerHitIsland(ship, island){
     }
   }
 
+
   function turnAndShoot(enemy, targetAngle){
+    var weapon;
+    var ray = new Phaser.Line(enemy.x, enemy.y, player1.sprite.x, player1.sprite.y);
+    var newAngle;
+    if ((enemy.angle - ray.angle >= 70 && enemy.angle - ray.angle <= 110)
+      || (enemy.angle - ray.angle <= -70 && enemy.angle >= -110)
+      || (enemy.angle - ray.angle <= 290 && enemy.angle - ray.angle >= 250)
+      || (enemy.angle - ray.angle >= -290 && enemy.angle - ray.angle <= -250)){ //if the player is in or near the firing angle
+        for (var i = 0; i < enemyWeapons.getWeapons(enemy).length; i++){
+        weapon = enemyWeapons.getWeapons(enemy)[i];
+        weapon.fire();
+        }
+      }
+    if (enemy.angle - ray.angle > 0 && enemy.angle - ray.angle <= 180){
+      newAngle = enemy.angle - enemy.TURN_RATE;
+    } else {
+      newAngle = enemy.angle + enemy.TURN_RATE;
+    }
+
+  navigate(enemy, newAngle);
+  //check if the player is off to the left or off to the right +/- 20 degrees
+  //if it is, fire the weapons
+  //if not, figure out whether it's better to turn left or right based on the targetAngle
+  //turn in the correct direction
+}
+
+  /*
+  function turnAndShoot(enemy, targetAngle){
+    console.log("turning and shooting");
     //console.log("Turn rate in turn and shoot: " + enemy.TURN_RATE);
     // Gradually (this.TURN_RATE) aim the missile towards the target angle
     if (this.rotation !== targetAngle) {
@@ -1683,28 +1715,91 @@ function playerHitIsland(ship, island){
     //shoot the guns
     //}
   }
+  */
 
   function navigate(enemy, targetAngle){
-    //console.log("Turn rate in navigate: " + enemy.TURN_RATE);
-    if (enemy.angle != targetAngle){
+    console.log("navigating");
+    //console.log("Turn rate in turn and shoot: " + enemy.TURN_RATE);
+    // Gradually (this.TURN_RATE) aim the missile towards the target angle
+    if (this.rotation !== targetAngle) {
+      // Calculate difference between the current angle and targetAngle
       var delta = targetAngle - enemy.rotation;
-      if (delta > 0){
-        //turn clockwise
+
+      // Keep it in range from -180 to 180 to make the most efficient turns.
+      if (delta > Math.PI) delta -= Math.PI * 2;
+      if (delta < -Math.PI) delta += Math.PI * 2;
+
+      if (delta > 0) {
+        // Turn clockwise
         enemy.angle += enemy.TURN_RATE;
       } else {
           // Turn counter-clockwise
           enemy.angle -= enemy.TURN_RATE;
       }
-    }
+
+      //TODO: Change this to make the ship not quite hit the player, but keep a short distance
+      // Just set angle to target angle if they are close
+      if (Math.abs(delta) < this.game.math.degToRad(enemy.TURN_RATE)) {
+        enemy.rotation = targetAngle;
+      }
+  }
+
+  // Calculate velocity vector based on this.rotation and this.SPEED
+  enemy.body.velocity.x = Math.cos(enemy.rotation) * enemy.maxSpeed;
+  enemy.body.velocity.y = Math.sin(enemy.rotation) * enemy.maxSpeed;
   }
 
 
   //TODO: fill out this stub
   function avoidIslands(enemy, islands){
-    //go through all the islands to see if one is in the way
-    //if the island is off to the ship's right, turn left
-    //otherwise, turn right
+    //project a ray between the enemy and the player
+    var ray = new Phaser.Line(enemy.x, enemy.y, player1.sprite.x, player1.sprite.y);
+    //check if the ray is interrupted by any islands
+    var intersect = getIslandIntersection(ray, islands);
+    //if it is, turn away from the island
+    if (intersect){
+      if (enemy.angle - ray.angle >= 0){
+        navigate(enemy, ray.angle + 10);
+      } else {
+        navigate (enemy, ray.angle - 10);
+      }
+    }
   }
+
+  function getIslandIntersection(ray, islands){
+    var distanceToisland = Number.POSITIVE_INFINITY;
+var closestIntersection = null;
+
+// For each of the islands...
+  islands.forEach(function(island) {
+    // Create an array of lines that represent the four edges of each island
+    var lines = [
+        new Phaser.Line(island.x, island.y, island.x + island.width, island.y),
+        new Phaser.Line(island.x, island.y, island.x, island.y + island.height),
+        new Phaser.Line(island.x + island.width, island.y,
+            island.x + island.width, island.y + island.height),
+        new Phaser.Line(island.x, island.y + island.height,
+            island.x + island.width, island.y + island.height)
+    ];
+
+    // Test each of the edges in this island against the ray.
+    // If the ray intersects any of the edges then the island must be in the way.
+    for(var i = 0; i < lines.length; i++) {
+        var intersect = Phaser.Line.intersects(ray, lines[i]);
+        if (intersect) {
+            // Find the closest intersection
+            distance =
+                this.game.math.distance(ray.start.x, ray.start.y, intersect.x, intersect.y);
+            if (distance < distanceToisland) {
+                distanceToisland = distance;
+                closestIntersection = intersect;
+            }
+        }
+    }
+}, this);
+
+return closestIntersection;
+};
 
   //calls the appropriate functions for each boss depending on what string is passed in
   //TODO: add otehr bosses
@@ -1755,7 +1850,12 @@ function playerHitIsland(ship, island){
       var gameOverText =  game.add.text(this.width/2 - 90, this.height/4 - 20, 'GAME OVER', { fontSize: '32px', fill: '#000' });
       var scoreText = game.add.text(this.width/2 - 300, this.height/4 + 20, "You collected " + score + " doubloons worth of treasure", { fontSize: '16px', fill: '#000' });
       var waveText = game.add.text(this.width/2 - 300, this.height/4 + 40, "You made it to wave " + wave, { fontSize: '16px', fill: '#000' });
-      var factText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#000' });
+
+      var text = game.cache.getText('pirateFacts');
+      var factArray = text.split('\n');
+      var pirateFact =  factArray[Math.floor(Math.random() * factArray.length)];
+      var factText = game.add.text(this.width/2 - 300, this.height/4 + 60, pirateFact, { fontSize: '16px', fill: '#000' });
+      var killText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#000' });
       var bossText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#000' });
   }
 
