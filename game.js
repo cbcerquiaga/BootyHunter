@@ -100,9 +100,6 @@ GameState.prototype.create = function() {
     this.powerups = this.game.add.group();
     this.powerups.enableBody = true;
 
-    //creates enemies group
-    this.enemies = this.game.add.group();
-    this.enemies.enableBody = true;
 
 
     // Define motion constants
@@ -117,8 +114,12 @@ GameState.prototype.create = function() {
     var searchDirection = 'S'
     var searchDistance = 10;
     player1 = new ship(this.game.add.sprite(this.game.width/2, this.game.height/2, 'ship'));
+
+
     var treasureGroup = this.game.add.group();
-    storage1 = new  storage(treasureGroup);
+    var enemies = this.game.add.group();
+    enemies.enableBody = true;
+    storage1 = new  storage(treasureGroup, enemies);
     var weaponGroup = {};
     enemyWeapons = new enemyWeapons(weaponGroup);
 
@@ -234,31 +235,31 @@ GameState.prototype.update = function () {
   //collides whitecaps with the world
   game.physics.arcade.overlap(player1.sprite, this.whitecaps, whiteCapHitShip);
   game.physics.arcade.overlap(this.islands, this.whitecaps, whiteCapHitIsland);
-  game.physics.arcade.overlap(this.enemies, this.whitecaps, whiteCapHitShip);
+  game.physics.arcade.overlap(storage1.getEnemies(), this.whitecaps, whiteCapHitShip);
 
   game.physics.arcade.overlap(this.islands, this.weapon.bullets, islandWasShot);
   game.physics.arcade.overlap(this.islands, this.weapon2.bullets, islandWasShot);
   game.physics.arcade.overlap(this.islands, this.boarder.bullets, islandWasShot);
-  game.physics.arcade.overlap(this.enemies, this.weapon.bullets, enemyWasShot);
-  game.physics.arcade.overlap(this.enemies, this.weapon2.bullets, enemyWasShot);
-  game.physics.arcade.overlap(this.enemies, this.boarder.bullets, enemyBoarded);
+  game.physics.arcade.overlap(storage1.getEnemies(), this.weapon.bullets, enemyWasShot);
+  game.physics.arcade.overlap(storage1.getEnemies(), this.weapon2.bullets, enemyWasShot);
+  game.physics.arcade.overlap(storage1.getEnemies(), this.boarder.bullets, enemyBoarded);
 
   game.physics.arcade.overlap(player1.sprite, storage1.getTreasures(), collectTreasure);
-  game.physics.arcade.collide(storage1.getTreasures(), this.enemies);
+  game.physics.arcade.collide(storage1.getTreasures(), storage1.getEnemies());
   game.physics.arcade.collide(storage1.getTreasures(), this.islands);
 
   game.physics.arcade.overlap(player1.sprite, this.powerups, collectPowerUp);
 
   //  Collide the player and enemy ships with the islands
   game.physics.arcade.collide(player1.sprite, this.islands, playerHitIsland);
-  game.physics.arcade.collide(this.enemies, this.islands, enemyHitIsland);
+  game.physics.arcade.collide(storage1.getEnemies(), this.islands, enemyHitIsland);
 
-  game.physics.arcade.collide(player1.sprite, this.enemies, playerHitShip);//TODO: add function to check if the player is invincible
-  game.physics.arcade.collide(this.enemies, this.enemies, shipsCollided);
+  game.physics.arcade.collide(player1.sprite, storage1.getEnemies(), playerHitShip);//TODO: add function to check if the player is invincible
+  game.physics.arcade.collide(storage1.getEnemies(), storage1.getEnemies(), shipsCollided);
 
   //console.log(player1.sprite.body.velocity.x + " " + player1.sprite.body.velocity.y);
   //if there are no enemies, then the game moves to the next wave
-  //console.log(this.enemies.countLiving());
+  //console.log(storage1.getEnemies().countLiving());
 
 
   //score
@@ -266,11 +267,11 @@ GameState.prototype.update = function () {
   this.scoreText.text = scoreString;
 
 
-  if (this.enemies.countLiving() <= 0){ //all enemies are dead, the wave is over
+  if (storage1.getEnemies().countLiving() <= 0){ //all enemies are dead, the wave is over
     //sets up the initial wave: randomizes the wind and generates 2 gunboats
     if (storage1.getWave() === 0){
       storage1.nextWave();
-      generateEnemies(storage1.getWave(), 2, this.wind, this.enemies, true);
+      generateEnemies(storage1.getWave(), 2, this.wind, storage1.getEnemies(), true);
     } else if (storage1.getWave() === 5 || storage1.getWave() === 15 || storage1.getWave() === 25 || storage1.getWave() === 35 || storage1.getWave() === 45 || storage1.getWave() >= 55){ //boss wave
       if (this.allBosses.length - 1 <= this.killedBosses.length){
         this.killedBosses = [];
@@ -280,14 +281,14 @@ GameState.prototype.update = function () {
         var bossType = this.allBosses[i];
         if (this.allBosses[i], this.killedBosses.indexOf(bossType) === -1){
           var boss = bossWave(bossType);
-          this.enemies.add(boss);
+          storage1.getEnemies().add(boss);
         }
       }
     } else {
       storage1.nextWave();
       this.numEnemies += Math.round(1.5 * storage1.getWave());
       console.log("Wave: " + storage1.getWave() + "NumEnemies: " + this.numEnemies);
-      generateEnemies(storage1.getWave(), this.numEnemies, this.wind, this.enemies, false);
+      generateEnemies(storage1.getWave(), this.numEnemies, this.wind, storage1.getEnemies(), false);
     }
       var randWind = Math.random();
       if (randWind < 0.25){
@@ -321,8 +322,8 @@ GameState.prototype.update = function () {
   }
 
 
-  for (var i = 0; i < this.enemies.countLiving(); i++){
-    var enemy = this.enemies.children[i];
+  for (var i = 0; i < storage1.getEnemies().countLiving(); i++){
+    var enemy = storage1.getEnemies().children[i];
     //console.log(enemy + " looping through living enemies.");
     var oldXSpeed = enemy.body.velocity.x;
     var oldYSpeed = enemy.body.velocity.y;
@@ -491,8 +492,8 @@ GameState.prototype.update = function () {
     if (player1.sprite.y < 0) player1.sprite.y = this.game.height;
 
     //keep the enemies on the screen
-    for (var i = 0; i < this.enemies.children.length; i++){
-      var enemy = this.enemies.children[i];
+    for (var i = 0; i < storage1.getEnemies().children.length; i++){
+      var enemy = storage1.getEnemies().children[i];
       if (enemy.centerX > this.game.width) enemy.centerX = 0;
       if (enemy.centerX < 0) enemy.centerX = this.game.width;
       if (enemy.centerY > this.game.height) enemy.centerY = 0;
@@ -654,14 +655,14 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
   //TODO: figure out if this is redundant or efficient
   if (isFirstWave){
     enemy = initializeEnemy('gunboat', wind, enemies);
-    enemies.add(enemy);
+    storage1.addEnemy(enemy);
     enemy = initializeEnemy('gunboat', wind, enemies);
-    enemies.add(enemy);
-    //console.log("live enemies after production: " + enemies.countLiving());
+    storage1.addEnemy(enemy);
+    //console.log("live enemies after production: " + storage1.getEnemies().countLiving());
   } else {
     //console.log("not the first wave");
     for (var i = 0; i <= numEnemies; i++){
-    //console.log("in the loop: " + enemies.countLiving());
+    //console.log("in the loop: " + storage1.getEnemies());
     //TODO: find a way to weight the selection to favor a certain type of enemy if one of that type has already been added to the wave
       var shipChosen = false;
       if ((wave) >= 4 && !shipChosen){ //difficulty value of the man o' war and dhow
@@ -671,11 +672,11 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
           var useDhow =  Math.random()>0.5?true:false; //determines whether to use dhow or man o' war
           if (useDhow){//create a dhow
             enemy = initializeEnemy('dhow', wind);
-            enemies.add(enemy);
+            storage1.addEnemy(enemy);
             i += 10;
           } else {// create a man o war
             enemy = initializeEnemy('manowar', wind);
-            enemies.add(enemy);
+            storage1.addEnemy(enemy);
             i +=10;
           }
         }
@@ -685,14 +686,14 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
       if (useThisSprite){
         shipChosen = true;
         enemy = initializeEnemy('normal', wind);
-        enemies.add(enemy);
+        storage1.addEnemy(enemy);
         i += 2;
       }
     }
     if (!shipChosen){//no other ship was chosen and/or the remaining difficulty value is too low
       shipChosen = true;
       enemy = initializeEnemy('gunboat', wind);
-      enemies.add(enemy);
+      storage1.addEnemy(enemy);
       i++;
     }
   }
@@ -1663,9 +1664,9 @@ function playerHitIsland(ship, island){
         }
       }
     if (enemy.angle - ray.angle > 0 && enemy.angle - ray.angle <= 180){
-      newAngle = enemy.angle - enemy.TURN_RATE;
+      newAngle = enemy.angle - 90;
     } else {
-      newAngle = enemy.angle + enemy.TURN_RATE;
+      newAngle = enemy.angle + 90;
     }
 
   navigate(enemy, newAngle);
