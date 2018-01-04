@@ -271,11 +271,14 @@ GameState.prototype.update = function () {
 
 
   if (storage1.getEnemies().countLiving() <= 0){ //all enemies are dead, the wave is over
+    console.log("All the enemies are dead. There are " + storage1.getEnemies().countLiving() + " enemies.");
     //sets up the initial wave: randomizes the wind and generates 2 gunboats
     if (storage1.getWave() === 0){
+      console.log("first wave. " + storage1.getWave());
       storage1.nextWave();
       generateEnemies(storage1.getWave(), 2, this.wind, storage1.getEnemies(), true);
     } else if (storage1.getWave() === 5 || storage1.getWave() === 15 || storage1.getWave() === 25 || storage1.getWave() === 35 || storage1.getWave() === 45 || storage1.getWave() >= 55){ //boss wave
+      console.log("boss wave. " + storage1.getWave());
       if (this.allBosses.length - 1 <= this.killedBosses.length){
         this.killedBosses = [];
       }
@@ -287,7 +290,9 @@ GameState.prototype.update = function () {
           storage1.addEnemy(boss);
         }
       }
+      storage1.nextWave();
     } else {
+      console.log("regular wave. " + storage1.getWave());
       storage1.nextWave();
       this.numEnemies += Math.round(1.5 * storage1.getWave());
       console.log("Wave: " + storage1.getWave() + "NumEnemies: " + this.numEnemies);
@@ -327,10 +332,10 @@ GameState.prototype.update = function () {
       storage1.addTreasure(treasure);
     }
   }
-  console.log("Tentacles: " + storage1.getTentacleGroup().children);
-  console.log("Enemies: " + storage1.getEnemies().children);
+  //console.log("Tentacles: " + storage1.getTentacleGroup().children);
+  //console.log("Enemies: " + storage1.getEnemies().children);
   for (var i = 0; i < storage1.getTentacleGroup().children.length; i++){
-    console.log("looping through tentacles");
+    //console.log("looping through tentacles");
     var tentacle = storage1.getTentacleGroup().children[i];
     tentacleAI(tentacle);
   }
@@ -742,15 +747,16 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
   function enemyWasShot(enemy, bullet){
     bullet.kill();
     enemy.health--;
-    console.log("bang! " + enemy.health);
+    //console.log("bang! " + enemy.health);
     //TODO: add explosion
     //play explosion sound
-    if (enemy.type === 'kraken'){
+    if (enemy.key === 'kraken'){
+      console.log("You shot hte kraken!");
       if (enemy.health > 0){
         moveKraken(enemy);
-        killAllTentacles();
         return 0;
       } else {
+        console.log("you killed the kraken!");
         spawnTreasure(enemy.x, enemy.y, 10);
         enemy.kill();
         player1.addKill();
@@ -759,12 +765,12 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
       }
     } else {
 
-    if (enemy.health <= 0){
+      if (enemy.health <= 0){
       spawnTreasure(enemy.x, enemy.y, 4);//spawn treasure
       enemy.kill();
       player1.addKill();
       //play explosion and sound
-    }
+      }
     }
   }
 
@@ -1192,7 +1198,7 @@ function playerHitIsland(ship, island){
         player1.addScore(score);
     }
     treasure.kill();
-    console.log("Score: " + player1.getScore());
+    //console.log("Score: " + player1.getScore());
   }
 
   function initializeEnemy(type, wind) {
@@ -1901,7 +1907,7 @@ return closestIntersection;
     kraken.x = Math.random() * this.width;
     kraken.y = Math.random() * this.height;
     killAllTentacles();
-    generateTentacles(x, y);
+    generateTentacles(kraken.x, kraken.y);
   }
 
   function generateTentacles(x, y){
@@ -1911,7 +1917,7 @@ return closestIntersection;
       tentacle.enableBody = true;
       tentacle.anchor.setTo(0.5, 0.5);
       tentacle.angle = setTentacleAngle(i);
-      tentacle.maxSpeed = 250;
+      tentacle.maxSpeed = 150; //TODO: balance this
       tentacle.collideWorldBounds = false;
       tentacle.body.velocity.x = findTentacleXSpeed(i, tentacle.maxSpeed);
       tentacle.body.velocity.y = findTentacleYSpeed(i, tentacle.maxSpeed);
@@ -1965,6 +1971,7 @@ return closestIntersection;
   }
 
   function killAllTentacles(){
+    console.log("Kill all the tentacles");
     for (var i = 0; i < storage1.getTentacleGroup().children.length; i++){
       var tentacle = storage1.getTentacleGroup().children[i];
       tentacle.kill();
