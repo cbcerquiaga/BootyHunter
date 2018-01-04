@@ -40,6 +40,10 @@ var storage = function (treasureGroup, enemyGroup, tentacleGroup) {
       this.enemies = group;
     }
 
+    this.addTentacle = function(tentacle){
+      this.tentacleGroup.add(tentacle);
+    }
+
     this.addTentacleGroup = function(group){
       this.tentacles = group;
     }

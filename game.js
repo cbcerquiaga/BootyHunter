@@ -237,7 +237,7 @@ GameState.prototype.update = function () {
   game.physics.arcade.overlap(player1.sprite, this.whitecaps, whiteCapHitShip);
   game.physics.arcade.overlap(this.islands, this.whitecaps, whiteCapHitIsland);
   game.physics.arcade.overlap(storage1.getEnemies(), this.whitecaps, whiteCapHitShip);
-  game.physics.arcade.overlap(player1.sprite, storage1.getTentacleGroup(), tentacleGrabbedPlayer)
+  game.physics.arcade.overlap(player1.sprite, storage1.getTentacleGroup(), tentacleGrabbedPlayer);
 
   game.physics.arcade.overlap(this.islands, this.weapon.bullets, islandWasShot);
   game.physics.arcade.overlap(this.islands, this.weapon2.bullets, islandWasShot);
@@ -252,9 +252,10 @@ GameState.prototype.update = function () {
 
   game.physics.arcade.overlap(player1.sprite, this.powerups, collectPowerUp);
 
-  //  Collide the player and enemy ships with the islands
+  //  Collide stuff with the islands
   game.physics.arcade.collide(player1.sprite, this.islands, playerHitIsland);
   game.physics.arcade.collide(storage1.getEnemies(), this.islands, enemyHitIsland);
+  game.physics.arcade.collide(storage1.getTentacleGroup(), this.islands);
 
   game.physics.arcade.collide(player1.sprite, storage1.getEnemies(), playerHitShip);//TODO: add function to check if the player is invincible
   game.physics.arcade.collide(storage1.getEnemies(), storage1.getEnemies(), shipsCollided);
@@ -326,8 +327,10 @@ GameState.prototype.update = function () {
       storage1.addTreasure(treasure);
     }
   }
-
+  console.log("Tentacles: " + storage1.getTentacleGroup().children);
+  console.log("Enemies: " + storage1.getEnemies().children);
   for (var i = 0; i < storage1.getTentacleGroup().children.length; i++){
+    console.log("looping through tentacles");
     var tentacle = storage1.getTentacleGroup().children[i];
     tentacleAI(tentacle);
   }
@@ -745,11 +748,13 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
     if (enemy.type === 'kraken'){
       if (enemy.health > 0){
         moveKraken(enemy);
+        killAllTentacles();
         return 0;
       } else {
         spawnTreasure(enemy.x, enemy.y, 10);
         enemy.kill();
         player1.addKill();
+        killAllTentacles();
         storage1.nextWave();
       }
     } else {
@@ -1837,13 +1842,14 @@ return closestIntersection;
 };
 
   function tentacleAI(tentacle){
+    console.log("The tentacle has a mind");
     if (!tentacle.grabbedPlayer){
       var straightDistance = game.physics.arcade.distanceBetween(player1.sprite, tentacle);//find the direct distance to the player
       //find the round the world distance to the player
-      var roundDistance = ((this.width - player1.sprite.x) + (tentalce.x) + (this.height - tenta.sprite.y) + (tentacle.y));
+      var roundDistance = ((this.width - player1.sprite.x) + (tentacle.x) + (this.height - tentacle.y) + (tentacle.y));
       //find the angle if the ship were to go directly
       var targetAngle = this.game.math.angleBetween(
-        tentacle.x, tentalce.y,
+        tentacle.x, tentacle.y,
         player1.sprite.x, player1.sprite.y
       );
       if (straightDistance <= roundDistance){
@@ -1853,7 +1859,7 @@ return closestIntersection;
       }
     } else { //the tentacle has grabbed the player
       tentacle.x = player1.x;
-      tentacle.y = player.y;
+      tentacle.y = player1.y;
     }
   }
 
@@ -1894,27 +1900,40 @@ return closestIntersection;
     //var placeArray = findGoodPlace(Math.Random() * this.width, Math.random() * this.height, this.islands);
     kraken.x = Math.random() * this.width;
     kraken.y = Math.random() * this.height;
+    killAllTentacles();
     generateTentacles(x, y);
   }
 
   function generateTentacles(x, y){
-    var tentacleGroup = this.game.add.group();
     for (var i = 0; i < 8; i++){
       var tentacle = this.game.add.sprite(x, y, 'tentacle');
       this.game.physics.enable(tentacle, Phaser.Physics.ARCADE);
       tentacle.enableBody = true;
       tentacle.anchor.setTo(0.5, 0.5);
-      tentacle.angle = 45 * i;
-      tentacle.maxSpeed = 400;
+      tentacle.angle = setTentacleAngle(i);
+      tentacle.maxSpeed = 250;
       tentacle.collideWorldBounds = false;
       tentacle.body.velocity.x = findTentacleXSpeed(i, tentacle.maxSpeed);
       tentacle.body.velocity.y = findTentacleYSpeed(i, tentacle.maxSpeed);
       tentacle.frame = Math.floor(Math.random() * 3);
       tentacle.grabbedPlayer = false;
       tentacle.TURN_RATE = 12;
-      tentacleGroup.add(tentacle);
+      storage1.addTentacle(tentacle);
     }
-    storage1.addTentacleGroup(tentacleGroup);
+  }
+
+  function setTentacleAngle(i){
+    if (i === 0){
+      return -90;
+    } else if (i === 2){
+      return 0;
+    } else if (i === 4){
+      return 90;
+    } else if (i === 6){
+      return 180;
+    } else {
+      return 45 * i;
+    }
   }
 
   function findTentacleXSpeed(i, maxSpeed){
@@ -1942,6 +1961,13 @@ return closestIntersection;
       return maxSpeed/2;
     } else if (i === 3 || i === 5){
       return 0 - maxSpeed/2;
+    }
+  }
+
+  function killAllTentacles(){
+    for (var i = 0; i < storage1.getTentacleGroup().children.length; i++){
+      var tentacle = storage1.getTentacleGroup().children[i];
+      tentacle.kill();
     }
   }
 
