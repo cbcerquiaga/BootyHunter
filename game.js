@@ -292,8 +292,9 @@ GameState.prototype.update = function () {
       }
       storage1.nextWave();
     } else {
-      console.log("regular wave. " + storage1.getWave());
+      //console.log("regular wave. " + storage1.getWave());
       storage1.nextWave();
+      killAllTentacles();
       this.numEnemies += Math.round(1.5 * storage1.getWave());
       console.log("Wave: " + storage1.getWave() + "NumEnemies: " + this.numEnemies);
       generateEnemies(storage1.getWave(), this.numEnemies, this.wind, storage1.getEnemies(), false);
@@ -761,7 +762,6 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
         spawnTreasure(enemy.x, enemy.y, 10);
         enemy.kill();
         player1.addKill();
-        storage1.nextWave();
       }
     } else {
 
@@ -1651,7 +1651,7 @@ function playerHitIsland(ship, island){
         gunboat.x, gunboat.y,
         player1.sprite.x, player1.sprite.y
     );
-    console.log("Direct: " + straightDistance + " Da Gama: " + roundDistance);
+    //console.log("Direct: " + straightDistance + " Da Gama: " + roundDistance);
     var routeDirection = 'Q';
     //if one of those distances is within firing range, call a turnAndShoot() function
     if (straightDistance <= 250){
@@ -1798,18 +1798,18 @@ function playerHitIsland(ship, island){
   function getDaGamaDistance(enemy){
     if (player1.sprite.x < enemy.x){ //player is to the left of the enemy
       if (player1.sprite.y < enemy.y){ //player is above enemy
-        console.log("player is to the left and above the enemy");
+        //console.log("player is to the left and above the enemy");
         return (((this.height - enemy.y) + (player1.sprite.y)) + ((this.width - enemy.x) + (player1.sprite.x)));
       } else { //player is below or equal to enemy
-        console.log("player is to the left and above the enemy");
+        //console.log("player is to the left and above the enemy");
         return (((this.height - player1.sprite.y) + (enemy.y)) + ((this.width - enemy.x) + (player1.sprite.x)));
       }
     } else { //player is to the right or equal to enemy
       if (player1.sprite.y < enemy.y){ // player is above the enemy
-        console.log("player is to the right and above the enemy");
+        //console.log("player is to the right and above the enemy");
         return (((this.height - enemy.y) + (player1.sprite.y)) + ((this.width - player1.sprite.x) + (enemy.x)));
       } else { //player is below or equal to the enemy
-        console.log("player is to the right and below the enemy");
+        //console.log("player is to the right and below the enemy");
         return (((this.height - player1.sprite.y) + (enemy.y)) + ((this.width - player1.sprite.x) + (enemy.x)));
       }
     }
@@ -1868,7 +1868,7 @@ return closestIntersection;
 };
 
   function tentacleAI(tentacle){
-    console.log("The tentacle has a mind");
+    //console.log("The tentacle has a mind");
     if (!tentacle.grabbedPlayer){
       var straightDistance = game.physics.arcade.distanceBetween(player1.sprite, tentacle);//find the direct distance to the player
       //find the round the world distance to the player
