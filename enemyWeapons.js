@@ -11,8 +11,6 @@ var enemyWeapons = function(weaponGroup, ghostWeapon1, ghostWeapon2){
   this.ghostWeapon2 = ghostWeapon2;
 
   //add weapons for the ghost ship boss
-  //weapons for the ghost ship
-
   this.ghostWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
   this.ghostWeapon.bulletLifespan = 600;
   this.ghostWeapon.bulletSpeed = 600;

@@ -278,10 +278,10 @@ GameState.prototype.update = function () {
 
   if (storage1.getEnemies().countLiving() <= 0){ //all enemies are dead, the wave is over
     console.log("All the enemies are dead. There are " + storage1.getEnemies().countLiving() + " enemies.");
+    storage1.nextWave();
     //sets up the initial wave: randomizes the wind and generates 2 gunboats
-    if (storage1.getWave() === 0){
+    if (storage1.getWave() === 1){
       console.log("first wave. " + storage1.getWave());
-      storage1.nextWave();
       generateEnemies(storage1.getWave(), 2, this.wind, storage1.getEnemies(), true);
     } else if (isBossWave()){ //boss wave
       console.log("boss wave. " + storage1.getWave());
@@ -298,10 +298,8 @@ GameState.prototype.update = function () {
           break;
         }
       }
-      storage1.nextWave();
     } else {
       //console.log("regular wave. " + storage1.getWave());
-      storage1.nextWave();
       killAllTentacles();
       this.numEnemies += Math.round(1.5 * storage1.getWave());
       console.log("Wave: " + storage1.getWave() + "NumEnemies: " + this.numEnemies);
@@ -768,7 +766,7 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
     //play explosion sound
     if (enemy.key === 'kraken'){
       killAllTentacles();
-      console.log("You shot hte kraken!");
+      console.log("You shot the kraken!");
       if (enemy.health > 0){
         moveKraken(enemy);
         return 0;
@@ -1924,13 +1922,17 @@ return closestIntersection;
   function ghostShipAI(ghostShip){
     //console.log("You're being haunted");
       if (ghostShip.x > (this.width - player1.sprite.x)){
+        console.log("Need to go left");
         ghostShip.x -= 2;
       } else if(ghostShip.x < (this.width - player1.sprite.x)){
+        console.log("Need to go right");
         ghostShip.x += 2;
       }
       if (ghostShip.y > (this.height - player1.sprite.y)){
+        console.log("Need to go up");
         ghostShip.y -= 2;
       } else if(ghostShip.y < (this.height - player1.sprite.y)){
+        console.log("Need to go down");
         ghostShip.y += 2;
       }
       ghostShip.angle = 180 + player1.sprite.angle;
