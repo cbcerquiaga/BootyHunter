@@ -28,7 +28,7 @@ var numEnemies;
 var enemyDownWindSpeed = {'gunboat': 100, 'manowar': 400, 'normal': 650, 'dhow': 500};
 var enemyCrossWindSpeed = {'gunboat': 60, 'manowar': 250, 'normal': 300, 'dhow': 850};//the dhow goes faster across the wind than down
 var enemyUpWindSpeed = {'gunboat': 35, 'manowar': 100, 'normal': 150, 'dhow': 250};
-var enemyHealth = {'gunboat': 1, 'manowar': 12, 'normal': 6, 'dhow': 3};
+var enemyHealth = {'gunboat': 1, 'manowar': 90, 'normal': 45, 'dhow': 21};
 var enemyDifficulty = {'gunboat': 1, 'manowar': 10, 'normal': 5, 'dhow': 10};
 var enemyTurnRate = {'gunboat': 120, 'manowar': 135, 'normal': 180, 'dhow': 240};
 var enemyTreasureDrop = {'gunboat': 4, 'manowar': 8, 'normal': 6, 'dhow': 8}
@@ -751,6 +751,7 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
     //TODO: add explosion
     //play explosion sound
     if (enemy.key === 'kraken'){
+      killAllTentacles();
       console.log("You shot hte kraken!");
       if (enemy.health > 0){
         moveKraken(enemy);
@@ -760,7 +761,6 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
         spawnTreasure(enemy.x, enemy.y, 10);
         enemy.kill();
         player1.addKill();
-        killAllTentacles();
         storage1.nextWave();
       }
     } else {
@@ -777,7 +777,7 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
   function enemyBoarded(enemy, boarder){
     var retVal = 0;
     boarder.kill();
-    if (enemy.type === 'kraken'){retVal = 1;}
+    if (enemy.type === 'kraken'){retVal = 1; killAllTentacles();}
     enemy.kill();
     player1.addKill();
     var bootyLength = Math.random() * 6;
@@ -1906,7 +1906,7 @@ return closestIntersection;
     //var placeArray = findGoodPlace(Math.Random() * this.width, Math.random() * this.height, this.islands);
     kraken.x = Math.random() * this.width;
     kraken.y = Math.random() * this.height;
-    killAllTentacles();
+    //killAllTentacles();
     generateTentacles(kraken.x, kraken.y);
   }
 
