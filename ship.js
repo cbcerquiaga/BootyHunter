@@ -53,9 +53,7 @@ var ship = function (_sprite) {
     }
 
     this.damage = function(){
-      if (this.health >= 0 || this.health < 0){
         this.health--;
-      }
     }
 
     this.setHealth = function(value){

@@ -128,7 +128,7 @@ GameState.prototype.create = function() {
     enemyWeapons = new enemyWeapons(weaponGroup, ghostWeapon, ghostWeapon2);
 
     //makes sure the ship isn't overlapping with any islands
-    console.log(player1.sprite.overlap(island));
+    //console.log(player1.sprite.overlap(island));
     /*for (var i = 0; i < this.islands.children.length; i++){
       var island = this.islands.children[i];
       game.physics.arcade.collide(player1.sprite, island);
@@ -368,7 +368,7 @@ GameState.prototype.update = function () {
         var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
         enemy.body.velocity.x = speedArray[0];
         enemy.body.velocity.y = speedArray[1];
-        //normalAI(enemy, this.wind);
+        normalAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
       } else if (enemy.key === 'manOwar'){
         enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
@@ -376,7 +376,7 @@ GameState.prototype.update = function () {
         var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
         enemy.body.velocity.x = speedArray[0];
         enemy.body.velocity.y = speedArray[1];
-        //manOwarAI(enemy, this.wind);
+        manOwarAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
       } else if (enemy.key === 'dhow'){
         enemy.frame = dhowCheckWind(enemy.angle, this.wind);
@@ -384,7 +384,7 @@ GameState.prototype.update = function () {
         var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
         enemy.body.velocity.x = speedArray[0];
         enemy.body.velocity.y = speedArray[1];
-        //dhowAI(enemy, this.wind);
+        dhowAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
       } else {//boss
         if (enemy.key === 'ship'){//ghost ship, but it uses the same sprite as the player
@@ -823,7 +823,7 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
       player1.damage();
       player1.resetKills();
       player1.toggleInvincible();
-      console.log("I am invincible! " + player1.getIsInvincible());
+      //console.log("I am invincible! " + player1.getIsInvincible());
       //and then we add a timer to restore the player to a vulnerable state. The normal game timer didn't work, so I came up with this which uses update frames
       player1.setInvincibilityTime(100); //TODO: balance this time
       tentacle.grabbedPlayer = true; //now in the update() function we need to check for tentacles with this value and make them latch onto the player sprite
@@ -1724,41 +1724,57 @@ function playerHitIsland(ship, island){
     }
   }
 
+  /*once the enemy ship is close enough, move in, turn until the player is at an
+  angle where they might get hit, and fire the weapons
+  */
 
   function turnAndShoot(enemy, targetAngle){
     var weapon;
     var ray = new Phaser.Line(enemy.x, enemy.y, player1.sprite.x, player1.sprite.y);
+    game.debug.geom(ray);
     var newAngle;
-    if ((enemy.angle - ray.angle >= 70 && enemy.angle - ray.angle <= 110)
-      || (enemy.angle - ray.angle <= -70 && enemy.angle >= -110)
-      || (enemy.angle - ray.angle <= 290 && enemy.angle - ray.angle >= 250)
-      || (enemy.angle - ray.angle >= -290 && enemy.angle - ray.angle <= -250)){ //if the player is in or near the firing angle
+    var rayAngle = ray.angle * 180/Math.PI;//convert ray angle from radians to degrees
+    console.log("Ray angle: " + rayAngle + " Enemy angle: " + enemy.angle + " In firing cone? " + (enemy.angle - rayAngle >= 70 && enemy.angle - rayAngle <= 110)
+      || (enemy.angle - rayAngle <= -70 && enemy.angle >= -110)
+      || (enemy.angle - rayAngle <= 290 && enemy.angle - rayAngle >= 250)
+      || (enemy.angle - rayAngle >= -290 && enemy.angle - rayAngle <= -250));
+      //check if the player is off to the left or off to the right +/- 20 degrees
+    if ((enemy.angle - rayAngle >= 70 && enemy.angle - rayAngle <= 110)
+      || (enemy.angle - rayAngle <= -70 && enemy.angle >= -110)
+      || (enemy.angle - rayAngle <= 290 && enemy.angle - rayAngle >= 250)
+      || (enemy.angle - rayAngle >= -290 && enemy.angle - rayAngle <= -250)){ //if the player is in or near the firing angle
+          //if it is, fire the weapons
         for (var i = 0; i < enemyWeapons.getWeapons(enemy).length; i++){
         weapon = enemyWeapons.getWeapons(enemy)[i];
         weapon.fire();
         }
-      }
-    if (enemy.angle - ray.angle > 0 && enemy.angle - ray.angle <= 180){
-      newAngle = enemy.angle - 90;
+      } else { //not in the firing cone
+      //if not, figure out whether it's better to turn left or right based on the targetAngle
+    if (enemy.angle - rayAngle > 0 && enemy.angle - rayAngle <= 180){
+      newAngle = enemy.angle - enemy.TURN_RATE;
     } else {
-      newAngle = enemy.angle + 90;
+      newAngle = enemy.angle + enemy.TURN_RATE;
     }
-
-  navigate(enemy, newAngle);
-  //check if the player is off to the left or off to the right +/- 20 degrees
-  //if it is, fire the weapons
-  //if not, figure out whether it's better to turn left or right based on the targetAngle
   //turn in the correct direction
+  navigate(enemy, newAngle);
+  }
 }
 
-  /*
+/*
   function turnAndShoot(enemy, targetAngle){
     console.log("turning and shooting");
     //console.log("Turn rate in turn and shoot: " + enemy.TURN_RATE);
     // Gradually (this.TURN_RATE) aim the missile towards the target angle
-    if (this.rotation !== targetAngle) {
+    if ((this.rotation !== targetAngle + 90) && (this.rotation !== targetAngle - 90)) {
       // Calculate difference between the current angle and targetAngle
-      var delta = targetAngle - enemy.rotation;
+      var delta1 = (targetAngle + 90) - enemy.rotation;
+      var delta2 = (targetAngle - 90) - enemy.rotation;
+      var delta;
+      if (delta1 > delta2){
+         delta = delta1;
+      } else {
+        delta = delta2;
+      }
 
       // Keep it in range from -180 to 180 to make the most efficient turns.
       if (delta > Math.PI) delta -= Math.PI * 2;
@@ -1776,22 +1792,17 @@ function playerHitIsland(ship, island){
       // Just set angle to target angle if they are close
       if (Math.abs(delta) < this.game.math.degToRad(enemy.TURN_RATE)) {
         enemy.rotation = targetAngle;
-        var weapon;
-        for (var i = 0; i < enemyWeapons.getWeapons(enemy).length; i++){
-          weapon = enemyWeapons.getWeapons(enemy)[i];
-          weapon.fire();
-        }
       }
+  } else {
+    var weapon;
+    for (var i = 0; i < enemyWeapons.getWeapons(enemy).length; i++){
+      weapon = enemyWeapons.getWeapons(enemy)[i];
+      weapon.fire();
+    }
   }
 
-  // Calculate velocity vector based on this.rotation and this.SPEED
-  enemy.body.velocity.x = Math.cos(enemy.rotation) * enemy.maxSpeed;
-  enemy.body.velocity.y = Math.sin(enemy.rotation) * enemy.maxSpeed;
-    //if (player is in range, off to the side or off to the side and off the bow){
-    //shoot the guns
-    //}
   }
-  */
+*/
 
   function navigate(enemy, targetAngle){
     //console.log("navigating");
@@ -1852,12 +1863,13 @@ function playerHitIsland(ship, island){
     var ray = new Phaser.Line(enemy.x, enemy.y, player1.sprite.x, player1.sprite.y);
     //check if the ray is interrupted by any islands
     var intersect = getIslandIntersection(ray, islands);
+    var rayAngle = ray.angle * 180/Math.PI;//convert ray angle into degrees from radians
     //if it is, turn away from the island
     if (intersect){
-      if (enemy.angle - ray.angle >= 0){
-        navigate(enemy, ray.angle + 10);
+      if (enemy.angle - rayAngle >= 0){
+        navigate(enemy, rayAngle + 10);
       } else {
-        navigate(enemy, ray.angle - 10);
+        navigate(enemy, rayAngle - 10);
       }
     }
   }
@@ -1896,6 +1908,49 @@ var closestIntersection = null;
 
 return closestIntersection;
 };
+
+  //AI for the standard, "normal" enemy. It uses a blend of simple chasing,
+  //flocking, and running away to keep the player on their toes
+  function normalAI(ship, wind){
+    //look for man o'wars to flock with
+    // if there is another normal enemy in front of/behind this ship, flock with it
+    // if health is high (over 50%?), attack the player like a gunboat
+    // if health is low, but the player is being attacked by another ship or has low health, but is not invincible, attack the player
+    // otherwise, run away from the player
+  }
+
+  //AI for the heavy "man O' war" enemy. It wants to flock with other ships (especially otehr man o wars)
+  //into either a line formation or into a circled-wagon formation in order to maximize firepower
+  function manOwarAI(ship, wind){
+    //if this ship has at least one ship behind it, look to attack the player
+    // if there's a nearby flockable ship (either a normal or another manowar), approach it to flock
+    // if there isn't, avoid islands and don't go upwind. If the player comes by, attack.
+    // if health is low(below 30%?) attack the player like a gunboat
+  }
+
+  //AI for the light "dhow" enemy. It wants to avoid getting hit as much as possible, so it runs
+  //away most of the time and only attacks when the player would be most vulnerable
+  function dhowAI(ship, wind){
+    //check the ship's current "courage" value
+    //if (ship.courage < 100){}
+    //if it's below the threshhold (let's say 100), then increase its value and continue to run away
+    //ship.courage++;
+    //runAway(ship, wind);
+    //if it's at or above the threshhold, look to attack.
+    //dhowAttack(ship, wind);
+  }
+
+  function runAway(ship, wind){
+    //check the location of the player
+    //if going straight is both away from the player and not upwind, go that way
+    //check to see if turning left runs into an island or the player's firing range
+    //check to see if turning right runs into an island or the player's firing range
+  }
+
+  function dhowAttack(ship, wind){
+    //try to maneuver behind the player and shoot, avoid going upwind
+    //if shots land, reset the courage value so the dhow will run away
+  }
 
   function tentacleAI(tentacle){
     //console.log("The tentacle has a mind");
