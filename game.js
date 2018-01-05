@@ -1645,13 +1645,13 @@ function playerHitIsland(ship, island){
     //console.log(gunboat + " in the Gunboat AI function");
     var straightDistance = game.physics.arcade.distanceBetween(player1.sprite, gunboat);//find the direct distance to the player
     //find the round the world distance to the player
-    var roundDistance = ((this.width - player1.sprite.x) + (gunboat.x) + (this.height - player1.sprite.y) + (gunboat.y));
+    var roundDistance = getDaGamaDistance(gunboat);
     //find the angle if the ship were to go directly
     var targetAngle = this.game.math.angleBetween(
         gunboat.x, gunboat.y,
         player1.sprite.x, player1.sprite.y
     );
-    //console.log("Direct: " + straightDistance + " Da Gama: " + roundDistance);
+    console.log("Direct: " + straightDistance + " Da Gama: " + roundDistance);
     var routeDirection = 'Q';
     //if one of those distances is within firing range, call a turnAndShoot() function
     if (straightDistance <= 250){
@@ -1659,13 +1659,13 @@ function playerHitIsland(ship, island){
     } else if (roundDistance <= 250){
       turnAndShoot(gunboat, targetAngle);
     }
-    //if one of those distances is less than half the other, go that way
-    if ((straightDistance * 2) < roundDistance){
+    //if one of those distances is less than one third the other, go that way
+    if ((straightDistance * 3) < roundDistance){
       //go directly
       navigate(gunboat, targetAngle);
-    } else if ((roundDistance * 2) < straightDistance){
+    } else if ((roundDistance * 3) < straightDistance){
       //go around the world
-      naviagate(gunboat, 0 - targetAngle);
+      navigate(gunboat, 0 - targetAngle);
     //if directly sends you upwind, go around the world, otherwise go directly
     } else if (targetAngle >= 45 && targetAngle <135){ //south
       if (wind === 'S'){ //upwind
@@ -1795,6 +1795,26 @@ function playerHitIsland(ship, island){
   enemy.body.velocity.y = Math.sin(enemy.rotation) * enemy.maxSpeed;
   }
 
+  function getDaGamaDistance(enemy){
+    if (player1.sprite.x < enemy.x){ //player is to the left of the enemy
+      if (player1.sprite.y < enemy.y){ //player is above enemy
+        console.log("player is to the left and above the enemy");
+        return (((this.height - enemy.y) + (player1.sprite.y)) + ((this.width - enemy.x) + (player1.sprite.x)));
+      } else { //player is below or equal to enemy
+        console.log("player is to the left and above the enemy");
+        return (((this.height - player1.sprite.y) + (enemy.y)) + ((this.width - enemy.x) + (player1.sprite.x)));
+      }
+    } else { //player is to the right or equal to enemy
+      if (player1.sprite.y < enemy.y){ // player is above the enemy
+        console.log("player is to the right and above the enemy");
+        return (((this.height - enemy.y) + (player1.sprite.y)) + ((this.width - player1.sprite.x) + (enemy.x)));
+      } else { //player is below or equal to the enemy
+        console.log("player is to the right and below the enemy");
+        return (((this.height - player1.sprite.y) + (enemy.y)) + ((this.width - player1.sprite.x) + (enemy.x)));
+      }
+    }
+  }
+
 
   //TODO: fill out this stub
   function avoidIslands(enemy, islands){
@@ -1852,7 +1872,7 @@ return closestIntersection;
     if (!tentacle.grabbedPlayer){
       var straightDistance = game.physics.arcade.distanceBetween(player1.sprite, tentacle);//find the direct distance to the player
       //find the round the world distance to the player
-      var roundDistance = ((this.width - player1.sprite.x) + (tentacle.x) + (this.height - tentacle.y) + (tentacle.y));
+      var roundDistance = getDaGamaDistance(tentacle);
       //find the angle if the ship were to go directly
       var targetAngle = this.game.math.angleBetween(
         tentacle.x, tentacle.y,
