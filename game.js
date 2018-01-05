@@ -84,7 +84,7 @@ GameState.prototype.create = function() {
 
   //instantiates boss data
     this.killedBosses = new Array();
-    this.allBosses = ['kraken'];
+    this.allBosses = ['kraken', 'ghost'];
 
   //adds islands to map
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -122,7 +122,10 @@ GameState.prototype.create = function() {
     var tentacleGroup = this.game.add.group();
     storage1 = new storage(treasureGroup, enemies, tentacleGroup);
     var weaponGroup = {};
-    enemyWeapons = new enemyWeapons(weaponGroup);
+    //add weapons for the ghost ship boss
+    var ghostWeapon = this.game.add.weapon(100, 'cannonball');
+    var ghostWeapon2 = this.game.add.weapon(100, 'cannonball');
+    enemyWeapons = new enemyWeapons(weaponGroup, ghostWeapon, ghostWeapon2);
 
     //makes sure the ship isn't overlapping with any islands
     console.log(player1.sprite.overlap(island));
@@ -250,6 +253,9 @@ GameState.prototype.update = function () {
   game.physics.arcade.collide(storage1.getTreasures(), storage1.getEnemies());
   game.physics.arcade.collide(storage1.getTreasures(), this.islands);
 
+  game.physics.arcade.overlap(player1.sprite, enemyWeapons.getGhostWeapon(1).bullets, playerWasShot);
+  game.physics.arcade.overlap(player1.sprite, enemyWeapons.getGhostWeapon(2).bullets, playerWasShot);
+
   game.physics.arcade.overlap(player1.sprite, this.powerups, collectPowerUp);
 
   //  Collide stuff with the islands
@@ -277,17 +283,19 @@ GameState.prototype.update = function () {
       console.log("first wave. " + storage1.getWave());
       storage1.nextWave();
       generateEnemies(storage1.getWave(), 2, this.wind, storage1.getEnemies(), true);
-    } else if (storage1.getWave() === 5 || storage1.getWave() === 15 || storage1.getWave() === 25 || storage1.getWave() === 35 || storage1.getWave() === 45 || storage1.getWave() >= 55){ //boss wave
+    } else if (isBossWave()){ //boss wave
       console.log("boss wave. " + storage1.getWave());
       if (this.allBosses.length - 1 <= this.killedBosses.length){
         this.killedBosses = [];
       }
-      //TODO: implement this with a hashmap for random access rather than fixed order
-      for (var i = 0; i < this.allBosses.length; i++){
-        var bossType = this.allBosses[i];
-        if (this.allBosses[i], this.killedBosses.indexOf(bossType) === -1){
+      //randomly chooses one of the available bosses
+      while(1){
+        var guess = Math.floor(Math.random() * this.allBosses.length);
+        var bossType = this.allBosses[guess];
+        if (this.allBosses[guess], this.killedBosses.indexOf(bossType) === -1){
           var boss = bossWave(bossType);
           storage1.addEnemy(boss);
+          break;
         }
       }
       storage1.nextWave();
@@ -381,7 +389,9 @@ GameState.prototype.update = function () {
         //dhowAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
       } else {//boss
-
+        if (enemy.key === 'ship'){//ghost ship, but it uses the same sprite as the player
+          ghostShipAI(enemy);
+        }
       }
       if (Math.abs(enemy.body.velocity.x) > oldXSpeed || Math.abs(enemy.body.velocity.y) > oldYSpeed){
         enemy.frame += 2;
@@ -602,6 +612,11 @@ GameState.prototype.update = function () {
     this.weapon.fire();
     this.weapon2.fire();
     this.fireButtonHeld++;
+    if (isGhostWave()){
+      //console.log("anything you can do I can do better!");
+      enemyWeapons.fireGhostWeapons();
+      console.log(enemyWeapons.getGhostWeaponAngles());
+    }
   } else { //reduce the fireButtonHeld value
       if (this.fireButtonHeld > 0)
         this.fireButtonHeld -= 1; //TODO: balance cooldown time vs spam time. Should it be longer? Should it be shorter?
@@ -1091,6 +1106,7 @@ function playerHitIsland(ship, island){
 }
 
   function enemyHitIsland(enemy, island){
+    if (enemy.key !== 'ship'){
     enemy.health--;
     //TODO: copy whatever the playerHitisland function does
     if (enemy.health <= 0){
@@ -1099,6 +1115,22 @@ function playerHitIsland(ship, island){
       player1.addKill();
       //TODO: explosion, sound
     }
+    }
+  }
+
+  function playerWasShot(player, bullet){
+    bullet.kill();
+    if (player1.getIsInvincible() === false) { //We only damage the player if not invincible
+      player1.damage();
+      player1.resetKills();
+      player1.toggleInvincible();
+      console.log("I am invincible! " + player1.getIsInvincible());
+      //and then we add a timer to restore the player to a vulnerable state. The normal game timer didn't work, so I came up with this which uses update frames
+      player1.setInvincibilityTime(100); //TODO: balance this time
+      //TODO: add sound for when the player is hit
+      //TODO: add explosion
+      //console.log("We've been hit, Captain! " + player1.getHealth());
+  }
   }
 
   function playerHitShip(player, ship){
@@ -1889,6 +1921,38 @@ return closestIntersection;
     }
   }
 
+  function ghostShipAI(ghostShip){
+    //console.log("You're being haunted");
+      if (ghostShip.x > (this.width - player1.sprite.x)){
+        ghostShip.x -= 2;
+      } else if(ghostShip.x < (this.width - player1.sprite.x)){
+        ghostShip.x += 2;
+      }
+      if (ghostShip.y > (this.height - player1.sprite.y)){
+        ghostShip.y -= 2;
+      } else if(ghostShip.y < (this.height - player1.sprite.y)){
+        ghostShip.y += 2;
+      }
+      ghostShip.angle = 180 + player1.sprite.angle;
+      ghostShip.frame = getGhostShipFrame();
+      var angle = ghostShip.angle;
+      enemyWeapons.setGhostWeaponAngles(angle);
+      enemyWeapons.getGhostWeaponAngles();
+    }
+
+    //makes the ghost ship use the opposite wake sprite as the player
+    function getGhostShipFrame(){
+      if (player1.sprite.frame >= 0 && player1.sprite.frame < 3){
+        return 9;
+      } else if (player1.sprite.frame >= 3 && player1.sprite.frame < 6){
+        return 6;
+      } else if (player1.sprite.frame >= 6 && player1.sprite.frame < 9){
+        return 3;
+      } else {
+        return 0;
+      }
+    }
+
 
   //calls the appropriate functions for each boss depending on what string is passed in
   //TODO: add otehr bosses
@@ -1896,7 +1960,9 @@ return closestIntersection;
     console.log(type);
     var boss;
     switch(type){
-      case 'ghost': // boss = ghostShip(); break;
+      case 'ghost':
+      boss = ghostShip();
+      break;
       default://kraken
       boss = releaseKraken();
     }
@@ -1996,6 +2062,38 @@ return closestIntersection;
       var tentacle = storage1.getTentacleGroup().children[i];
       tentacle.kill();
     }
+  }
+
+  function ghostShip(){
+    var x, y;
+    if (player1.sprite.y < this.height/2){
+      y = this.height;
+    } else {
+      y = 0;
+    }
+    x = this.width - player1.sprite.x;
+    var ship = this.game.add.sprite(x, y, 'ship'); //uses the sam sprite as the player...what if the enemies we are battling are really ourselves? So deep.
+    ship.tint = 0x2EFE2E; //green tint to the ship
+    ship.health = enemyHealth['manowar'];
+    ship.anchor.setTo(0.5, 0.5);
+    enemyWeapons.trackGhostSprite(ship);
+    return ship;
+  }
+
+  function isBossWave(){
+    return (storage1.getWave() === 5 || storage1.getWave() === 15 || storage1.getWave() === 25 || storage1.getWave() === 35 || storage1.getWave() === 45 || storage1.getWave() >= 55);
+  }
+
+  function isGhostWave(){
+    var children = storage1.getEnemies().children;
+    var enemy;
+    for (var i = 0; i < children.length; i++){
+      enemy = children[i];
+      if (enemy.alive && enemy.key === 'ship'){ //there is a live ghost ship in the game
+        return true;
+      }
+    }
+    return false;
   }
 
 

@@ -12,7 +12,7 @@ Maybe we can assign a "difficulty value" to each enemy type, and each wave is al
 Bosses
 Potentially, we could break up bosses into two groups- "easy" and "hard", and have a higher chance of a "hard" boss the higher the wave is.
 1. Kraken- head takes damage, tentacles seek out the player and don't take damage.
-    The head disappears briefly after being hit and reappears somewhere else.
+    The head disappears briefly after being hit and reappears somewhere else. Needs a delay before the tentacles launch so the player can know what's going on.
 2. Mother Of All Boats- giant ship that doesn't really move, has cannons that shoot in bullet-hell patterns.
 3. Megaladon- giant super shark that seeks the player
 4. Chinese Junk- ship that fires exploding rockets (with proximity fuses) instead of cannonballs
