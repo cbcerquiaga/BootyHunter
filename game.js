@@ -70,8 +70,6 @@ GameState.prototype.preload = function() {
 GameState.prototype.create = function() {
     // Set stage background color
 //    this.game.stage.backgroundColor = 0x111111;
-  var scoreIndicator = this.game.add.sprite(16, 22, 'treasureChest');
-  this.scoreText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#FFF' });
 
   //TODO: remove redundant code
   this.numEnemies = 2;
@@ -224,7 +222,8 @@ GameState.prototype.create = function() {
 
     ]);
     //this.ship.body.collideWorldBounds = false;//lets the ship wrap around the world
-
+    var scoreIndicator = this.game.add.sprite(16, 22, 'treasureChest');
+    this.scoreText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#FFF' });
 };
 
 
@@ -295,6 +294,7 @@ GameState.prototype.update = function () {
         if (this.allBosses[guess], this.killedBosses.indexOf(bossType) === -1){
           var boss = bossWave(bossType);
           storage1.addEnemy(boss);
+          //console.log("Number of living children after adding boss: " + storage1.getEnemies().countLiving());
           break;
         }
       }
@@ -352,6 +352,7 @@ GameState.prototype.update = function () {
     //console.log(enemy + " looping through living enemies.");
     var oldXSpeed = enemy.body.velocity.x;
     var oldYSpeed = enemy.body.velocity.y;
+    console.log(enemy.key); //TODO: figure out why this always logs "gunboat"
       //console.log(enemy + " in loop");
       if (enemy.key === 'gunboat'){
         //console.log("it's a gunboat");
@@ -362,6 +363,7 @@ GameState.prototype.update = function () {
         enemy.body.velocity.y = speedArray[1];
         gunBoatAI(enemy, this.wind); //the ship chases the player or runs away, turns to shoot
         avoidIslands(enemy, this.islands); //the ship tries to avoid islands
+        break;
       } else if (enemy.key === 'normal'){
         enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
         enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'normal');
@@ -370,6 +372,7 @@ GameState.prototype.update = function () {
         enemy.body.velocity.y = speedArray[1];
         normalAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
+        break;
       } else if (enemy.key === 'manOwar'){
         enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
         enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'manOwar');
@@ -378,6 +381,7 @@ GameState.prototype.update = function () {
         enemy.body.velocity.y = speedArray[1];
         manOwarAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
+        break;
       } else if (enemy.key === 'dhow'){
         enemy.frame = dhowCheckWind(enemy.angle, this.wind);
         enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'normal');
@@ -386,10 +390,13 @@ GameState.prototype.update = function () {
         enemy.body.velocity.y = speedArray[1];
         dhowAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
+        break;
       } else {//boss
         if (enemy.key === 'ship'){//ghost ship, but it uses the same sprite as the player
+          console.log("It's the ghost ship");
           ghostShipAI(enemy);
         }
+        break;
       }
       if (Math.abs(enemy.body.velocity.x) > oldXSpeed || Math.abs(enemy.body.velocity.y) > oldYSpeed){
         enemy.frame += 2;
@@ -1105,15 +1112,14 @@ function playerHitIsland(ship, island){
 
   function enemyHitIsland(enemy, island){
     if (enemy.key !== 'ship'){
-    enemy.health--;
-    //TODO: copy whatever the playerHitisland function does
+      enemy.health--;
     if (enemy.health <= 0){
       spawnTreasure(enemy.x, enemy.y, 4);//spawn treasure
       enemy.kill();
       player1.addKill();
       //TODO: explosion, sound
     }
-    }
+  }
   }
 
   function playerWasShot(player, bullet){
@@ -1734,10 +1740,10 @@ function playerHitIsland(ship, island){
     game.debug.geom(ray);
     var newAngle;
     var rayAngle = ray.angle * 180/Math.PI;//convert ray angle from radians to degrees
-    console.log("Ray angle: " + rayAngle + " Enemy angle: " + enemy.angle + " In firing cone? " + (enemy.angle - rayAngle >= 70 && enemy.angle - rayAngle <= 110)
-      || (enemy.angle - rayAngle <= -70 && enemy.angle >= -110)
-      || (enemy.angle - rayAngle <= 290 && enemy.angle - rayAngle >= 250)
-      || (enemy.angle - rayAngle >= -290 && enemy.angle - rayAngle <= -250));
+    //console.log("Ray angle: " + rayAngle + " Enemy angle: " + enemy.angle + " In firing cone? " + (enemy.angle - rayAngle >= 70 && enemy.angle - rayAngle <= 110)
+    //  || (enemy.angle - rayAngle <= -70 && enemy.angle >= -110)
+    //  || (enemy.angle - rayAngle <= 290 && enemy.angle - rayAngle >= 250)
+    //  || (enemy.angle - rayAngle >= -290 && enemy.angle - rayAngle <= -250));
       //check if the player is off to the left or off to the right +/- 20 degrees
     if ((enemy.angle - rayAngle >= 70 && enemy.angle - rayAngle <= 110)
       || (enemy.angle - rayAngle <= -70 && enemy.angle >= -110)
@@ -1975,19 +1981,19 @@ return closestIntersection;
   }
 
   function ghostShipAI(ghostShip){
-    //console.log("You're being haunted");
+    console.log("You're being haunted");
       if (ghostShip.x > (this.width - player1.sprite.x)){
-        console.log("Need to go left");
+        //console.log("Need to go left");
         ghostShip.x -= 2;
       } else if(ghostShip.x < (this.width - player1.sprite.x)){
-        console.log("Need to go right");
+        //console.log("Need to go right");
         ghostShip.x += 2;
       }
       if (ghostShip.y > (this.height - player1.sprite.y)){
-        console.log("Need to go up");
+        //console.log("Need to go up");
         ghostShip.y -= 2;
       } else if(ghostShip.y < (this.height - player1.sprite.y)){
-        console.log("Need to go down");
+        //console.log("Need to go down");
         ghostShip.y += 2;
       }
       ghostShip.angle = 180 + player1.sprite.angle;
@@ -2132,6 +2138,7 @@ return closestIntersection;
     var ship = this.game.add.sprite(x, y, 'ship'); //uses the sam sprite as the player...what if the enemies we are battling are really ourselves? So deep.
     ship.tint = 0x2EFE2E; //green tint to the ship
     ship.health = enemyHealth['manowar'];
+    ship.collideWorldBounds = false;
     ship.anchor.setTo(0.5, 0.5);
     enemyWeapons.trackGhostSprite(ship);
     return ship;
