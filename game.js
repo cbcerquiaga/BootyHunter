@@ -363,7 +363,6 @@ GameState.prototype.update = function () {
         enemy.body.velocity.y = speedArray[1];
         gunBoatAI(enemy, this.wind); //the ship chases the player or runs away, turns to shoot
         avoidIslands(enemy, this.islands); //the ship tries to avoid islands
-        break;
       } else if (enemy.key === 'normal'){
         enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
         enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'normal');
@@ -372,7 +371,6 @@ GameState.prototype.update = function () {
         enemy.body.velocity.y = speedArray[1];
         normalAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
-        break;
       } else if (enemy.key === 'manOwar'){
         enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
         enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'manOwar');
@@ -381,7 +379,6 @@ GameState.prototype.update = function () {
         enemy.body.velocity.y = speedArray[1];
         manOwarAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
-        break;
       } else if (enemy.key === 'dhow'){
         enemy.frame = dhowCheckWind(enemy.angle, this.wind);
         enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'normal');
@@ -390,13 +387,11 @@ GameState.prototype.update = function () {
         enemy.body.velocity.y = speedArray[1];
         dhowAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
-        break;
       } else {//boss
         if (enemy.key === 'ship'){//ghost ship, but it uses the same sprite as the player
           console.log("It's the ghost ship");
           ghostShipAI(enemy);
         }
-        break;
       }
       if (Math.abs(enemy.body.velocity.x) > oldXSpeed || Math.abs(enemy.body.velocity.y) > oldYSpeed){
         enemy.frame += 2;
@@ -1552,77 +1547,77 @@ function playerHitIsland(ship, island){
         direction = checkWind('S', wind);
         switch(direction){
           case 'D':
-          //if (angle is sw){
-          //startWake = 0;//starboard downwind
-          //} else {
-          //startWake = 3;//port downwind
-          //}
+            if (angle > 90){//if angle is sw
+              startWake = 0;//starboard downwind
+            } else {
+              startWake = 3;//port downwind
+            }
           break;
           case 'P': startWake = 6; break;
           case 'S': startWake = 9; break;
           default:
-            //if (angle is sw){
-            //startWake = 9;
-            //} else {
-            //startWake = 6;
-            //}
+            if (angle > 90){//if angle is sw
+              startWake = 9;
+              } else {
+              startWake = 6;
+            }
       }
     } else if ((angle >= 135 && angle <225) || (angle >= -225 && angle < -135)){//ship pointing west
         direction = checkWind('W', wind);
         switch(direction){
           case 'D':
-          //if (angle is nw){
-          //startWake = 0;//starboard downwind
-          //} else {
-          //startWake = 3;//port downwind
-          //}
+            if ((angle < 180 && angle > 0) || (angle > -180 && angle < 0)){//if angle is nw
+              startWake = 0;//starboard downwind
+            } else {
+              startWake = 3;//port downwind
+            }
           break;
           case 'P': startWake = 6; break;
           case 'S': startWake = 3; break;
           default:
-          //if (angle is nw){
-          //startWake = 9;//port upwind
-          //} else {
-          //startWake = 6;//starboard upwind
-          //}
+            if ((angle < 180 && angle > 0) || (angle > -180 && angle < 0)){//if angle is nw
+              startWake = 9;//port upwind
+            } else {
+              startWake = 6;//starboard upwind
+          }
       }
     } else if ((angle < -45 && angle >= -135)|| (angle < 315 && angle >= 225)){//ship pointing north
         direction = checkWind('N', wind);
         switch(direction){
           case 'D':
-          //if (angle is sw){
-          //startWake = 0;//starboard downwind
-          //} else {
-          //startWake = 3;//port downwind
-          //}
+            if ((angle > -90 && angle < 0) || (angle > 270 && angle > 0)){//if angle is ne
+              startWake = 0;//starboard downwind
+            } else {
+              startWake = 3;//port downwind
+            }
           break;
           case 'P': startWake = 6; break;
           case 'S': startWake = 3; break;
           default:
-          //if (angle is ne){
-          //startWake = 9;//port upwind
-          //} else {
-          //startWake = 6;//starboard upwind
-          //}
+            if ((angle > -90 && angle < 0) || (angle > 270 && angle > 0)){//if angle is ne
+              startWake = 9;//port upwind
+            } else {
+              startWake = 6;//starboard upwind
+            }
       }
     } else {//east
         direction = checkWind('E', wind);
         switch(direction){
           case 'D':
-          //if (angle is se){
-          //startWake = 0;//starboard downwind
-          //} else {//angle is ne
-          //startWake = 3;//port downwind
-          //}
+            if ((angle > 0 && angle < 90) || (angle < -270 && angle > -359)){//if angle is se
+              startWake = 0;//starboard downwind
+            } else {//angle is ne
+              startWake = 3;//port downwind
+            }
           break;
           case 'P': startWake = 6; break;
           case 'S': startWake = 3; break;
           default:
-          //if (angle is se){
-          //startWake = 9;//port upwind
-          //} else {
-          //startWake = 6;//starboard upwind
-          //}
+            if ((angle > 0 && angle < 90) || (angle < -270 && angle > -359)){//if angle is se
+              startWake = 9;//port upwind
+            } else {
+              startWake = 6;//starboard upwind
+          }
       }
     }
       return startWake;
