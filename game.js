@@ -44,7 +44,7 @@ GameState.prototype.preload = function() {
   //  this.game.load.spritesheet('ship', 'assets/gfx/ship.png', 32, 32);
     this.game.load.spritesheet('ship', 'assets/boatLoRes.png', 38, 32);
     this.game.load.image('cannonball', 'assets/cannonball.png');
-    this.game.load.image('treasureChest', 'assets/treasureChest.png');
+    this.game.load.image('treasureChest', 'assets/treasureChest2.png');
     this.game.load.image('whitecap', 'assets/whitecap.png');
     this.game.load.spritesheet('gunboat', 'assets/gunBoat.png', 25, 19);
     this.game.load.spritesheet('manowar', 'assets/manOwar.png', 59, 32);
@@ -222,7 +222,7 @@ GameState.prototype.create = function() {
 
     ]);
     //this.ship.body.collideWorldBounds = false;//lets the ship wrap around the world
-    var scoreIndicator = this.game.add.sprite(16, 22, 'treasureChest');
+    var scoreIndicator = this.game.add.sprite(13, 19, 'treasureChest');
     this.scoreText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#FFF' });
 };
 
