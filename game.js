@@ -1562,9 +1562,9 @@ function playerHitIsland(ship, island){
           case 'S': startWake = 9; break;
           default:
             //if (angle is sw){
-            //startWake = 6;
-            //} else {
             //startWake = 9;
+            //} else {
+            //startWake = 6;
             //}
       }
     } else if ((angle >= 135 && angle <225) || (angle >= -225 && angle < -135)){//ship pointing west
@@ -1581,9 +1581,9 @@ function playerHitIsland(ship, island){
           case 'S': startWake = 3; break;
           default:
           //if (angle is nw){
-          //startWake = 6;//port upwind
+          //startWake = 9;//port upwind
           //} else {
-          //startWake = 9;//starboard upwind
+          //startWake = 6;//starboard upwind
           //}
       }
     } else if ((angle < -45 && angle >= -135)|| (angle < 315 && angle >= 225)){//ship pointing north
@@ -1600,9 +1600,9 @@ function playerHitIsland(ship, island){
           case 'S': startWake = 3; break;
           default:
           //if (angle is ne){
-          //startWake = 6;//port upwind
+          //startWake = 9;//port upwind
           //} else {
-          //startWake = 9;//starboard upwind
+          //startWake = 6;//starboard upwind
           //}
       }
     } else {//east
@@ -1619,9 +1619,9 @@ function playerHitIsland(ship, island){
           case 'S': startWake = 3; break;
           default:
           //if (angle is se){
-          //startWake = 6;//port upwind
+          //startWake = 9;//port upwind
           //} else {
-          //startWake = 9;//starboard upwind
+          //startWake = 6;//starboard upwind
           //}
       }
     }
