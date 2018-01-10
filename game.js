@@ -63,6 +63,8 @@ GameState.prototype.preload = function() {
     this.game.load.image('parrot', 'assets/parrot.png');
     this.game.load.image('gameOver', 'assets/gameOver.png');
     game.load.text('pirateFacts', 'PirateFacts.txt');
+    this.game.load.spritesheet('sandParticles', 'assets/islandParticles.png', 1, 1);
+    this.game.load.spritesheet('explosionParticles', 'assets/explosionParticles.png', 1,1);
   //  console.log("Hello world");
 };
 
@@ -88,7 +90,7 @@ GameState.prototype.create = function() {
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
     this.islands = this.game.add.group();
     this.islands.enableBody = true;
-    generateIslands(width, height, 20, 100, 'ship', this.islands);
+    generateIslands(width, height, 20, 100, 10, 'ship', this.islands);
 
     //creates whitecaps group
     this.whitecaps = this.game.add.group();
@@ -835,12 +837,18 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
   }
 
 
-function generateIslands(width, height, maxIslands, maxSize, tank, islands) {
+function generateIslands(width, height, maxIslands, maxSize, minSize, tank, islands) {
   var numIslands = Math.random() * maxIslands;
 
 for (var i = 0; i < numIslands; i++){
-  var radius1 = Math.random() * maxSize;
-  var radius2 = Math.random() * maxSize;
+  var radius1 = 0;
+  var radius2 = 0;
+    while (radius1 < minSize){
+      radius1 = Math.random() * maxSize;
+    }
+    while (radius2 < minSize){
+      radius2 = Math.random() * maxSize;
+    }
   var x = Math.random() * width;
   var y = Math.random() * height;
   var isDesert = Math.random()>0.5?true:false;
@@ -1099,7 +1107,7 @@ function playerHitIsland(ship, island){
       console.log("I am invincible! " + player1.getIsInvincible());
       //and then we add a timer to restore the player to a vulnerable state. The normal game timer didn't work, so I came up with this which uses update frames
       player1.setInvincibilityTime(100); //TODO: balance this time
-      //TODO: add sound for when the player is hit
+      //particleExplosion(player1.sprite.body.x, player1.sprite.body.y, 8, 'sandParticles', 5, 100, 20);
       //TODO: add "explosion" of water/sand pixels?
       //console.log("We've been hit, Captain! " + player1.getHealth());
   }
@@ -1168,6 +1176,30 @@ function playerHitIsland(ship, island){
       ship2.kill();
       player1.addKill();
     }
+  }
+
+  //creates a particle explosion with a given spritesheet
+  function particleExplosion(x, y, numParticles, spriteSheet, spriteSheetLength, maxSpeed, minSpeed){
+    var xVelocity, yVelocity = 0;
+    for (var i = 0; i < numParticles; i++){
+      var particle = this.game.add.sprite(x, y, spriteSheet);
+        particle.enableBody = true;
+              console.log("Particle " + i + " particle body = " + particle.enableBody);
+        particle.anchor.setTo(0.5, 0.5);
+        xVelocity = 0;
+        yVelocity = 0;
+      while (xVelocity < minSpeed){
+        xVelocity = Math.random() * maxSpeed;
+      }
+        particle.body.velocity.x = xVelocity;
+      while (yVelocity < minSpeed){
+        yVelocity = Math.random() * maxSpeed;
+      }
+        particle.body.velocity.y = yVelocity;
+    }
+      particle.lifespan = 100;
+      particle.angle = Math.random() * 90;
+      particle.frame = Math.random() * spriteSheetLength;
   }
 
   //spawns treasure from a fallen enemy
