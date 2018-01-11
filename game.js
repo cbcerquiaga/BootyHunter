@@ -65,6 +65,7 @@ GameState.prototype.preload = function() {
     game.load.text('pirateFacts', 'PirateFacts.txt');
     this.game.load.spritesheet('sandParticles', 'assets/islandParticles.png', 1, 1);
     this.game.load.spritesheet('explosionParticles', 'assets/explosionParticles.png', 1,1);
+    this.game.load.spritesheet('bigExplosionParticles', 'assets/bigExplosionParticles.png', 4, 4);
   //  console.log("Hello world");
 };
 
@@ -764,6 +765,7 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
 
   function enemyWasShot(enemy, bullet){
     bullet.kill();
+    particleExplosion(enemy.x, enemy.y, 3, 'explosionParticles', 8, 40);
     enemy.health--;
     //console.log("bang! " + enemy.health);
     //TODO: add explosion
@@ -786,6 +788,7 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
       spawnTreasure(enemy.x, enemy.y, 4);//spawn treasure
       enemy.kill();
       player1.addKill();
+      particleExplosion(enemy.x, enemy.y, 10, 'bigExplosionParticles', 8, 70);
       //play explosion and sound
       }
     }
@@ -1107,8 +1110,8 @@ function playerHitIsland(ship, island){
       console.log("I am invincible! " + player1.getIsInvincible());
       //and then we add a timer to restore the player to a vulnerable state. The normal game timer didn't work, so I came up with this which uses update frames
       player1.setInvincibilityTime(100); //TODO: balance this time
-      //particleExplosion(player1.sprite.body.x, player1.sprite.body.y, 8, 'sandParticles', 5, 100, 20);
-      //TODO: add "explosion" of water/sand pixels?
+      //explosion, needs to be improved somewhat but usually it looks good
+      particleExplosion(player1.sprite.body.x, player1.sprite.body.y, 20, 'sandParticles', 5, 100);
       //console.log("We've been hit, Captain! " + player1.getHealth());
   }
 }
@@ -1132,10 +1135,11 @@ function playerHitIsland(ship, island){
       player1.resetKills();
       player1.toggleInvincible();
       console.log("I am invincible! " + player1.getIsInvincible());
-      //and then we add a timer to restore the player to a vulnerable state. The normal game timer didn't work, so I came up with this which uses update frames
+      //and then we add a timer to restore the player to a vulnerable state. The normal timer didn't work, so I came up with this which uses update frames
       player1.setInvincibilityTime(100); //TODO: balance this time
       //TODO: add sound for when the player is hit
-      //TODO: add explosion
+      //explosion
+      particleExplosion(player1.sprite.body.x, player1.sprite.body.y, 3, 'explosionParticles', 8, 40);
       //console.log("We've been hit, Captain! " + player1.getHealth());
   }
   }
@@ -1179,27 +1183,21 @@ function playerHitIsland(ship, island){
   }
 
   //creates a particle explosion with a given spritesheet
-  function particleExplosion(x, y, numParticles, spriteSheet, spriteSheetLength, maxSpeed, minSpeed){
-    var xVelocity, yVelocity = 0;
+  function particleExplosion(x, y, numParticles, spriteSheet, spriteSheetLength, maxSpeed){
+    var particleGroup = this.game.add.group();
     for (var i = 0; i < numParticles; i++){
       var particle = this.game.add.sprite(x, y, spriteSheet);
+        this.game.physics.enable(particle, Phaser.Physics.ARCADE);
         particle.enableBody = true;
-              console.log("Particle " + i + " particle body = " + particle.enableBody);
+        console.log("Particle " + i + " " + particle + " particle body = " + particle.enableBody);
         particle.anchor.setTo(0.5, 0.5);
-        xVelocity = 0;
-        yVelocity = 0;
-      while (xVelocity < minSpeed){
-        xVelocity = Math.random() * maxSpeed;
-      }
-        particle.body.velocity.x = xVelocity;
-      while (yVelocity < minSpeed){
-        yVelocity = Math.random() * maxSpeed;
-      }
-        particle.body.velocity.y = yVelocity;
+        particle.body.velocity.x = Math.random() * maxSpeed;
+        particle.body.velocity.y = Math.random() * maxSpeed;
+        particle.lifespan = 1000;
+        particle.angle = Math.random() * 90;
+        particle.frame = Math.floor(Math.random() * spriteSheetLength);
+        particleGroup.add(particle);
     }
-      particle.lifespan = 100;
-      particle.angle = Math.random() * 90;
-      particle.frame = Math.random() * spriteSheetLength;
   }
 
   //spawns treasure from a fallen enemy
