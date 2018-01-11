@@ -24,10 +24,10 @@ var startWake = 0;
 
 //enemy global variables
 var wave;
-var numEnemies;
-var enemyDownWindSpeed = {'gunboat': 100, 'manowar': 400, 'normal': 650, 'dhow': 500};
-var enemyCrossWindSpeed = {'gunboat': 60, 'manowar': 250, 'normal': 300, 'dhow': 850};//the dhow goes faster across the wind than down
-var enemyUpWindSpeed = {'gunboat': 35, 'manowar': 100, 'normal': 150, 'dhow': 250};
+var numEnemies; //added 100 to all gunboat speeds
+var enemyDownWindSpeed = {'gunboat': 200, 'manowar': 400, 'normal': 650, 'dhow': 500};
+var enemyCrossWindSpeed = {'gunboat': 160, 'manowar': 250, 'normal': 300, 'dhow': 850};//the dhow goes faster across the wind than down
+var enemyUpWindSpeed = {'gunboat': 135, 'manowar': 100, 'normal': 150, 'dhow': 250};
 var enemyHealth = {'gunboat': 1, 'manowar': 90, 'normal': 45, 'dhow': 21};
 var enemyDifficulty = {'gunboat': 1, 'manowar': 10, 'normal': 5, 'dhow': 10};
 var enemyTurnRate = {'gunboat': 120, 'manowar': 135, 'normal': 180, 'dhow': 240};
@@ -92,7 +92,7 @@ GameState.prototype.create = function() {
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
     this.islands = this.game.add.group();
     this.islands.enableBody = true;
-    generateIslands(width, height, 20, 100, 10, 'ship', this.islands);
+    generateIslands(width, height, 0, 100, 10, 'ship', this.islands);//unually 20 islands
 
     //creates whitecaps group
     this.whitecaps = this.game.add.group();
@@ -351,12 +351,13 @@ GameState.prototype.update = function () {
     tentacleAI(tentacle);
   }
 
-  for (var i = 0; i < storage1.getEnemies().countLiving(); i++){
+  for (var i = 0; i < storage1.getEnemies().children.length; i++){
     var enemy = storage1.getEnemies().children[i];
     //console.log(enemy + " looping through living enemies.");
     var oldXSpeed = enemy.body.velocity.x;
     var oldYSpeed = enemy.body.velocity.y;
-    console.log(enemy.key); //TODO: figure out why this always logs "gunboat"
+    //console.log(enemy.key); //TODO: figure out why this always logs "gunboat"
+    if (enemy.alive){
       //console.log(enemy + " in loop");
       if (enemy.key === 'gunboat'){
         //console.log("it's a gunboat");
@@ -400,6 +401,7 @@ GameState.prototype.update = function () {
       if (Math.abs(enemy.body.velocity.x) > oldXSpeed || Math.abs(enemy.body.velocity.y) > oldYSpeed){
         enemy.frame += 2;
     }
+  }
   }
 
   //console.log("I am invincible in the update function! " + player1.getIsInvincible());
@@ -1708,10 +1710,12 @@ function playerHitIsland(ship, island){
     var straightDistance = game.physics.arcade.distanceBetween(player1.sprite, gunboat);//find the direct distance to the player
     //find the round the world distance to the player
     var roundDistance = getDaGamaDistance(gunboat);
+    var leadX = player1.sprite.x + (player1.sprite.body.velocity.x * 1);
+    var leadY = player1.sprite.y + (player1.sprite.body.velocity.y * 1);
     //find the angle if the ship were to go directly
     var targetAngle = this.game.math.angleBetween(
         gunboat.x, gunboat.y,
-        player1.sprite.x, player1.sprite.y
+        leadX, leadY
     );
     //console.log("Direct: " + straightDistance + " Da Gama: " + roundDistance);
     var routeDirection = 'Q';
@@ -1762,35 +1766,18 @@ function playerHitIsland(ship, island){
 
   function turnAndShoot(enemy, targetAngle){
     var weapon;
-    var ray = new Phaser.Line(enemy.x, enemy.y, player1.sprite.x, player1.sprite.y);
-    game.debug.geom(ray);
-    var newAngle;
-    var rayAngle = ray.angle * 180/Math.PI;//convert ray angle from radians to degrees
-    //console.log("Ray angle: " + rayAngle + " Enemy angle: " + enemy.angle + " In firing cone? " + (enemy.angle - rayAngle >= 70 && enemy.angle - rayAngle <= 110)
-    //  || (enemy.angle - rayAngle <= -70 && enemy.angle >= -110)
-    //  || (enemy.angle - rayAngle <= 290 && enemy.angle - rayAngle >= 250)
-    //  || (enemy.angle - rayAngle >= -290 && enemy.angle - rayAngle <= -250));
-      //check if the player is off to the left or off to the right +/- 20 degrees
-    if ((enemy.angle - rayAngle >= 70 && enemy.angle - rayAngle <= 110)
-      || (enemy.angle - rayAngle <= -70 && enemy.angle >= -110)
-      || (enemy.angle - rayAngle <= 290 && enemy.angle - rayAngle >= 250)
-      || (enemy.angle - rayAngle >= -290 && enemy.angle - rayAngle <= -250)){ //if the player is in or near the firing angle
+    var relFiringAngle = Math.abs(this.game.math.wrapAngle(enemy.angle - targetAngle));
+    console.log("relFiringAngle: "+ relFiringAngle);
+  //if the player is in or near the firing angle
+    if (relFiringAngle >=70 && relFiringAngle <= 110){
+      console.log("time to shoot");
           //if it is, fire the weapons
         for (var i = 0; i < enemyWeapons.getWeapons(enemy).length; i++){
         weapon = enemyWeapons.getWeapons(enemy)[i];
         weapon.fire();
         }
-      } else { //not in the firing cone
-      //if not, figure out whether it's better to turn left or right based on the targetAngle
-    if (enemy.angle - rayAngle > 0 && enemy.angle - rayAngle <= 180){
-      newAngle = enemy.angle - enemy.TURN_RATE;
-    } else {
-      newAngle = enemy.angle + enemy.TURN_RATE;
+      }
     }
-  //turn in the correct direction
-  navigate(enemy, newAngle);
-  }
-}
 
 /*
   function turnAndShoot(enemy, targetAngle){
@@ -1908,7 +1895,7 @@ function playerHitIsland(ship, island){
 
   function getIslandIntersection(ray, islands){
     var distanceToisland = Number.POSITIVE_INFINITY;
-var closestIntersection = null;
+    var closestIntersection = null;
 
 // For each of the islands...
   islands.forEach(function(island) {
