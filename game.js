@@ -365,6 +365,7 @@ GameState.prototype.update = function () {
       if (enemy.key === 'gunboat'){
         //console.log("it's a gunboat");
         enemy.frame = squareSailCheckWind(enemy.angle, this.wind); //figure out the ship's orientation
+        if (enemy.frame >= 0 && enemy.frame < 3){enemy.isGoingUpWind = true;} else {enemy.isGoingUpWind = false;}
         enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'gunboat'); //adjust the sprite accordingly
         var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
         enemy.body.velocity.x = speedArray[0];
@@ -380,6 +381,7 @@ GameState.prototype.update = function () {
         avoidIslands(enemy, this.islands); //the ship tries to avoid islands
       } else if (enemy.key === 'normal'){
         enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
+        if (enemy.frame >= 0 && enemy.frame < 3){enemy.isGoingUpWind = true;} else {enemy.isGoingUpWind = false;}
         enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'normal');
         var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
         enemy.body.velocity.x = speedArray[0];
@@ -394,6 +396,7 @@ GameState.prototype.update = function () {
         avoidIslands(enemy, this.islands);
       } else if (enemy.key === 'manOwar'){
         enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
+        if (enemy.frame >= 0 && enemy.frame < 3){enemy.isGoingUpWind = true;} else {enemy.isGoingUpWind = false;}
         enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'manOwar');
         var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
         enemy.body.velocity.x = speedArray[0];
@@ -413,7 +416,9 @@ GameState.prototype.update = function () {
         manOwarAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
       } else if (enemy.key === 'dhow'){
-        enemy.frame = dhowCheckWind(enemy.angle, this.wind);
+        var dhowArray = dhowCheckWind(enemy.angle, this.wind);
+        enemy.frame = dhowArray[0];
+        enemy.isGoingUpWind = dhowArray[1];
         enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'normal');
         var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
         enemy.body.velocity.x = speedArray[0];
@@ -1395,6 +1400,8 @@ function playerHitIsland(ship, island){
     enemy.body.velocity.y = yVelocity;
     enemy.body.bounce.set(0.25);
     enemy.health = this.enemyHealth[type];
+    enemy.courage = 0;
+    enemy.isGoingUpWind = false;
     addWeapons(enemy);
     return enemy;
   }
@@ -1503,7 +1510,7 @@ function playerHitIsland(ship, island){
         var FWeapon = this.game.add.weapon(100, 'cannonball');
         FWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
         FWeapon.bulletLifespan = 650;
-        FWeapon.bulletSpeed = 250; //TODO: figure out the appropriate speed with the ship's speed
+        FWeapon.bulletSpeed = 350; //TODO: figure out the appropriate speed with the ship's speed
         FWeapon.bulletInheritSpriteSpeed = true;
         FWeapon.fireRate = 10;
         FWeapon.bulletAngleVariance = 3;
@@ -1605,7 +1612,9 @@ function playerHitIsland(ship, island){
   //TODO: fix this for the special scenarios of the dhow spritesheet
   //TODO: fix dhow spritesheet
   function dhowCheckWind(angle, wind){
+    var retArray = new Array();
     var startWake = 0;
+    var upWind = false;
     var direction = 'D';
     if (angle >= 45 && angle <135){ //ship pointing south
         direction = checkWind('S', wind);
@@ -1620,6 +1629,7 @@ function playerHitIsland(ship, island){
           case 'P': startWake = 6; break;
           case 'S': startWake = 9; break;
           default:
+            upWind = true;
             if (angle > 90){//if angle is sw
               startWake = 9;
               } else {
@@ -1639,6 +1649,7 @@ function playerHitIsland(ship, island){
           case 'P': startWake = 6; break;
           case 'S': startWake = 3; break;
           default:
+            upWind = true;
             if ((angle < 180 && angle > 0) || (angle > -180 && angle < 0)){//if angle is nw
               startWake = 9;//port upwind
             } else {
@@ -1658,6 +1669,7 @@ function playerHitIsland(ship, island){
           case 'P': startWake = 6; break;
           case 'S': startWake = 3; break;
           default:
+            upWind = true;
             if ((angle > -90 && angle < 0) || (angle > 270 && angle > 0)){//if angle is ne
               startWake = 9;//port upwind
             } else {
@@ -1677,6 +1689,7 @@ function playerHitIsland(ship, island){
           case 'P': startWake = 6; break;
           case 'S': startWake = 3; break;
           default:
+            upWind = true;
             if ((angle > 0 && angle < 90) || (angle < -270 && angle > -359)){//if angle is se
               startWake = 9;//port upwind
             } else {
@@ -1684,7 +1697,9 @@ function playerHitIsland(ship, island){
           }
       }
     }
-      return startWake;
+      retArray[0] = startWake;
+      retArray[1] = upWind;
+      return retArray;
   }
 
 
@@ -1938,23 +1953,70 @@ return closestIntersection;
   //away most of the time and only attacks when the player would be most vulnerable
   function dhowAI(ship, wind){
     //check the ship's current "courage" value
-    //if (ship.courage < 100){}
-    //if it's below the threshhold (let's say 100), then increase its value and continue to run away
-    //ship.courage++;
-    //runAway(ship, wind);
-    //if it's at or above the threshhold, look to attack.
-    //dhowAttack(ship, wind);
+    if (ship.courage < 100){
+      ship.courage++;
+      runAway(ship, wind);
+    } else {
+      //if it's at or above the threshhold, look to attack.
+      dhowAttack(ship);
+    }
   }
 
+  //runs away from the player, and avoids going upwind
   function runAway(ship, wind){
-    //check the location of the player
-    //if going straight is both away from the player and not upwind, go that way
-    //check to see if turning left runs into an island or the player's firing range
-    //check to see if turning right runs into an island or the player's firing range
+    //check the location of the player- if it's close, then change course
+    if (game.physics.arcade.distanceBetween(player1.sprite,ship) < 600){
+      var targetAngle = this.game.math.angleBetween(
+        ship.x, ship.y,
+        player1.sprite.x, player1.sprite.y
+      );
+      var wrapAngle = Math.abs(this.game.math.wrapAngle(ship.angle - targetAngle));
+      if (wrapAngle >= 0 && wrapAngle <=120){//need to turn left
+        navigate(ship, ship.angle - ship.TURN_RATE);
+      } else if (wrapAngle < 0 && wrapAngle >= -120){//need to turn right
+        navigate(ship, ship.angle + ship.TURN_RATE);
+      }
+    } else if (ship.isGoingUpWind){
+      switch(wind){
+        case 'N':
+          if (ship.angle < 0 && ship.angle > -90){//turn right
+            navigate(ship, ship.angle + ship.TURN_RATE);
+          } else {
+            navigate(ship, ship.angle - ship.TURN_RATE);
+          } break;
+        case 'W':
+          if (ship.angle < 180 && ship.angle > 0){//turn left
+            navigate(ship, ship.angle - ship.TURN_RATE);
+          } else {
+            navigate(ship, ship.angle + ship.TURN_RATE);
+          } break;
+        case 'S':
+          if (ship.angle > 0 && ship.angle < 90){//turn left
+            navigate(ship, ship.angle - ship.TURN_RATE);
+          } else {
+            navigate(ship, ship.angle + ship.TURN_RATE);
+          } break;
+        default://east
+          if (ship.angle > 0 && ship.angle < 90){//turn left
+            navigate(ship, ship.angle - ship.TURN_RATE);
+          } else {
+            navigate(ship, ship.angle + ship.TURN_RATE);
+      }
+    }
   }
+}
 
   function dhowAttack(ship, wind){
-    //try to maneuver behind the player and shoot, avoid going upwind
+    console.log("I am not afraid!");
+    var targetAngle = this.game.math.angleBetween(
+      ship.x, ship.y,
+      player1.sprite.x, player1.sprite.y
+    );
+    navigate(ship, targetAngle);
+    if (game.physics.arcade.distanceBetween(player1.sprite,ship) < 400){
+      ship.weapons[0].fire();
+      game.time.events.add(800, function () {ship.courage = 0;});
+    }
     //if shots land, reset the courage value so the dhow will run away
   }
 
