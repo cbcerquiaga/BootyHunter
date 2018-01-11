@@ -61,6 +61,7 @@ GameState.prototype.preload = function() {
     this.game.load.image('pelican', 'assets/pelican.png');
     this.game.load.image('albatross', 'assets/albatross.png');
     this.game.load.image('parrot', 'assets/parrot.png');
+    this.game.load.image('pirate', 'assets/boardingPirate.png');
     this.game.load.image('gameOver', 'assets/gameOver.png');
     game.load.text('pirateFacts', 'PirateFacts.txt');
     this.game.load.spritesheet('sandParticles', 'assets/islandParticles.png', 1, 1);
@@ -188,7 +189,7 @@ GameState.prototype.create = function() {
     this.weapon2.trackSprite(player1.sprite, 0, 0, false);//TODO: shift over to actual position of gun
     //boarding pirate, can only be used when hasPirate === true
     //TODO: make the andle point towards the nearest enemy
-    this.boarder = this.game.add.weapon(1, 'parrot'); //TODO: add pirate sprite and animation
+    this.boarder = this.game.add.weapon(1, 'pirate'); //TODO: add pirate sprite and animation
     this.boarder.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
     this.boarder.bulletLifespan = 650;
     this.boarder.bulletSpeed = 100;
