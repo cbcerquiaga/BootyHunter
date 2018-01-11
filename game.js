@@ -351,8 +351,9 @@ GameState.prototype.update = function () {
     tentacleAI(tentacle);
   }
 
-  for (var i = 0; i < storage1.getEnemies().children.length; i++){
+  for (var i = 0; i < storage1.getEnemies().length; i++){
     var enemy = storage1.getEnemies().children[i];
+    if(enemy.alive){
     //console.log(enemy + " looping through living enemies.");
     var oldXSpeed = enemy.body.velocity.x;
     var oldYSpeed = enemy.body.velocity.y;
@@ -400,8 +401,9 @@ GameState.prototype.update = function () {
       }
       if (Math.abs(enemy.body.velocity.x) > oldXSpeed || Math.abs(enemy.body.velocity.y) > oldYSpeed){
         enemy.frame += 2;
+      }
     }
-  }
+    }
   }
 
   //console.log("I am invincible in the update function! " + player1.getIsInvincible());
