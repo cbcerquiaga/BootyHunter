@@ -92,7 +92,7 @@ GameState.prototype.create = function() {
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
     this.islands = this.game.add.group();
     this.islands.enableBody = true;
-    generateIslands(width, height, 0, 100, 10, 'ship', this.islands);//unually 20 islands
+    generateIslands(width, height, 20, 100, 10, 'ship', this.islands);//usually 20 islands
 
     //creates whitecaps group
     this.whitecaps = this.game.add.group();
@@ -367,6 +367,9 @@ GameState.prototype.update = function () {
         var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
         enemy.body.velocity.x = speedArray[0];
         enemy.body.velocity.y = speedArray[1];
+        enemy.weapons[0].fireAngle = enemy.angle + 90;
+        enemy.weapons[1].fireAngle = enemy.angle - 90;
+        //console.log("enemy angle: " + enemy.angle + " weapon angles: " + enemy.weapons[0].angle + ", "  + enemy.weapons[1].angle);
         gunBoatAI(enemy, this.wind); //the ship chases the player or runs away, turns to shoot
         avoidIslands(enemy, this.islands); //the ship tries to avoid islands
       } else if (enemy.key === 'normal'){
@@ -1141,7 +1144,7 @@ function playerHitIsland(ship, island){
       player1.toggleInvincible();
       console.log("I am invincible! " + player1.getIsInvincible());
       //and then we add a timer to restore the player to a vulnerable state. The normal timer didn't work, so I came up with this which uses update frames
-      player1.setInvincibilityTime(100); //TODO: balance this time
+      player1.setInvincibilityTime(25); //TODO: balance this time
       //TODO: add sound for when the player is hit
       //explosion
       particleExplosion(player1.sprite.body.x, player1.sprite.body.y, 3, 'explosionParticles', 8, 40);
@@ -1194,7 +1197,7 @@ function playerHitIsland(ship, island){
       var particle = this.game.add.sprite(x, y, spriteSheet);
         this.game.physics.enable(particle, Phaser.Physics.ARCADE);
         particle.enableBody = true;
-        console.log("Particle " + i + " " + particle + " particle body = " + particle.enableBody);
+        //console.log("Particle " + i + " " + particle + " particle body = " + particle.enableBody);
         particle.anchor.setTo(0.5, 0.5);
         particle.body.velocity.x = Math.random() * maxSpeed;
         particle.body.velocity.y = Math.random() * maxSpeed;
@@ -1364,7 +1367,7 @@ function playerHitIsland(ship, island){
     enemy.body.collideWorldBounds = false;
     enemy.body.velocity.x = xVelocity;
     enemy.body.velocity.y = yVelocity;
-  //  enemy.body.bounce.set(0.25);
+    enemy.body.bounce.set(0.25);
     enemy.health = this.enemyHealth[type];
     addWeapons(enemy);
     return enemy;
@@ -1396,7 +1399,7 @@ function playerHitIsland(ship, island){
 
         weaponArray.push(RWeapon);
         weaponArray.push(LWeapon);
-        enemyWeapons.addWeapon(enemy, weaponArray);
+        enemy.weapons = weaponArray;
       break;
       case 'normal':
         var RWeapon = this.game.add.weapon(100, 'cannonball');
@@ -1421,7 +1424,7 @@ function playerHitIsland(ship, island){
 
         weaponArray.push(RWeapon);
         weaponArray.push(LWeapon);
-        enemyWeapons.addWeapon(enemy, weaponArray);
+        enemy.weapons = weaponArray;
       break;
       case 'manOwar': //four guns?
         var LWeapon1 = this.game.add.weapon(100, 'cannonball');
@@ -1468,7 +1471,7 @@ function playerHitIsland(ship, island){
         weaponArray.push(LWeapon1);
         weaponArray.push(RWeapon2);
         weaponArray.push(LWeapon2);
-        enemyWeapons.addWeapon(enemy, weaponArray);
+        enemy.weapons = weaponArray;
       break;
       default://dhow
         var FWeapon = this.game.add.weapon(100, 'cannonball');
@@ -1480,9 +1483,9 @@ function playerHitIsland(ship, island){
         FWeapon.bulletAngleVariance = 3;
         FWeapon.bulletCollideWorldBounds = false;
         FWeapon.bulletWorldWrap = true;
-        FWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, near the bow
+        FWeapon.trackSprite(enemy, 0, 0, true);//TODO: shift over to actual position of gun, near the bow
         weaponArray.push(FWeapon);
-        enemyWeapons.addWeapon(enemy, FWeapon);
+        enemy.weapons = weaponArray;
     }
   }
 
@@ -1769,61 +1772,17 @@ function playerHitIsland(ship, island){
   function turnAndShoot(enemy, targetAngle){
     var weapon;
     var relFiringAngle = Math.abs(this.game.math.wrapAngle(enemy.angle - targetAngle));
-    console.log("relFiringAngle: "+ relFiringAngle);
+    //console.log("relFiringAngle: "+ relFiringAngle);
   //if the player is in or near the firing angle
     if (relFiringAngle >=70 && relFiringAngle <= 110){
-      console.log("time to shoot");
+      //console.log("time to shoot");
           //if it is, fire the weapons
-        for (var i = 0; i < enemyWeapons.getWeapons(enemy).length; i++){
-        weapon = enemyWeapons.getWeapons(enemy)[i];
+        for (var i = 0; i < enemy.weapons.length; i++){
+        weapon = enemy.weapons[i];
         weapon.fire();
         }
       }
     }
-
-/*
-  function turnAndShoot(enemy, targetAngle){
-    console.log("turning and shooting");
-    //console.log("Turn rate in turn and shoot: " + enemy.TURN_RATE);
-    // Gradually (this.TURN_RATE) aim the missile towards the target angle
-    if ((this.rotation !== targetAngle + 90) && (this.rotation !== targetAngle - 90)) {
-      // Calculate difference between the current angle and targetAngle
-      var delta1 = (targetAngle + 90) - enemy.rotation;
-      var delta2 = (targetAngle - 90) - enemy.rotation;
-      var delta;
-      if (delta1 > delta2){
-         delta = delta1;
-      } else {
-        delta = delta2;
-      }
-
-      // Keep it in range from -180 to 180 to make the most efficient turns.
-      if (delta > Math.PI) delta -= Math.PI * 2;
-      if (delta < -Math.PI) delta += Math.PI * 2;
-
-      if (delta > 0) {
-        // Turn clockwise
-        enemy.angle += enemy.TURN_RATE;
-      } else {
-          // Turn counter-clockwise
-          enemy.angle -= enemy.TURN_RATE;
-      }
-
-      //TODO: Change this to make the ship not quite hit the player, but keep a short distance
-      // Just set angle to target angle if they are close
-      if (Math.abs(delta) < this.game.math.degToRad(enemy.TURN_RATE)) {
-        enemy.rotation = targetAngle;
-      }
-  } else {
-    var weapon;
-    for (var i = 0; i < enemyWeapons.getWeapons(enemy).length; i++){
-      weapon = enemyWeapons.getWeapons(enemy)[i];
-      weapon.fire();
-    }
-  }
-
-  }
-*/
 
   function navigate(enemy, targetAngle){
     //console.log("navigating");
