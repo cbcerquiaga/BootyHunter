@@ -1715,8 +1715,8 @@ function playerHitIsland(ship, island){
     var straightDistance = game.physics.arcade.distanceBetween(player1.sprite, gunboat);//find the direct distance to the player
     //find the round the world distance to the player
     var roundDistance = getDaGamaDistance(gunboat);
-    var leadX = player1.sprite.x + (player1.sprite.body.velocity.x * 1);
-    var leadY = player1.sprite.y + (player1.sprite.body.velocity.y * 1);
+    var leadX = player1.sprite.x + (player1.sprite.body.velocity.x * .75);
+    var leadY = player1.sprite.y + (player1.sprite.body.velocity.y * .75);
     //find the angle if the ship were to go directly
     var targetAngle = this.game.math.angleBetween(
         gunboat.x, gunboat.y,
@@ -1847,9 +1847,9 @@ function playerHitIsland(ship, island){
     //if it is, turn away from the island
     if (intersect){
       if (enemy.angle - rayAngle >= 0){
-        navigate(enemy, rayAngle + 10);
+        navigate(enemy, enemy.angle + enemy.TURN_RATE);
       } else {
-        navigate(enemy, rayAngle - 10);
+        navigate(enemy, enemy.angle - enemy.TURN_RATE);
       }
     }
   }
@@ -1894,7 +1894,7 @@ return closestIntersection;
   function normalAI(ship, wind){
     //look for man o'wars to flock with
     // if there is another normal enemy in front of/behind this ship, flock with it
-    // if health is high (over 50%?), attack the player like a gunboat
+    // if health is high (over 50%?), attack the player like a gunboat, but a little smarter
     // if health is low, but the player is being attacked by another ship or has low health, but is not invincible, attack the player
     // otherwise, run away from the player
   }

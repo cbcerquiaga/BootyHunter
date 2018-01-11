@@ -18,7 +18,7 @@ var enemyWeapons = function(weaponGroup, ghostWeapon1, ghostWeapon2){
   this.ghostWeapon.bulletAngleVariance = 10;
   this.ghostWeapon.bulletCollideWorldBounds = false;
   this.ghostWeapon.bulletWorldWrap = true;
-  this.ghostWeapon.angle = 0;
+  this.ghostWeapon.fireAngle = 0;
   //second weapon, fires left relative to the ship
   this.ghostWeapon2.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
   this.ghostWeapon2.bulletLifespan = 600;
@@ -27,7 +27,7 @@ var enemyWeapons = function(weaponGroup, ghostWeapon1, ghostWeapon2){
   this.ghostWeapon2.bulletAngleVariance = 10;
   this.ghostWeapon2.bulletCollideWorldBounds = false;
   this.ghostWeapon2.bulletWorldWrap = true;
-  this.ghostWeapon2.angle = 0;
+  this.ghostWeapon2.fireAngle = 0;
 
   this.addWeapon = function(enemy, weaponArray){
     this.weaponMap[enemy] = weaponArray;
@@ -44,8 +44,8 @@ var enemyWeapons = function(weaponGroup, ghostWeapon1, ghostWeapon2){
   }
 
   this.setGhostWeaponAngles = function(angle){
-    this.ghostWeapon.angle = angle + 90;
-    this.ghostWeapon2.angle = angle - 90;
+    this.ghostWeapon.fireAngle = angle + 90;
+    this.ghostWeapon2.fireAngle = angle - 90;
     //console.log(this.ghostWeapon.angle + " : " + this.ghostWeapon2.angle + " from parameter " + angle);
   }
 
