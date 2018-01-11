@@ -5,8 +5,7 @@
 Stores a map that maps an array of Weapon objects to a specific enemy,
 so the weapons can be accessed easily in game.js
 */
-var enemyWeapons = function(weaponGroup, ghostWeapon1, ghostWeapon2){
-  this.weaponMap = weaponGroup;
+var enemyWeapons = function(ghostWeapon1, ghostWeapon2){
   this.ghostWeapon = ghostWeapon1;
   this.ghostWeapon2 = ghostWeapon2;
 

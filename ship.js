@@ -41,11 +41,13 @@ var ship = function (_sprite) {
     }
 
     this.addHealth = function(value){
-      if ((this.health + this.value) >= 6){
+      console.log("old health: " + this.health);
+      if ((this.health + value) >= 6){
         this.health = 6;
       } else {
       this.health += value;
       }
+      console.log("new health: " + this.health);
     }
 
     this.getHealth = function(){

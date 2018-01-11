@@ -123,11 +123,10 @@ GameState.prototype.create = function() {
     enemies.enableBody = true;
     var tentacleGroup = this.game.add.group();
     storage1 = new storage(treasureGroup, enemies, tentacleGroup);
-    var weaponGroup = {};
     //add weapons for the ghost ship boss
     var ghostWeapon = this.game.add.weapon(100, 'cannonball');
     var ghostWeapon2 = this.game.add.weapon(100, 'cannonball');
-    enemyWeapons = new enemyWeapons(weaponGroup, ghostWeapon, ghostWeapon2);
+    enemyWeapons = new enemyWeapons(ghostWeapon, ghostWeapon2);
 
     //makes sure the ship isn't overlapping with any islands
     //console.log(player1.sprite.overlap(island));
@@ -248,6 +247,8 @@ GameState.prototype.update = function () {
   game.physics.arcade.overlap(this.islands, this.weapon.bullets, islandWasShot);
   game.physics.arcade.overlap(this.islands, this.weapon2.bullets, islandWasShot);
   game.physics.arcade.overlap(this.islands, this.boarder.bullets, islandWasShot);
+  game.physics.arcade.overlap(this.islands, enemyWeapons.getGhostWeapon(1).bullets, islandWasShot);
+  game.physics.arcade.overlap(this.islands, enemyWeapons.getGhostWeapon(1).bullets, islandWasShot);
   game.physics.arcade.overlap(storage1.getEnemies(), this.weapon.bullets, enemyWasShot);
   game.physics.arcade.overlap(storage1.getEnemies(), this.weapon2.bullets, enemyWasShot);
   game.physics.arcade.overlap(storage1.getEnemies(), this.boarder.bullets, enemyBoarded);
@@ -268,6 +269,7 @@ GameState.prototype.update = function () {
 
   game.physics.arcade.collide(player1.sprite, storage1.getEnemies(), playerHitShip);//TODO: add function to check if the player is invincible
   game.physics.arcade.collide(storage1.getEnemies(), storage1.getEnemies(), shipsCollided);
+
 
   //console.log(player1.sprite.body.velocity.x + " " + player1.sprite.body.velocity.y);
   //if there are no enemies, then the game moves to the next wave
@@ -369,6 +371,10 @@ GameState.prototype.update = function () {
         enemy.body.velocity.y = speedArray[1];
         enemy.weapons[0].fireAngle = enemy.angle + 90;
         enemy.weapons[1].fireAngle = enemy.angle - 90;
+        game.physics.arcade.overlap(this.islands, enemy.weapons[0].bullets, islandWasShot);
+        game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
+        game.physics.arcade.overlap(this.islands, enemy.weapons[1].bullets, islandWasShot);
+        game.physics.arcade.overlap(player1.sprite, enemy.weapons[1].bullets, playerWasShot);
         //console.log("enemy angle: " + enemy.angle + " weapon angles: " + enemy.weapons[0].angle + ", "  + enemy.weapons[1].angle);
         gunBoatAI(enemy, this.wind); //the ship chases the player or runs away, turns to shoot
         avoidIslands(enemy, this.islands); //the ship tries to avoid islands
@@ -378,6 +384,12 @@ GameState.prototype.update = function () {
         var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
         enemy.body.velocity.x = speedArray[0];
         enemy.body.velocity.y = speedArray[1];
+        enemy.weapons[0].fireAngle = enemy.angle + 90;
+        enemy.weapons[1].fireAngle = enemy.angle - 90;
+        game.physics.arcade.overlap(this.islands, enemy.weapons[0].bullets, islandWasShot);
+        game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
+        game.physics.arcade.overlap(this.islands, enemy.weapons[1].bullets, islandWasShot);
+        game.physics.arcade.overlap(player1.sprite, enemy.weapons[1].bullets, playerWasShot);
         normalAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
       } else if (enemy.key === 'manOwar'){
@@ -386,6 +398,18 @@ GameState.prototype.update = function () {
         var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
         enemy.body.velocity.x = speedArray[0];
         enemy.body.velocity.y = speedArray[1];
+        enemy.weapons[0].fireAngle = enemy.angle + 90;
+        enemy.weapons[1].fireAngle = enemy.angle - 90;
+        enemy.weapons[2].fireAngle = enemy.angle + 90;
+        enemy.weapons[3].fireAngle = enemy.angle - 90;
+        game.physics.arcade.overlap(this.islands, enemy.weapons[0].bullets, islandWasShot);
+        game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
+        game.physics.arcade.overlap(this.islands, enemy.weapons[1].bullets, islandWasShot);
+        game.physics.arcade.overlap(player1.sprite, enemy.weapons[1].bullets, playerWasShot);
+        game.physics.arcade.overlap(this.islands, enemy.weapons[2].bullets, islandWasShot);
+        game.physics.arcade.overlap(player1.sprite, enemy.weapons[2].bullets, playerWasShot);
+        game.physics.arcade.overlap(this.islands, enemy.weapons[3].bullets, islandWasShot);
+        game.physics.arcade.overlap(player1.sprite, enemy.weapons[3].bullets, playerWasShot);
         manOwarAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
       } else if (enemy.key === 'dhow'){
@@ -394,6 +418,8 @@ GameState.prototype.update = function () {
         var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
         enemy.body.velocity.x = speedArray[0];
         enemy.body.velocity.y = speedArray[1];
+        game.physics.arcade.overlap(this.islands, enemy.weapons[0].bullets, islandWasShot);
+        game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
         dhowAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
       } else {//boss
@@ -406,7 +432,7 @@ GameState.prototype.update = function () {
         enemy.frame += 2;
       }
     }
-    }
+  }
   }
 
   //console.log("I am invincible in the update function! " + player1.getIsInvincible());
@@ -1381,7 +1407,7 @@ function playerHitIsland(ship, island){
         LWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
         LWeapon.bulletLifespan = 250;
         LWeapon.bulletSpeed = 600;
-        LWeapon.fireRate = 300;
+        LWeapon.fireRate = 30;
         LWeapon.bulletAngleVariance = 10;
         LWeapon.bulletCollideWorldBounds = false;
         LWeapon.bulletWorldWrap = true;
@@ -1391,7 +1417,7 @@ function playerHitIsland(ship, island){
         RWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
         RWeapon.bulletLifespan = 250;
         RWeapon.bulletSpeed = 600;
-        RWeapon.fireRate = 300;
+        RWeapon.fireRate = 30;
         RWeapon.bulletAngleVariance = 10;
         RWeapon.bulletCollideWorldBounds = false;
         RWeapon.bulletWorldWrap = true;
@@ -1428,34 +1454,34 @@ function playerHitIsland(ship, island){
       break;
       case 'manOwar': //four guns?
         var LWeapon1 = this.game.add.weapon(100, 'cannonball');
-        LWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-        LWeapon.bulletLifespan = 650;
-        LWeapon.bulletSpeed = 600;
-        LWeapon.fireRate = 10;
-        LWeapon.bulletAngleVariance = 10;
-        LWeapon.bulletCollideWorldBounds = false;
-        LWeapon.bulletWorldWrap = true;
-        LWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, mnore forward
+        LWeapon1.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+        LWeapon1.bulletLifespan = 650;
+        LWeapon1.bulletSpeed = 600;
+        LWeapon1.fireRate = 10;
+        LWeapon1.bulletAngleVariance = 10;
+        LWeapon1.bulletCollideWorldBounds = false;
+        LWeapon1.bulletWorldWrap = true;
+        LWeapon1.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, mnore forward
         //second weapon, fires right relative to the ship
         var RWeapon1 = this.game.add.weapon(100, 'cannonball');
-        RWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-        RWeapon.bulletLifespan = 650;
-        RWeapon.bulletSpeed = 600;
-        RWeapon.fireRate = 10;
-        RWeapon.bulletAngleVariance = 10;
-        RWeapon.bulletCollideWorldBounds = false;
-        RWeapon.bulletWorldWrap = true;
-        RWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, more forward
+        RWeapon1.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+        RWeapon1.bulletLifespan = 650;
+        RWeapon1.bulletSpeed = 600;
+        RWeapon1.fireRate = 10;
+        RWeapon1.bulletAngleVariance = 10;
+        RWeapon1.bulletCollideWorldBounds = false;
+        RWeapon1.bulletWorldWrap = true;
+        RWeapon1.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, more forward
         //third weapon, fires left relative to the ship
         var LWeapon2 = this.game.add.weapon(100, 'cannonball');
-        LWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-        LWeapon.bulletLifespan = 650;
-        LWeapon.bulletSpeed = 600;
-        LWeapon.fireRate = 10;
-        LWeapon.bulletAngleVariance = 10;
-        LWeapon.bulletCollideWorldBounds = false;
-        LWeapon.bulletWorldWrap = true;
-        LWeapon.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, more aft
+        LWeapon2.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+        LWeapon2.bulletLifespan = 650;
+        LWeapon2.bulletSpeed = 600;
+        LWeapon2.fireRate = 10;
+        LWeapon2.bulletAngleVariance = 10;
+        LWeapon2.bulletCollideWorldBounds = false;
+        LWeapon2.bulletWorldWrap = true;
+        LWeapon2.trackSprite(enemy, 0, 0, false);//TODO: shift over to actual position of gun, more aft
         //fourth weapon, fires right relative to the ship
         var RWeapon2 = this.game.add.weapon(100, 'cannonball');
         RWeapon2.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
