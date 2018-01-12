@@ -351,6 +351,9 @@ GameState.prototype.update = function () {
     //console.log("looping through tentacles");
     var tentacle = storage1.getTentacleGroup().children[i];
     tentacleAI(tentacle);
+    //repel other tentacles to form a proper flock
+    var repulsion = repelTentacles(tentacle, 35);
+    tentacle.body.velocity.add(repulsion.x, repulsion.y);
   }
 
   for (var i = 0; i < storage1.getEnemies().length; i++){
@@ -1953,7 +1956,7 @@ return closestIntersection;
   //away most of the time and only attacks when the player would be most vulnerable
   function dhowAI(ship, wind){
     //check the ship's current "courage" value
-    if (ship.courage < 100){
+    if (ship.courage < 150){
       ship.courage++;
       runAway(ship, wind);
     } else {
@@ -2040,6 +2043,19 @@ return closestIntersection;
       tentacle.x = player1.x;
       tentacle.y = player1.y;
     }
+  }
+
+  function repelTentacles(tentacle, repulsionDistance){
+    // keep tentacles away from closed tentacles
+    var repulsion = new Phaser.Point(0, 0);
+    for (var i=0; i < 8; i++) {
+      if (i !== tentacle.id && tentacle.position.distance(storage1.getTentacleGroup().children[i].position) < repulsionDistance) {
+      var sub = Phaser.Point.subtract(storage1.getTentacleGroup().children[i].position, tentacle.position);
+      repulsion.subtract(sub.x, sub.y);
+      }
+    }
+    console.log(repulsion);
+    return repulsion;
   }
 
   function ghostShipAI(ghostShip){
@@ -2135,6 +2151,7 @@ return closestIntersection;
       tentacle.frame = Math.floor(Math.random() * 3);
       tentacle.grabbedPlayer = false;
       tentacle.TURN_RATE = 12;
+      tentacle.id = i;
       storage1.addTentacle(tentacle);
     }
   }
