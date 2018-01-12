@@ -57,6 +57,7 @@ GameState.prototype.preload = function() {
     this.game.load.image('diamond', 'assets/diamond.png');
     this.game.load.image('kraken', 'assets/Kraken.png');
     this.game.load.spritesheet('tentacle', 'assets/tentacles.png', 38, 8);
+    this.game.load.spritesheet('megaladon', 'assets/megaladon.png', 73, 27);
     this.game.load.image('seagull', 'assets/seagull.png');
     this.game.load.image('pelican', 'assets/pelican.png');
     this.game.load.image('albatross', 'assets/albatross.png');
@@ -86,7 +87,7 @@ GameState.prototype.create = function() {
 
   //instantiates boss data
     this.killedBosses = new Array();
-    this.allBosses = ['kraken', 'ghost'];
+    this.allBosses = ['kraken', 'ghost', 'megaladon'];
 
   //adds islands to map
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -434,6 +435,11 @@ GameState.prototype.update = function () {
         if (enemy.key === 'ship'){//ghost ship, but it uses the same sprite as the player
           console.log("It's the ghost ship");
           ghostShipAI(enemy);
+        } else if (enemy.key === 'megaladon'){
+          console.log("You're supposed to be extinct!");
+          tentacleAI(enemy);
+          avoidIslands(enemy, this.islands);
+          enemy.animations.play('swim', 4, true);
         }
       }
       if (Math.abs(enemy.body.velocity.x) > oldXSpeed || Math.abs(enemy.body.velocity.y) > oldYSpeed){
@@ -2104,6 +2110,9 @@ return closestIntersection;
       case 'ghost':
       boss = ghostShip();
       break;
+      case 'megaladon':
+      boss = megaladon();
+      break;
       default://kraken
       boss = releaseKraken();
     }
@@ -2221,6 +2230,31 @@ return closestIntersection;
     ship.anchor.setTo(0.5, 0.5);
     enemyWeapons.trackGhostSprite(ship);
     return ship;
+  }
+
+  function megaladon(){
+    console.log("We're going to need a bigger boat");
+    var x, y, angle;
+    if (player1.sprite.x < this.width/2){
+      x = 0;
+      angle = 0;
+    } else {
+      x = this.width;
+      angle = 180;
+    }
+    y = Math.random() * this.height;
+    var shark = this.game.add.sprite(x, y, 'megaladon');
+    shark.enableBody = true;
+    this.game.physics.enable(shark, Phaser.Physics.ARCADE);
+    shark.anchor.setTo(0.5, 0.5);
+    //TODO: balance health, speed, turn rate
+    shark.health = enemyHealth['manowar'] * 1.5;
+    shark.TURN_RATE = 10;
+    shark.maxSpeed = 200;
+    shark.grabbedPlayer = false;
+    shark.frame = 0;
+    shark.animations.add('swim');
+    return shark;
   }
 
   function isBossWave(){
