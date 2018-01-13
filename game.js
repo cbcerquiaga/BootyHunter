@@ -25,12 +25,12 @@ var startWake = 0;
 //enemy global variables
 var wave;
 var numEnemies; //added 100 to all gunboat speeds
-var enemyDownWindSpeed = {'gunboat': 200, 'manowar': 400, 'normal': 650, 'dhow': 500};
-var enemyCrossWindSpeed = {'gunboat': 160, 'manowar': 250, 'normal': 300, 'dhow': 850};//the dhow goes faster across the wind than down
-var enemyUpWindSpeed = {'gunboat': 135, 'manowar': 100, 'normal': 150, 'dhow': 250};
-var enemyHealth = {'gunboat': 1, 'manowar': 90, 'normal': 45, 'dhow': 21};
+var enemyDownWindSpeed = {'gunboat': 200, 'manowar': 210, 'normal': 220, 'dhow': 250};
+var enemyCrossWindSpeed = {'gunboat': 160, 'manowar': 170, 'normal': 180, 'dhow': 350};//the dhow goes faster across the wind than down
+var enemyUpWindSpeed = {'gunboat': 135, 'manowar': 100, 'normal': 140, 'dhow': 200};
+var enemyHealth = {'gunboat': 1, 'manowar': 80, 'normal': 45, 'dhow': 21};
 var enemyDifficulty = {'gunboat': 1, 'manowar': 10, 'normal': 5, 'dhow': 10};
-var enemyTurnRate = {'gunboat': 120, 'manowar': 135, 'normal': 180, 'dhow': 240};
+var enemyTurnRate = {'gunboat': 120, 'manowar': 115, 'normal': 120, 'dhow': 140};
 var enemyTreasureDrop = {'gunboat': 4, 'manowar': 8, 'normal': 6, 'dhow': 8}
 var waveDifficulty;
 
@@ -398,10 +398,10 @@ GameState.prototype.update = function () {
         game.physics.arcade.overlap(player1.sprite, enemy.weapons[1].bullets, playerWasShot);
         normalAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
-      } else if (enemy.key === 'manOwar'){
+      } else if (enemy.key === 'manowar'){
         enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
         if (enemy.frame >= 0 && enemy.frame < 3){enemy.isGoingUpWind = true;} else {enemy.isGoingUpWind = false;}
-        enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'manOwar');
+        enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'manowar');
         var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
         enemy.body.velocity.x = speedArray[0];
         enemy.body.velocity.y = speedArray[1];
@@ -776,7 +776,7 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
           }
         }
     }
-    if ((waveDifficulty) >= 2 && !shipChosen){
+    if ((wave) >= 2 && !shipChosen){
       var useThisSprite = Math.random()>0.5?true:false;//TODO: balance freequency of selecting hardest available enemy
       if (useThisSprite){
         shipChosen = true;
@@ -1468,7 +1468,7 @@ function playerHitIsland(ship, island){
         weaponArray.push(LWeapon);
         enemy.weapons = weaponArray;
       break;
-      case 'manOwar': //four guns?
+      case 'manowar': //four guns?
         var LWeapon1 = this.game.add.weapon(100, 'cannonball');
         LWeapon1.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
         LWeapon1.bulletLifespan = 650;
@@ -1942,6 +1942,8 @@ return closestIntersection;
   //AI for the standard, "normal" enemy. It uses a blend of simple chasing,
   //flocking, and running away to keep the player on their toes
   function normalAI(ship, wind){
+    //placeholder
+    gunBoatAI(ship,wind);
     //look for man o'wars to flock with
     // if there is another normal enemy in front of/behind this ship, flock with it
     // if health is high (over 50%?), attack the player like a gunboat, but a little smarter
@@ -1952,6 +1954,8 @@ return closestIntersection;
   //AI for the heavy "man O' war" enemy. It wants to flock with other ships (especially otehr man o wars)
   //into either a line formation or into a circled-wagon formation in order to maximize firepower
   function manOwarAI(ship, wind){
+    //plsceholder
+    gunBoatAI(ship,wind);
     //if this ship has at least one ship behind it, look to attack the player
     // if there's a nearby flockable ship (either a normal or another manowar), approach it to flock
     // if there isn't, avoid islands and don't go upwind. If the player comes by, attack.
