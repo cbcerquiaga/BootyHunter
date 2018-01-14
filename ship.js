@@ -41,6 +41,7 @@ var ship = function (_sprite) {
     }
 
     this.addHealth = function(value){
+      if (this.health != "invincible"){
       console.log("old health: " + this.health);
       if ((this.health + value) >= 6){
         this.health = 6;
@@ -48,6 +49,7 @@ var ship = function (_sprite) {
       this.health += value;
       }
       console.log("new health: " + this.health);
+      }
     }
 
     this.getHealth = function(){

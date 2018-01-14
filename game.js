@@ -68,7 +68,7 @@ GameState.prototype.preload = function() {
     this.game.load.spritesheet('sandParticles', 'assets/islandParticles.png', 1, 1);
     this.game.load.spritesheet('explosionParticles', 'assets/explosionParticles.png', 1,1);
     this.game.load.spritesheet('bigExplosionParticles', 'assets/bigExplosionParticles.png', 4, 4);
-  //  console.log("Hello world");
+    //console.log("Hello world");
 };
 
 // Setup the example
@@ -283,7 +283,7 @@ GameState.prototype.update = function () {
 
 
   if (storage1.getEnemies().countLiving() <= 0){ //all enemies are dead, the wave is over
-    console.log("All the enemies are dead. There are " + storage1.getEnemies().countLiving() + " enemies.");
+    //console.log("All the enemies are dead. There are " + storage1.getEnemies().countLiving() + " enemies.");
     storage1.nextWave();
     //sets up the initial wave: randomizes the wind and generates 2 gunboats
     if (storage1.getWave() === 1){
@@ -309,7 +309,7 @@ GameState.prototype.update = function () {
       //console.log("regular wave. " + storage1.getWave());
       killAllTentacles();
       this.numEnemies += Math.round(1.5 * storage1.getWave());
-      console.log("Wave: " + storage1.getWave() + "NumEnemies: " + this.numEnemies);
+      console.log("Wave: " + storage1.getWave() + " NumEnemies: " + this.numEnemies);
       generateEnemies(storage1.getWave(), this.numEnemies, this.wind, storage1.getEnemies(), false);
     }
 
@@ -433,12 +433,11 @@ GameState.prototype.update = function () {
         avoidIslands(enemy, this.islands);
       } else {//boss
         if (enemy.key === 'ship'){//ghost ship, but it uses the same sprite as the player
-          console.log("It's the ghost ship");
+          //console.log("It's the ghost ship");
           ghostShipAI(enemy);
         } else if (enemy.key === 'megaladon'){
-          console.log("You're supposed to be extinct!");
-          tentacleAI(enemy);
-          avoidIslands(enemy, this.islands);
+          //console.log("You're supposed to be extinct!");
+          sharkAI(enemy, this.islands);
           enemy.animations.play('swim', 4, true);
         }
       }
@@ -460,7 +459,7 @@ GameState.prototype.update = function () {
   }
 
   if (player1.getHealth() === "invincible"){
-    console.log("Polly wants a cracker!");
+    //console.log("Polly wants a cracker!");
     if (player1.getRestoreOldHealthTime() > 0){
       //console.log(player1.getRestoreOldHealthTime() + " more updates ")
       player1.lessRestoreOldHealthTime();
@@ -666,7 +665,7 @@ GameState.prototype.update = function () {
     if (isGhostWave()){
       //console.log("anything you can do I can do better!");
       enemyWeapons.fireGhostWeapons();
-      console.log(enemyWeapons.getGhostWeaponAngles());
+      //console.log(enemyWeapons.getGhostWeaponAngles());
     }
   } else { //reduce the fireButtonHeld value
       if (this.fireButtonHeld > 0)
@@ -701,7 +700,7 @@ GameState.prototype.update = function () {
   }
   switch(player1.getHealth()){
     case 0:
-      console.log("You'd be dead if this game was finished");//run game over sequence...show score, kills ,wave,
+      //console.log("You'd be dead if this game was finished");//run game over sequence...show score, kills ,wave,
       gameOverSequence(player1.getScore(), storage1.getWave(), player1.getKills(), this.bossesKilled);
       //maybe a fun historically accurate pirate fact too
       break;
@@ -745,7 +744,7 @@ GameState.prototype.update = function () {
 };
 
 function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
-//  console.log(wind + " wind in generateEnemies");
+  //console.log(wind + " wind in generateEnemies");
   var enemy;
   //TODO: figure out if this is redundant or efficient
   if (isFirstWave){
@@ -754,7 +753,7 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
     enemy = initializeEnemy('gunboat', wind, enemies);
     storage1.addEnemy(enemy);
     //console.log("live enemies after production: " + storage1.getEnemies().countLiving());
-  } else {
+  } else if (wave <= 7){
     //console.log("not the first wave");
     for (var i = 0; i <= numEnemies; i++){
     //console.log("in the loop: " + storage1.getEnemies());
@@ -792,7 +791,23 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
       i++;
     }
   }
-}
+} else { //once the waves get high enough, we cap the total
+  for (var i = 0; i < 22; i++){
+    var spriteChoice = Math.random();
+    if (spriteChoice < 0.4){
+      enemy = initializeEnemy('normal', wind);
+      storage1.addEnemy(enemy);
+      i += 2;
+    } else {
+      spriteChoice = Math.random();
+      if (spriteChoice < 0.5){
+        enemy = initializeEnemy('dhow', wind);
+        storage1.addEnemy(enemy);
+        i += 10;
+      }
+    }
+  }
+  }
 }
 
   //function to kill bullets when they hit islands. I couldn't get it working,
@@ -820,12 +835,12 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
     //play explosion sound
     if (enemy.key === 'kraken'){
       killAllTentacles();
-      console.log("You shot the kraken!");
+      //console.log("You shot the kraken!");
       if (enemy.health > 0){
         moveKraken(enemy);
         return 0;
       } else {
-        console.log("you killed the kraken!");
+        //console.log("you killed the kraken!");
         spawnTreasure(enemy.x, enemy.y, 10);
         enemy.kill();
         player1.addKill();
@@ -868,7 +883,7 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
        break;
       default://albatross
         player1.addPirate();
-    //  console.log("The player has a pirate? " + player1.getPirate());
+      //console.log("The player has a pirate? " + player1.getPirate());
     }
     powerup.kill();
   }
@@ -1155,7 +1170,7 @@ function playerHitIsland(ship, island){
       player1.damage();
       player1.resetKills();
       player1.toggleInvincible();
-      console.log("I am invincible! " + player1.getIsInvincible());
+      console.log("I am invincible! " + player1.getIsInvincible() + " Health: " + player1.getHealth());
       //and then we add a timer to restore the player to a vulnerable state. The normal game timer didn't work, so I came up with this which uses update frames
       player1.setInvincibilityTime(100); //TODO: balance this time
       //explosion, needs to be improved somewhat but usually it looks good
@@ -1166,7 +1181,7 @@ function playerHitIsland(ship, island){
 
   function enemyHitIsland(enemy, island){
     if (enemy.key !== 'ship'){
-      enemy.health--;
+      enemy.health -= 5;
     if (enemy.health <= 0){
       spawnTreasure(enemy.x, enemy.y, 4);//spawn treasure
       enemy.kill();
@@ -1182,9 +1197,9 @@ function playerHitIsland(ship, island){
       player1.damage();
       player1.resetKills();
       player1.toggleInvincible();
-      console.log("I am invincible! " + player1.getIsInvincible());
+      console.log("I am invincible! " + player1.getIsInvincible() + " Health: " + player1.getHealth());
       //and then we add a timer to restore the player to a vulnerable state. The normal timer didn't work, so I came up with this which uses update frames
-      player1.setInvincibilityTime(25); //TODO: balance this time
+      player1.setInvincibilityTime(50); //TODO: balance this time
       //TODO: add sound for when the player is hit
       //explosion
       particleExplosion(player1.sprite.body.x, player1.sprite.body.y, 3, 'explosionParticles', 8, 40);
@@ -1446,9 +1461,9 @@ function playerHitIsland(ship, island){
       case 'normal':
         var RWeapon = this.game.add.weapon(100, 'cannonball');
         RWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-        RWeapon.bulletLifespan = 450;
+        RWeapon.bulletLifespan = 400;
         RWeapon.bulletSpeed = 600;
-        RWeapon.fireRate = 10;
+        RWeapon.fireRate = 15;
         RWeapon.bulletAngleVariance = 10;
         RWeapon.bulletCollideWorldBounds = false;
         RWeapon.bulletWorldWrap = true;
@@ -1456,9 +1471,9 @@ function playerHitIsland(ship, island){
         //second weapon, fires left relative to the ship
         var LWeapon = this.game.add.weapon(100, 'cannonball');
         LWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-        LWeapon.bulletLifespan = 450;
+        LWeapon.bulletLifespan = 400;
         LWeapon.bulletSpeed = 600;
-        LWeapon.fireRate = 10;
+        LWeapon.fireRate = 15;
         LWeapon.bulletAngleVariance = 10;
         LWeapon.bulletCollideWorldBounds = false;
         LWeapon.bulletWorldWrap = true;
@@ -2020,7 +2035,7 @@ return closestIntersection;
 }
 
   function dhowAttack(ship, wind){
-    console.log("I am not afraid!");
+    //console.log("I am not afraid!");
     var targetAngle = this.game.math.angleBetween(
       ship.x, ship.y,
       player1.sprite.x, player1.sprite.y
@@ -2064,12 +2079,17 @@ return closestIntersection;
       repulsion.subtract(sub.x, sub.y);
       }
     }
-    console.log(repulsion);
+    //console.log(repulsion);
     return repulsion;
   }
 
+  function sharkAI(shark, islands){
+    tentacleAI(shark);
+    avoidIslands(shark, islands);
+  }
+
   function ghostShipAI(ghostShip){
-    console.log("You're being haunted");
+    //console.log("You're being haunted");
       if (ghostShip.x > (this.width - player1.sprite.x)){
         //console.log("Need to go left");
         ghostShip.x -= 2;
@@ -2125,11 +2145,11 @@ return closestIntersection;
 
   //initializes the kraken boss
   function releaseKraken(){
-    console.log("RELEASE THE KRAKEN");
+    //console.log("RELEASE THE KRAKEN");
     //var placeArray = findGoodPlace(Math.Random() * this.width, Math.random() * this.height, this.islands);
     var x = Math.random() * this.width;
     var y = Math.random() * this.height;
-    console.log(x +  ", " + y);
+    //console.log(x +  ", " + y);
     var kraken = this.game.add.sprite(x, y, 'kraken');
     this.game.physics.enable(kraken, Phaser.Physics.ARCADE);
     kraken.enableBody = true;
@@ -2142,7 +2162,7 @@ return closestIntersection;
   }
 
   function moveKraken(kraken){
-    console.log("We've moved to " + kraken.x + ", " + kraken.y);
+    //console.log("We've moved to " + kraken.x + ", " + kraken.y);
     //var placeArray = findGoodPlace(Math.Random() * this.width, Math.random() * this.height, this.islands);
     kraken.x = Math.random() * this.width;
     kraken.y = Math.random() * this.height;
@@ -2212,7 +2232,7 @@ return closestIntersection;
   }
 
   function killAllTentacles(){
-    console.log("Kill all the tentacles");
+    //console.log("Kill all the tentacles");
     for (var i = 0; i < storage1.getTentacleGroup().children.length; i++){
       var tentacle = storage1.getTentacleGroup().children[i];
       tentacle.kill();
@@ -2229,7 +2249,7 @@ return closestIntersection;
     x = this.width - player1.sprite.x;
     var ship = this.game.add.sprite(x, y, 'ship'); //uses the sam sprite as the player...what if the enemies we are battling are really ourselves? So deep.
     ship.tint = 0x2EFE2E; //green tint to the ship
-    ship.health = enemyHealth['manowar'];
+    ship.health = enemyHealth['manowar'] * 2.5;
     ship.collideWorldBounds = false;
     ship.anchor.setTo(0.5, 0.5);
     enemyWeapons.trackGhostSprite(ship);
@@ -2237,7 +2257,7 @@ return closestIntersection;
   }
 
   function megaladon(){
-    console.log("We're going to need a bigger boat");
+    //console.log("We're going to need a bigger boat");
     var x, y, angle;
     if (player1.sprite.x < this.width/2){
       x = 0;
