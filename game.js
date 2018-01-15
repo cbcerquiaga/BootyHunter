@@ -2324,11 +2324,16 @@ return closestIntersection;
       var gameOverText =  game.add.text(this.width/2 - 90, this.height/4 - 20, 'GAME OVER', { fontSize: '32px', fill: '#000' });
       var scoreText = game.add.text(this.width/2 - 300, this.height/4 + 20, "You collected " + score + " doubloons worth of treasure", { fontSize: '16px', fill: '#000' });
       var waveText = game.add.text(this.width/2 - 300, this.height/4 + 40, "You made it to wave " + wave, { fontSize: '16px', fill: '#000' });
+      if (player1.getTotalKills() === 1){
+        var killsText = game.add.text(this.width/2 - 300, this.height/4 + 60, "You killed a single enemy", { fontSize: '16px', fill: '#000' });
+      } else {
+        var killsText = game.add.text(this.width/2 - 300, this.height/4 + 60, "You killed a total of " + player1.getTotalKills() + " enemies", { fontSize: '16px', fill: '#000' });
+      }
 
       var text = game.cache.getText('pirateFacts');
       var factArray = text.split('\n');
       var pirateFact =  factArray[Math.floor(Math.random() * factArray.length)];
-      var factText = game.add.text(this.width/2 - 300, this.height/4 + 60, pirateFact, { fontSize: '16px', fill: '#000' });
+      var factText = game.add.text(this.width/2 - 300, this.height/4 + 80, pirateFact, { fontSize: '16px', fill: '#000' });
       var killText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#000' });
       var bossText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#000' });
   }

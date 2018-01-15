@@ -4,7 +4,9 @@ var ship = function (_sprite) {
     const MAX_SPEED = 850;
     this.health = 6;
     this.oldHealth = 6;
-    this.kills = 0;
+    this.kills = 0; //stores the number of kills the player has since they were last hit
+    this.totalKills = 0; //stores the total kills the plater has over the game
+    this.allKilledBosses = new Array();
     this.score = 0;
     this.isInvincible = false;
     this.invincibilityTime = 0;
@@ -26,6 +28,7 @@ var ship = function (_sprite) {
 
     this.addKill = function(){
       this.kills++;
+      this.totalKills++;
     }
 
     this.resetKills = function(){
@@ -42,13 +45,13 @@ var ship = function (_sprite) {
 
     this.addHealth = function(value){
       if (this.health != "invincible"){
-      console.log("old health: " + this.health);
+      //console.log("old health: " + this.health);
       if ((this.health + value) >= 6){
         this.health = 6;
       } else {
       this.health += value;
       }
-      console.log("new health: " + this.health);
+      //console.log("new health: " + this.health);
       }
     }
 
@@ -117,5 +120,9 @@ var ship = function (_sprite) {
 
     this.lessRestoreOldHealthTime = function(){
       this.restoreOldHealthTime--;
+    }
+
+    this.getTotalKills = function(){
+      return this.totalKills;
     }
 }
