@@ -68,6 +68,7 @@ GameState.prototype.preload = function() {
     this.game.load.spritesheet('sandParticles', 'assets/islandParticles.png', 1, 1);
     this.game.load.spritesheet('explosionParticles', 'assets/explosionParticles.png', 1,1);
     this.game.load.spritesheet('bigExplosionParticles', 'assets/bigExplosionParticles.png', 4, 4);
+    this.game.load.image('startScreen', 'assets/introScreen.png');
     //console.log("Hello world");
 };
 
@@ -189,7 +190,7 @@ GameState.prototype.create = function() {
     this.weapon2.trackSprite(player1.sprite, 0, 0, false);//TODO: shift over to actual position of gun
     //boarding pirate, can only be used when hasPirate === true
     //TODO: make the andle point towards the nearest enemy
-    this.boarder = this.game.add.weapon(1, 'pirate'); //TODO: add pirate sprite and animation
+    this.boarder = this.game.add.weapon(1, 'pirate');
     this.boarder.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
     this.boarder.bulletLifespan = 650;
     this.boarder.bulletSpeed = 100;
@@ -228,10 +229,23 @@ GameState.prototype.create = function() {
     //this.ship.body.collideWorldBounds = false;//lets the ship wrap around the world
     var scoreIndicator = this.game.add.sprite(13, 19, 'treasureChest');
     this.scoreText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#FFF' });
+
+      game.paused = true;
+      console.log("ready to start");
+      this.game.stage.backgroundColor = 0x019ab2;
+      menu = this.game.add.sprite(game.world.centerX, 325, 'startScreen');
+      menu.anchor.setTo(0.5, 0.5);
+      game.input.onDown.add(unpause, self);
+
 };
 
-
-
+  function unpause(event){
+    if (game.paused){
+        console.log("Let's go!");
+        menu.destroy();
+        game.paused = false;
+      }
+  }
 
 
 // The update() method is called every frame
@@ -1300,7 +1314,7 @@ function playerHitIsland(ship, island){
     this.game.physics.enable(treasure, Phaser.Physics.ARCADE);
     treasure.enableBody = true;
     treasure.body.collideWorldBounds = false;
-    treasure.lifespan = 5000;//TODO: balance treasure lifespan
+    treasure.lifespan = 8000;//TODO: balance treasure lifespan
     treasure.value = this.treasureMinVal[type];
     return treasure;
   }
