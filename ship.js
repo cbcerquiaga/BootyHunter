@@ -6,12 +6,12 @@ var ship = function (_sprite) {
     this.oldHealth = 6;
     this.kills = 0; //stores the number of kills the player has since they were last hit
     this.totalKills = 0; //stores the total kills the plater has over the game
-    this.allKilledBosses = new Array();
+    this.allKilledBosses = new Array(); //stores all of the bosses the player has killed over the whole game
     this.score = 0;
     this.isInvincible = false;
     this.invincibilityTime = 0;
     this.restoreOldHealthTime = 0;
-    this.hasPirate = false; //true for testing
+    this.numPirates = 1;
     this.sprite = _sprite;
     this.sprite.anchor.setTo(0.5, 0.5);
     this.sprite.angle = -90;
@@ -79,15 +79,15 @@ var ship = function (_sprite) {
     }
 
     this.addPirate = function(){
-      this.hasPirate = true;
+      this.numPirates++;
     }
 
     this.removePirate = function(){
-      this.hasPirate = false;
+      this.numPirates--;
     }
 
-    this.getPirate = function(){
-      return this.hasPirate;
+    this.getPirates = function(){
+      return this.numPirates;
     }
 
     this.getIsInvincible = function(){

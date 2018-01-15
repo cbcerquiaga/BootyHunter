@@ -69,6 +69,7 @@ GameState.prototype.preload = function() {
     this.game.load.spritesheet('explosionParticles', 'assets/explosionParticles.png', 1,1);
     this.game.load.spritesheet('bigExplosionParticles', 'assets/bigExplosionParticles.png', 4, 4);
     this.game.load.image('startScreen', 'assets/introScreen.png');
+    this.game.load.image('jollyRoger', 'assets/jollyRoger.png');
     //console.log("Hello world");
 };
 
@@ -193,7 +194,7 @@ GameState.prototype.create = function() {
     this.boarder = this.game.add.weapon(1, 'pirate');
     this.boarder.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
     this.boarder.bulletLifespan = 650;
-    this.boarder.bulletSpeed = 100;
+    this.boarder.bulletSpeed = 200;
     this.boarder.bulletInheritSpriteSpeed = true;
     this.boarder.bulletCollideWorldBounds = false;
     this.boarder.bulletWorldWrap = true;
@@ -229,6 +230,8 @@ GameState.prototype.create = function() {
     //this.ship.body.collideWorldBounds = false;//lets the ship wrap around the world
     var scoreIndicator = this.game.add.sprite(13, 19, 'treasureChest');
     this.scoreText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#FFF' });
+    var roger = this.game.add.sprite(13, 36, 'jollyRoger');
+    this.rogerText = this.game.add.text(40, 33, '', { fontSize: '16px', fill: '#FFF' });
 
       game.paused = true;
       console.log("ready to start");
@@ -294,6 +297,8 @@ GameState.prototype.update = function () {
   //score
   var scoreString = player1.getScore().toString();
   this.scoreText.text = scoreString;
+  var numPirates = player1.getPirates().toString();
+  this.rogerText.text = numPirates;
 
 
   if (storage1.getEnemies().countLiving() <= 0){ //all enemies are dead, the wave is over
@@ -657,7 +662,7 @@ GameState.prototype.update = function () {
 
     }  else if (this.input.keyboard.isDown(Phaser.Keyboard.DOWN) || this.input.keyboard.isDown(Phaser.Keyboard.S)) {
       //console.log("pressing DOWN " + player1.getPirate());
-          if (player1.getPirate()){
+          if (player1.getPirates() > 0){
             //console.log("prepare the boarding party!");
             this.boarder.fire();
             player1.removePirate();
