@@ -70,6 +70,7 @@ GameState.prototype.preload = function() {
     this.game.load.spritesheet('bigExplosionParticles', 'assets/bigExplosionParticles.png', 4, 4);
     this.game.load.image('startScreen', 'assets/introScreen.png');
     this.game.load.image('jollyRoger', 'assets/jollyRoger.png');
+    this.game.load.audio('your-sound', 'assets/your-sound.mp3');
     //console.log("Hello world");
 };
 

@@ -30,9 +30,30 @@
     <script src = "storage.js"></script>
     <script src="ship.js"></script><!-- HTML5 assumes the script type is JS. no need to explictly call it-->
     <script type='text/javascript'  src='game.js'></script>
+    <!-- START SOUND CODE V4.1a HTML5 -->
+    <script type="text/javascript">
+
+        // PLAYER VARIABLES
+
+        var mp3snd = "assets/your-sound.mp3";
+
+        document.write('<audio autoplay="autoplay">');
+        document.write('<source src="'+mp3snd+'" type="audio/mpeg">');
+        document.write('<!--[if lt IE 9]>');
+        document.write('<bgsound src="'+mp3snd+'" loop="1">');
+        document.write('<![endif]-->');
+        document.write('</audio>');
+
+    </script>
+    <br>
+    <!-- END SOUND CODE V4.1a -->
+
+
+
 
 </head>
 <body>
+
 
 </body>
 </html>
