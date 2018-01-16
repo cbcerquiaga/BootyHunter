@@ -1069,7 +1069,7 @@ function initializeWhitecap(whitecap, angle){
       if (randVal > 0.94){//TODO: balance this
         var powerup;
         var side = Math.random();
-        if (randVal > 0.96){ //1 health 0.96 normal, .2 for testing
+        if (randVal > 0.2){ //1 health 0.96 normal, .2 for testing
           randVal = Math.random();
         if (randVal < 0.5){ //50% chance
           powerup = initializePowerup('seagull', side);//seagull, 1 health
@@ -1186,7 +1186,7 @@ function whiteCapHitShip(ship, whitecap){
 
 //damages the ship, after crashing into an island
 function playerHitIsland(ship, island){
-    if (player1.getIsInvincible() === false) { //We only damage the player if not invincible
+    if (player1.getIsInvincible() === false && player1.getHealth() != "invincible") { //We only damage the player if not invincible
       player1.damage();
       player1.resetKills();
       player1.toggleInvincible();
@@ -1213,7 +1213,7 @@ function playerHitIsland(ship, island){
 
   function playerWasShot(player, bullet){
     bullet.kill();
-    if (player1.getIsInvincible() === false) { //We only damage the player if not invincible
+    if (player1.getIsInvincible() === false && player1.getHealth() != "invincible") { //We only damage the player if not invincible
       player1.damage();
       player1.resetKills();
       player1.toggleInvincible();
@@ -1229,7 +1229,7 @@ function playerHitIsland(ship, island){
 
   function playerHitShip(player, ship){
     if (player1.getHealth() === "invincible"){
-      ship.health--;
+      ship.health-= 10;
     } else {
       if (!player1.getIsInvincible()){ //TODO: add check for if the enemy is invincible
       //TODO: add key to check so different bosses have different abilities
@@ -1445,6 +1445,7 @@ function playerHitIsland(ship, island){
     enemy.body.bounce.set(0.25);
     enemy.health = this.enemyHealth[type];
     enemy.courage = 0;
+    enemy.id = storage1.getEnemies().children.length;
     enemy.isLeader = false;
     enemy.isFollowing = false;
     enemy.followingShip;
@@ -2022,7 +2023,7 @@ return closestIntersection;
           leadX, leadY
         );
       //repel nearby man o wars to form a proper flock
-      var repulsion = repelTentacles(tentacle, manOwarArray.length, 70);
+      var repulsion = repelShips(ship, manOwarArray, 70);
       ship.body.velocity.add(repulsion.x, repulsion.y);
       turnAndShoot(ship, targetAngle);
       //if the player is in the firing cone, shoot
@@ -2173,6 +2174,18 @@ return closestIntersection;
     for (var i=0; i < length; i++) {
       if (i !== tentacle.id && tentacle.position.distance(storage1.getTentacleGroup().children[i].position) < repulsionDistance) {
       var sub = Phaser.Point.subtract(storage1.getTentacleGroup().children[i].position, tentacle.position);
+      repulsion.subtract(sub.x, sub.y);
+      }
+    }
+    //console.log(repulsion);
+    return repulsion;
+  }
+
+  function repelShips(ship, array, repulsionDistance){
+    var repulsion = new Phaser.Point(0, 0);
+    for (var i=0; i < array.length; i++) {
+      if (i !== ship.id && ship.position.distance(array[i].position) < repulsionDistance) {
+      var sub = Phaser.Point.subtract(array[i].position, ship.position);
       repulsion.subtract(sub.x, sub.y);
       }
     }
