@@ -1069,7 +1069,7 @@ function initializeWhitecap(whitecap, angle){
       if (randVal > 0.94){//TODO: balance this
         var powerup;
         var side = Math.random();
-        if (randVal > 0.2){ //1 health 0.96 normal, .2 for testing
+        if (randVal > 0.96){// 0.96 normal, .2 for testing
           randVal = Math.random();
         if (randVal < 0.5){ //50% chance
           powerup = initializePowerup('seagull', side);//seagull, 1 health
@@ -2409,8 +2409,6 @@ return closestIntersection;
 
 
   function gameOverSequence(score, wave, kills, bossesKilled) {
-      //TODO Explosion sprite
-
       player1.sprite.kill();
       game.paused = true;
       //TODO Change the current screen to a GameOver Screen with
