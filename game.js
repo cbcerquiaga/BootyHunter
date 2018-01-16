@@ -373,7 +373,7 @@ GameState.prototype.update = function () {
     var tentacle = storage1.getTentacleGroup().children[i];
     tentacleAI(tentacle);
     //repel other tentacles to form a proper flock
-    var repulsion = repelTentacles(tentacle, 35);
+    var repulsion = repelTentacles(tentacle, 8, 35);
     tentacle.body.velocity.add(repulsion.x, repulsion.y);
   }
 
@@ -1445,6 +1445,9 @@ function playerHitIsland(ship, island){
     enemy.body.bounce.set(0.25);
     enemy.health = this.enemyHealth[type];
     enemy.courage = 0;
+    enemy.isLeader = false;
+    enemy.isFollowing = false;
+    enemy.followingShip;
     enemy.isGoingUpWind = false;
     addWeapons(enemy);
     return enemy;
@@ -1808,7 +1811,6 @@ function playerHitIsland(ship, island){
         leadX, leadY
     );
     //console.log("Direct: " + straightDistance + " Da Gama: " + roundDistance);
-    var routeDirection = 'Q';
     //if one of those distances is within firing range, call a turnAndShoot() function
     if (straightDistance <= 250){
       turnAndShoot(gunboat, targetAngle);
@@ -1977,24 +1979,99 @@ return closestIntersection;
   //AI for the standard, "normal" enemy. It uses a blend of simple chasing,
   //flocking, and running away to keep the player on their toes
   function normalAI(ship, wind){
-    //placeholder
-    gunBoatAI(ship,wind);
     //look for man o'wars to flock with
     // if there is another normal enemy in front of/behind this ship, flock with it
-    // if health is high (over 50%?), attack the player like a gunboat, but a little smarter
-    // if health is low, but the player is being attacked by another ship or has low health, but is not invincible, attack the player
-    // otherwise, run away from the player
+    // if health is high (over 50%?), or the player's health is low and not invincible, attack the player like a gunboat
+    if ((ship.health > enemyHealth['normal']/2) || (player1.health <= 2 && !player1.getIsInvincible())){
+      gunBoatAI(ship,wind);
+    } else {
+      // otherwise, run away from the player
+      runAway(ship, wind);
+    }
   }
 
   //AI for the heavy "man O' war" enemy. It wants to flock with other ships (especially otehr man o wars)
   //into either a line formation or into a circled-wagon formation in order to maximize firepower
   function manOwarAI(ship, wind){
-    //plsceholder
-    gunBoatAI(ship,wind);
-    //if this ship has at least one ship behind it, look to attack the player
-    // if there's a nearby flockable ship (either a normal or another manowar), approach it to flock
-    // if there isn't, avoid islands and don't go upwind. If the player comes by, attack.
-    // if health is low(below 30%?) attack the player like a gunboat
+    var manOwarArray = countManOwars();
+    //check if the ship has a ship in front of it
+    //check if the ship has a ship behind it
+    //ship is in front of the line or ship is at 30% health
+    if ((ship.isLeader && !ship.isFollowing) || ship.health < enemyHealth[ship.key] * 0.3){
+      gunBoatAI(ship,wind);
+    } else if (ship.isFollowing){ //ship is in the middle of the line
+      if (!ship.followingShip.alive){
+        ship.isFollwing = false;
+      }
+      //keep following the ship in front
+      var targetAngle = this.game.math.angleBetween(
+        ship.x, ship.y,
+        ship.followingShip.x, ship.followingShip.y
+      );
+      var followAngle = Math.abs(this.game.math.wrapAngle(ship.angle - targetAngle));
+      if (followAngle > 0 && followAngle <= 180){ //need to turn left
+        navigate(ship, ship.angle - ship.TURN_RATE);
+      } else if (followAngle < 0 && followAngle > -180){ //need to turn right
+        navigate(ship, ship.angle + ship.TURN_RATE);
+      }
+      var leadX = player1.sprite.x - (player1.sprite.body.velocity.x * .75);
+      var leadY = player1.sprite.y - (player1.sprite.body.velocity.y * .75);
+      //find the angle if the ship were to go directly
+      var targetAngle = this.game.math.angleBetween(
+          ship.x, ship.y,
+          leadX, leadY
+        );
+      //repel nearby man o wars to form a proper flock
+      var repulsion = repelTentacles(tentacle, manOwarArray.length, 70);
+      ship.body.velocity.add(repulsion.x, repulsion.y);
+      turnAndShoot(ship, targetAngle);
+      //if the player is in the firing cone, shoot
+    } else { //ship is loose
+      //if the player is close, attack, otherwise flock
+      if (game.physics.arcade.distanceBetween(player1.sprite, ship) < 400){
+        gunBoatAI(ship, wind);
+      } else if (manOwarArray.length > 0){ //there are ships to flock with
+        var friend = findNearestShip(ship, manOwarArray);
+        ship.followingShip = friend;
+        ship.isFollowing;
+        var leadX = friend.x - (friend.body.velocity.x * .75);
+        var leadY = friend.y - (friend.body.velocity.y * .75);
+        //find the angle if the ship were to go directly
+        var targetAngle = this.game.math.angleBetween(
+            ship.x, ship.y,
+            leadX, leadY
+          );
+        turnAndShoot(ship, targetAngle);
+      } else {
+        var centroid = Phaser.Point.centroid(manOwarArray);
+
+      }
+    }
+  }
+
+  function countManOwars(){
+    var enemy;
+    var array = new Array();
+    for (var i = 0; i < storage1.getEnemies().length; i++){
+      enemy = storage1.getEnemies().children[i];
+      if(enemy.alive && enemy.key === 'manowar'){
+        array.push(enemy);
+      }
+    }
+    return array;
+  }
+
+  function findNearestShip(ship, array){
+    var friend;
+    var tempFriend;
+    var shortestDistance = this.width + this.height;
+    for (var i = 0; i < array.length; i++){
+      tempFriend = array[i];
+      if (game.physics.arcade.distanceBetween(tempFriend, ship) < shortestDistance){
+        friend = tempFriend;
+      }
+    }
+    return friend;
   }
 
   //AI for the light "dhow" enemy. It wants to avoid getting hit as much as possible, so it runs
@@ -2090,10 +2167,10 @@ return closestIntersection;
     }
   }
 
-  function repelTentacles(tentacle, repulsionDistance){
+  function repelTentacles(tentacle, length, repulsionDistance){
     // keep tentacles away from closed tentacles
     var repulsion = new Phaser.Point(0, 0);
-    for (var i=0; i < 8; i++) {
+    for (var i=0; i < length; i++) {
       if (i !== tentacle.id && tentacle.position.distance(storage1.getTentacleGroup().children[i].position) < repulsionDistance) {
       var sub = Phaser.Point.subtract(storage1.getTentacleGroup().children[i].position, tentacle.position);
       repulsion.subtract(sub.x, sub.y);
