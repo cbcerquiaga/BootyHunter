@@ -58,6 +58,8 @@ GameState.prototype.preload = function() {
     this.game.load.image('kraken', 'assets/Kraken.png');
     this.game.load.spritesheet('tentacle', 'assets/tentacles.png', 38, 8);
     this.game.load.spritesheet('megaladon', 'assets/megaladon.png', 73, 27);
+    this.game.load.spritesheet('junk', 'assets/junkShip.png', 40, 24);
+    this.game.load.image('rocket', 'assets/rocket.png');
     this.game.load.image('seagull', 'assets/seagull.png');
     this.game.load.image('pelican', 'assets/pelican.png');
     this.game.load.image('albatross', 'assets/albatross.png');
@@ -90,7 +92,8 @@ GameState.prototype.create = function() {
 
   //instantiates boss data
     this.killedBosses = new Array();
-    this.allBosses = ['kraken', 'ghost', 'megaladon'];
+    //this.allBosses = ['kraken', 'ghost', 'megaladon', 'junk'];
+    this.allBosses = ['junk'];
 
   //adds islands to map
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -459,6 +462,11 @@ GameState.prototype.update = function () {
           //console.log("You're supposed to be extinct!");
           sharkAI(enemy, this.islands);
           enemy.animations.play('swim', 4, true);
+        } else if (enemy.key === 'junk'){
+          //console.log("What a hunk of junk!");
+          game.physics.arcade.overlap(player1.sprite, enemy.weapon.bullets, playerWasShot);
+          enemy.frame = junkFrame(enemy.angle, this.wind);
+          junkAI(enemy, this.islands, this.wind);
         }
       }
       if (Math.abs(enemy.body.velocity.x) > oldXSpeed || Math.abs(enemy.body.velocity.y) > oldYSpeed){
@@ -2234,6 +2242,51 @@ return closestIntersection;
       }
     }
 
+    function junkFrame(angle, wind){
+      var retVal;
+      switch(wind){
+        case 'N':
+        if ((angle < -90 && angle > -270) || (angle < 270 && angle > 90)){
+          retVal = 0;
+        } else {
+          retVal = 3;
+        }
+        break;
+        case 'W':
+          if ((angle < 0 && angle > -180)|| (angle > 0 && angle < 180)){
+            retVal = 0;
+          } else {
+            retVal = 3;
+          }
+        break;
+        case 'S':
+          if ((angle < -90 && angle > -270) || (angle < 270 && angle > 90)){
+          retVal = 3;
+          } else {
+          retVal = 0;
+          }
+        break;
+        default://east
+          if ((angle < 0 && angle > -180)|| (angle > 0 && angle < 180)){
+            retVal = 3;
+          } else {
+            retVal = 0;
+          }
+      }
+      return retVal;
+    }
+
+    //the junk avoids the player and islands, launching rockets every few frames
+    function junkAI(junk, islands, wind){
+      console.log("Sun Tsu says..." + junk.timeToFire + " " + junk.weapon.fireAngle);
+      if (game.physics.arcade.distanceBetween(player1.sprite, junk) < 400){
+        runAway(junk, wind);
+      }
+        junk.weapon.fire();
+        junk.weapon.fireAngle += 15;
+          avoidIslands(junk, islands);
+    }
+
 
   //calls the appropriate functions for each boss depending on what string is passed in
   //TODO: add otehr bosses
@@ -2242,13 +2295,16 @@ return closestIntersection;
     var boss;
     switch(type){
       case 'ghost':
-      boss = ghostShip();
-      break;
+        boss = ghostShip();
+        break;
       case 'megaladon':
-      boss = megaladon();
-      break;
+        boss = megaladon();
+        break;
+      case 'junk':
+        boss = junkShip();
+        break;
       default://kraken
-      boss = releaseKraken();
+        boss = releaseKraken();
     }
     return boss;
   }
@@ -2389,6 +2445,58 @@ return closestIntersection;
     shark.frame = 0;
     shark.animations.add('swim');
     return shark;
+  }
+
+  function junkShip(){
+    var x, y, angle, xSpeed, ySpeed;
+    var spawnLocation = Math.random();
+    if (spawnLocation < 0.25){
+      x = 0;
+      y = 0;
+      angle = 45;
+      xSpeed = 45;
+      ySpeed = 45;
+    } else if (spawnLocation < 0.5){
+      x = this.width;
+      y = 0;
+      angle = 135;
+      xSpeed = -45;
+      ySpeed = 45;
+    } else if (spawnLocation < 0.75){
+      x = this.width;
+      y = this.height;
+      angle = -135;
+      xSpeed = -45;
+      ySpeed = -45;
+    } else {
+      x = 0;
+      y = this.height;
+      angle = -45;
+      xSpeed = 45;
+      ySpeed = -45;
+    }
+    var junk = this.game.add.sprite(x, y, 'junk');
+    junk.enableBody = true;
+    this.game.physics.enable(junk, Phaser.Physics.ARCADE);
+    junk.anchor.setTo(0.5, 0.5);
+    //TODO: balance health, speed, turn rate
+    junk.health = enemyHealth['manowar'] * 1.5;
+    junk.TURN_RATE = 10;
+    junk.maxSpeed = 65;
+    junk.angle = angle;
+    junk.body.velocity.x = xSpeed;
+    junk.body.velocity.y = ySpeed;
+    var weapon = this.game.add.weapon(30, 'rocket');
+    weapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+    weapon.bulletLifespan = 2350;
+    weapon.bulletSpeed = 200;
+    weapon.fireRate = 50;
+    weapon.bulletAngleVariance = 10;
+    weapon.bulletCollideWorldBounds = false;
+    weapon.bulletWorldWrap = true;
+    weapon.trackSprite(junk, 0, 0, false);
+    junk.weapon = weapon;
+    return junk;
   }
 
   function isBossWave(){
