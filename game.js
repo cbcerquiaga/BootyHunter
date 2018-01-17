@@ -92,8 +92,7 @@ GameState.prototype.create = function() {
 
   //instantiates boss data
     this.killedBosses = new Array();
-    //this.allBosses = ['kraken', 'ghost', 'megaladon', 'junk'];
-    this.allBosses = ['junk'];
+    this.allBosses = ['kraken', 'ghost', 'megaladon', 'junk'];
 
   //adds islands to map
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
