@@ -59,6 +59,7 @@ GameState.prototype.preload = function() {
     this.game.load.spritesheet('tentacle', 'assets/tentacles.png', 38, 8);
     this.game.load.spritesheet('megaladon', 'assets/megaladon.png', 73, 27);
     this.game.load.spritesheet('junk', 'assets/junkShip.png', 40, 24);
+    this.game.load.spritesheet('moab', 'assets/moab.png', 84, 40);
     this.game.load.image('rocket', 'assets/rocket.png');
     this.game.load.image('seagull', 'assets/seagull.png');
     this.game.load.image('pelican', 'assets/pelican.png');
@@ -90,15 +91,16 @@ GameState.prototype.create = function() {
 
   this.fireButtonHeld = 0;
 
-  //instantiates boss data
+    //instantiates boss data
     this.killedBosses = new Array();
-    this.allBosses = ['kraken', 'ghost', 'megaladon', 'junk'];
+    this.allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab'];
+    //this.allBosses = ['moab'];
 
   //adds islands to map
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
     this.islands = this.game.add.group();
     this.islands.enableBody = true;
-    generateIslands(width, height, 20, 100, 10, 'ship', this.islands);//usually 20 islands
+    generateIslands(width, height, 6, 100, 10, 'ship', this.islands);//usually 20 islands
 
     //creates whitecaps group
     this.whitecaps = this.game.add.group();
@@ -466,6 +468,11 @@ GameState.prototype.update = function () {
           game.physics.arcade.overlap(player1.sprite, enemy.weapon.bullets, playerWasShot);
           enemy.frame = junkFrame(enemy.angle, this.wind);
           junkAI(enemy, this.islands, this.wind);
+        } else if (enemy.key === 'moab'){
+          enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
+          trackMoabWeapons(enemy);
+          moabAI(enemy);
+          avoidIslands(enemy, this.islands);
         }
       }
       if (Math.abs(enemy.body.velocity.x) > oldXSpeed || Math.abs(enemy.body.velocity.y) > oldYSpeed){
@@ -2286,6 +2293,89 @@ return closestIntersection;
           avoidIslands(junk, islands);
     }
 
+    function moabAI(moab){
+      //console.log("Just, you know, doing MOAB stuff");
+      if (moab.patternTime <= 0){
+        //randomly chooses one of the 3 possible patterns if the patternTime has run out
+        moab.pattern = Math.floor(Math.random() * 4);
+        moab.patternTime = 600;
+      } else {
+        moab.patternTime--;
+        if (moab.pattern === 0){
+          moabFiringPattern0(moab);
+        } else if (moab.pattern === 1){
+          moabFiringPattern1(moab);
+        } else if (moab.pattern === 2){
+          moabFiringPattern2(moab);
+        } else {
+          moabFiringPattern3(moab);
+        }
+      }
+      var navigationAngle;
+      console.log("Going to point 1? " + moab.goingToPoint1);
+      if (moab.goingToPoint1){
+        navigationAngle = this.game.math.angleBetween(
+            moab.x, moab.y,
+            moab.point1.x, moab.point1.y
+        );
+
+      } else {
+        navigationAngle = this.game.math.angleBetween(
+            moab.x, moab.y,
+            moab.point2.x, moab.point2.y
+        );
+      }
+        navigate(moab, navigationAngle);
+        if (moab.goingToPoint1 && (game.physics.arcade.distanceBetween(moab, moab.point1) < 10)){
+          console.log("passed point1");
+          moab.goingToPoint1 = false;
+        } else if (!moab.goingToPoint1 && (game.physics.arcade.distanceBetween(moab, moab.point2) < 10)){
+          console.log("passed point2");
+          moab.goingToPoint1 = true;
+        }
+    }
+
+    function  moabFiringPattern0(moab){
+      console.log("Firing pattern 0");
+      for (i = 0; i < moab.weapons.length; i++){
+        if (moab.patternTime % 10 === 0){
+        moab.weapons[0][i].fire();
+        moab.weapons[1][i].fire();
+        }
+      }
+    }
+
+    function  moabFiringPattern1(moab){
+      console.log("Firing Pattern 1");
+      for (i = 0; i < moab.weapons.length; i++){
+        if (moab.patternTime/10 % 2 === 0){
+          moab.weapons[0][i].fire();
+        } else{
+          moab.weapons[1][i].fire();
+        }
+      }
+    }
+
+    function  moabFiringPattern2(moab){
+      console.log("Firing Pattern 2");
+      for (i = 0; i < moab.weapons.length; i++){
+        if ((i % 2) === (moab.patternTime % 2)){
+        moab.weapons[0][i].fire();
+        moab.weapons[1][i].fire();
+      }
+      }
+    }
+
+    function  moabFiringPattern3(moab){
+      console.log("Firing Pattern 3");
+      for (i = 0; i < moab.weapons.length; i++){
+        if ((moab.patternTime % 50 >= 100)){
+          moab.weapons[0][i].fire();
+          moab.weapons[1][i].fire();
+        }
+      }
+    }
+
 
   //calls the appropriate functions for each boss depending on what string is passed in
   //TODO: add otehr bosses
@@ -2301,6 +2391,9 @@ return closestIntersection;
         break;
       case 'junk':
         boss = junkShip();
+        break;
+      case 'moab':
+        boss = motherOfAllBoats(this.wind);
         break;
       default://kraken
         boss = releaseKraken();
@@ -2496,6 +2589,114 @@ return closestIntersection;
     weapon.trackSprite(junk, 0, 0, false);
     junk.weapon = weapon;
     return junk;
+  }
+
+  function motherOfAllBoats(wind){
+    var x, y, angle, xSpeed, ySpeed, point1x, point1y, point2x, point2y;
+    //find an open area on the upwind edge
+    switch(wind){
+      case 'N':
+        x = Math.random() * this.width; //TODO: make this find an empty area instead of a random one
+        y = 0;
+        angle = 90;
+        xSpeed = 0;
+        ySpeed = 250;
+      break;
+      case 'S':
+        x = Math.random() * this.width; //TODO: make this find an empty area instead of a random one
+        y = this.height;
+        angle = -90;
+        xSpeed = 0;
+        ySpeed = -250;
+      break;
+      case 'W':
+        x = 0;
+        y = Math.random() * this.height;
+        angle = 0;
+        xSpeed = 250;
+        ySpeed = 0;
+      break;
+      default://east
+        x = this.width;
+        y = Math.random() * this.height;
+        angle = 180;
+        xSpeed = -250;
+        ySpeed = 0;
+    }
+    var moab = this.game.add.sprite(x, y, 'moab');
+    moab.angle = angle;
+    moab.enableBody = true;
+    this.game.physics.enable(moab, Phaser.Physics.ARCADE);
+    moab.anchor.setTo(0.5, 0.5);
+    console.log("Holy mother of all boats! " + moab.body);
+    moab.body.velocity.x = xSpeed;
+    moab.body.velocity.y = ySpeed;
+    moab.maxSpeed = 250;
+    moab.TURN_RATE = 16;
+    moab.health = enemyHealth['manowar'] * 3;
+    moab.weapons = makeMoabWeapons(moab);
+    moab.patternTime = 600;
+    moab.pattern = 0;
+    point1x = Math.random() * this.width; //TODO: make this find an open area instead of just a random one
+    point1y = Math.random() * this.height;
+    point2x = point1x - 600;
+    point2y =  (Math.random()>0.5?1:-1) * (Math.random() * 245) + point1y;
+    var point1 = new Phaser.Point(point1x, point1y)
+    var point2 = new Phaser.Point(point2x, point2y);
+    moab.point1 = point1;
+    moab.point2 = point2;
+    moab.goingToPoint1 = true;
+    return moab;
+  }
+
+  //TODO: figure out how to make weapons track a specific part of the boat.
+  //just changing the fireFrom(x,y) makes bullets fire from the ocean, because they move
+  //a specific distance up or down relative to the sprite's anchor, but not to its angle
+  function makeMoabWeapons(moab){
+    var LWeapons = new Array();
+    for (var i = 0; i < 10; i++){
+      var LWeapon = this.game.add.weapon(100, 'cannonball');
+      LWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+      LWeapon.bulletLifespan = 2250;
+      LWeapon.bulletSpeed = 200;
+      LWeapon.fireRate = 30;
+      LWeapon.bulletAngleVariance = 2;
+      LWeapon.bulletCollideWorldBounds = false;
+      LWeapon.bulletWorldWrap = true;
+      LWeapon.trackSprite(moab, 0, 0, false);
+      LWeapons.push(LWeapon);
+    }
+    var RWeapons = new Array();
+    for (var i = 0; i < 10; i++){
+      var RWeapon = this.game.add.weapon(100, 'cannonball');
+      RWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+      RWeapon.bulletLifespan = 2250;
+      RWeapon.bulletSpeed = 200;
+      RWeapon.fireRate = 30;
+      RWeapon.bulletAngleVariance = 2;
+      RWeapon.bulletCollideWorldBounds = false;
+      RWeapon.bulletWorldWrap = true;
+      RWeapon.trackSprite(moab, 0, 0, false);
+      RWeapons.push(RWeapon);
+    }
+    var weapons = new Array();
+    weapons.push(LWeapons);
+    weapons.push(RWeapons);
+    console.log("MOAB weapons made");
+    console.log("LWeapons: " + LWeapons + " first weapon: " + LWeapons[0]);
+    return weapons;
+  }
+
+  function trackMoabWeapons(moab){
+    var LWeapon, RWeapon;
+    var LWeapons = moab.weapons[0];
+    var RWeapons = moab.weapons[1];
+    for (var i = 0; i < 10; i++){
+      LWeapon = LWeapons[i];
+      RWeapon = RWeapons[i];
+      LWeapon.fireAngle = moab.angle - 90;
+      RWeapon.fireAngle = moab.angle + 90;
+    }
   }
 
   function isBossWave(){
