@@ -40,5 +40,5 @@ Your ship can go faster downwind than in any other direction.
 Bartholomew Roberts, known as Black Bart, plundered more than 400 ships.
 Your ship will slow down if you go into the wind, but there's no other way to slow down.
 After every third wave, the wind direction will randomly change.
-Once you reach wave 55, every wave is a boss wave.
+Once you reach wave 25, every wave is a boss wave.
 The voice we often think of as a "pirate accent" was invented for the 1950 Disney film Treasure Island.

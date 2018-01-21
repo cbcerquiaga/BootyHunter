@@ -28,10 +28,10 @@ var numEnemies; //added 100 to all gunboat speeds
 var enemyDownWindSpeed = {'gunboat': 200, 'manowar': 210, 'normal': 220, 'dhow': 250};
 var enemyCrossWindSpeed = {'gunboat': 160, 'manowar': 170, 'normal': 180, 'dhow': 350};//the dhow goes faster across the wind than down
 var enemyUpWindSpeed = {'gunboat': 135, 'manowar': 100, 'normal': 140, 'dhow': 200};
-var enemyHealth = {'gunboat': 1, 'manowar': 80, 'normal': 45, 'dhow': 21};
+var enemyHealth = {'gunboat': 1, 'manowar': 70, 'normal': 40, 'dhow': 21};
 var enemyDifficulty = {'gunboat': 1, 'manowar': 10, 'normal': 5, 'dhow': 10};
 var enemyTurnRate = {'gunboat': 120, 'manowar': 115, 'normal': 120, 'dhow': 140};
-var enemyTreasureDrop = {'gunboat': 4, 'manowar': 8, 'normal': 6, 'dhow': 8}
+var enemyTreasureDrop = {'gunboat': 1, 'manowar': 4, 'normal': 2, 'dhow': 4}
 var waveDifficulty;
 
 //-----------------------------------------------------------------------------
@@ -787,7 +787,7 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
     enemy = initializeEnemy('gunboat', wind, enemies);
     storage1.addEnemy(enemy);
     //console.log("live enemies after production: " + storage1.getEnemies().countLiving());
-  } else if (wave <= 7){
+  } else if (wave <= 4){
     //console.log("not the first wave");
     for (var i = 0; i <= numEnemies; i++){
     //console.log("in the loop: " + storage1.getEnemies());
@@ -826,18 +826,18 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
     }
   }
 } else { //once the waves get high enough, we cap the total
-  for (var i = 0; i < 22; i++){
+  for (var i = 0; i < 16; i++){
     var spriteChoice = Math.random();
     if (spriteChoice < 0.4){
       enemy = initializeEnemy('normal', wind);
       storage1.addEnemy(enemy);
-      i += 2;
+      i += 3;
     } else {
       spriteChoice = Math.random();
       if (spriteChoice < 0.5){
         enemy = initializeEnemy('dhow', wind);
         storage1.addEnemy(enemy);
-        i += 10;
+        i += 4;
       }
     }
   }
@@ -1515,7 +1515,7 @@ function playerHitIsland(ship, island){
         RWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
         RWeapon.bulletLifespan = 400;
         RWeapon.bulletSpeed = 600;
-        RWeapon.fireRate = 15;
+        RWeapon.fireRate = 10;
         RWeapon.bulletAngleVariance = 10;
         RWeapon.bulletCollideWorldBounds = false;
         RWeapon.bulletWorldWrap = true;
@@ -1525,7 +1525,7 @@ function playerHitIsland(ship, island){
         LWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
         LWeapon.bulletLifespan = 400;
         LWeapon.bulletSpeed = 600;
-        LWeapon.fireRate = 15;
+        LWeapon.fireRate = 10;
         LWeapon.bulletAngleVariance = 10;
         LWeapon.bulletCollideWorldBounds = false;
         LWeapon.bulletWorldWrap = true;
@@ -1539,7 +1539,7 @@ function playerHitIsland(ship, island){
         var LWeapon1 = this.game.add.weapon(100, 'cannonball');
         LWeapon1.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
         LWeapon1.bulletLifespan = 650;
-        LWeapon1.bulletSpeed = 600;
+        LWeapon1.bulletSpeed = 500;
         LWeapon1.fireRate = 10;
         LWeapon1.bulletAngleVariance = 10;
         LWeapon1.bulletCollideWorldBounds = false;
@@ -1549,7 +1549,7 @@ function playerHitIsland(ship, island){
         var RWeapon1 = this.game.add.weapon(100, 'cannonball');
         RWeapon1.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
         RWeapon1.bulletLifespan = 650;
-        RWeapon1.bulletSpeed = 600;
+        RWeapon1.bulletSpeed = 500;
         RWeapon1.fireRate = 10;
         RWeapon1.bulletAngleVariance = 10;
         RWeapon1.bulletCollideWorldBounds = false;
@@ -1559,7 +1559,7 @@ function playerHitIsland(ship, island){
         var LWeapon2 = this.game.add.weapon(100, 'cannonball');
         LWeapon2.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
         LWeapon2.bulletLifespan = 650;
-        LWeapon2.bulletSpeed = 600;
+        LWeapon2.bulletSpeed = 500;
         LWeapon2.fireRate = 10;
         LWeapon2.bulletAngleVariance = 10;
         LWeapon2.bulletCollideWorldBounds = false;
@@ -1569,7 +1569,7 @@ function playerHitIsland(ship, island){
         var RWeapon2 = this.game.add.weapon(100, 'cannonball');
         RWeapon2.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
         RWeapon2.bulletLifespan = 650;
-        RWeapon2.bulletSpeed = 600;
+        RWeapon2.bulletSpeed = 500;
         RWeapon2.fireRate = 10;
         RWeapon2.bulletAngleVariance = 10;
         RWeapon2.bulletCollideWorldBounds = false;
@@ -2746,7 +2746,7 @@ return closestIntersection;
   }
 
   function isBossWave(){
-    return (storage1.getWave() === 5 || storage1.getWave() === 15 || storage1.getWave() === 25 || storage1.getWave() === 35 || storage1.getWave() === 45 || storage1.getWave() >= 55);
+    return (storage1.getWave() % 5 === 0  || storage1.getWave() >= 25);
   }
 
   function isGhostWave(){
