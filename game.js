@@ -96,7 +96,7 @@ GameState.prototype.create = function() {
     this.allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab'];
     //this.allBosses = ['moab'];
 
-  //adds islands to map
+    //adds islands to map
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
     this.islands = this.game.add.group();
     this.islands.enableBody = true;
@@ -470,9 +470,9 @@ GameState.prototype.update = function () {
           junkAI(enemy, this.islands, this.wind);
         } else if (enemy.key === 'moab'){
           enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
-          trackMoabWeapons(enemy);
-          moabAI(enemy);
+          trackMoabWeapons(enemy, this.islands);
           avoidIslands(enemy, this.islands);
+          moabAI(enemy);
         }
       }
       if (Math.abs(enemy.body.velocity.x) > oldXSpeed || Math.abs(enemy.body.velocity.y) > oldYSpeed){
@@ -985,6 +985,8 @@ function createIsland(x, y, radius1, radius2) {
     island.body.checkCollision.up = true;
 	  island.body.checkCollision.down = true;
     island.body.immovable = true;
+    island.x = x;
+    island.y = y;
     //island.body.loadpolygon()
     return island;
   }
@@ -1215,14 +1217,26 @@ function playerHitIsland(ship, island){
 
   function enemyHitIsland(enemy, island){
     if (enemy.key !== 'ship'){
-      enemy.health -= 5;
+      enemy.health -= 1;//previously 5
+      getOutOfThere(enemy, island);
     if (enemy.health <= 0){
       spawnTreasure(enemy.x, enemy.y, 4);//spawn treasure
       enemy.kill();
       player1.addKill();
-      //TODO: explosion, sound
+      particleExplosion(enemy.x, enemy.y, 10, 'bigExplosionParticles', 8, 70);
+      //TODO: add sound
     }
   }
+  }
+
+  function getOutOfThere(enemy, island){
+    console.log("Get the hell out of there!");
+    var outOfThereAngle = 180 + this.game.math.angleBetween(
+      enemy.x, enemy.y,
+      island.x, island.y
+    );
+    outOfThereAngle += ((Math.random()>0.5?-1:1) * 45);
+    navigate(enemy, outOfThereAngle);
   }
 
   function playerWasShot(player, bullet){
@@ -1939,7 +1953,7 @@ function playerHitIsland(ship, island){
   }
 
 
-  //TODO: fill out this stub
+
   function avoidIslands(enemy, islands){
     //project a ray between the enemy and the player
     var ray = new Phaser.Line(enemy.x, enemy.y, player1.sprite.x, player1.sprite.y);
@@ -1990,7 +2004,29 @@ function playerHitIsland(ship, island){
 
 return closestIntersection;
 };
+/*
 
+  function avoidIslands(enemy, islands){
+    var island;
+    for (var i = 0; i < islands.length; i++){
+      island = islands[i];
+      console.log("Island: " + island);
+    if ((Math.abs(enemy.x - island.x) < 200) && (Math.abs(enemy.y - island.y) < 200)){
+      console.log("avoid that island!");
+      var targetAngle = this.game.math.angleBetween(
+        ship.x, ship.y,
+        island.x, island.y
+      );
+      var wrapAngle = Math.abs(this.game.math.wrapAngle(enemy.angle - targetAngle));
+      if (wrapAngle >= 0 && wrapAngle <=120){//need to turn left
+        navigate(enemy, enemy.angle - enemy.TURN_RATE);
+      } else if (wrapAngle < 0 && wrapAngle >= -120){//need to turn right
+        navigate(enemy, enemy.angle + enemy.TURN_RATE);
+      }
+    }
+  }
+}
+*/
   //AI for the standard, "normal" enemy. It uses a blend of simple chasing,
   //flocking, and running away to keep the player on their toes
   function normalAI(ship, wind){
@@ -2337,20 +2373,23 @@ return closestIntersection;
 
     function  moabFiringPattern0(moab){
       console.log("Firing pattern 0");
-      for (i = 0; i < moab.weapons.length; i++){
-        if (moab.patternTime % 10 === 0){
+      for (i = 0; i < moab.weapons.length; i++){//alternates between shooting for 120 frames and for 40 frames
+        //long and short bursts with 60 frames inbetween them
+        if ((moab.patternTime < 600 && moab.patternTime >= 480) || (moab.patternTime < 420 && moab.patternTime >= 380) ||
+        (moab.patternTime < 320 && moab.patternTime >= 200) || (moab.patternTime < 140 && moab.patternTime >= 20)){
         moab.weapons[0][i].fire();
         moab.weapons[1][i].fire();
         }
       }
     }
 
+    //This firing pattern is good for now. It leaves nice ship-sized gaps in it.
     function  moabFiringPattern1(moab){
       console.log("Firing Pattern 1");
       for (i = 0; i < moab.weapons.length; i++){
-        if (moab.patternTime/10 % 2 === 0){
+        if (Math.floor(moab.patternTime/10) % 2 === 0){
           moab.weapons[0][i].fire();
-        } else{
+        } else {
           moab.weapons[1][i].fire();
         }
       }
@@ -2359,18 +2398,21 @@ return closestIntersection;
     function  moabFiringPattern2(moab){
       console.log("Firing Pattern 2");
       for (i = 0; i < moab.weapons.length; i++){
-        if ((i % 2) === (moab.patternTime % 2)){
+        if ((i % 2) === (Math.floor(moab.patternTime/10) % 2)){
         moab.weapons[0][i].fire();
         moab.weapons[1][i].fire();
       }
       }
     }
 
+    //fires the left weapon half the time and the right weapon the other half
     function  moabFiringPattern3(moab){
       console.log("Firing Pattern 3");
       for (i = 0; i < moab.weapons.length; i++){
-        if ((moab.patternTime % 50 >= 100)){
+        if ((moab.patternTime < 600 && moab.patternTime >= 500) || (moab.patternTime < 400 && moab.patternTime >= 300)
+        || (moab.patternTime < 200 && moab.patternTime >= 100)){
           moab.weapons[0][i].fire();
+        } else {
           moab.weapons[1][i].fire();
         }
       }
@@ -2687,7 +2729,7 @@ return closestIntersection;
     return weapons;
   }
 
-  function trackMoabWeapons(moab){
+  function trackMoabWeapons(moab, islands){
     var LWeapon, RWeapon;
     var LWeapons = moab.weapons[0];
     var RWeapons = moab.weapons[1];
@@ -2696,6 +2738,10 @@ return closestIntersection;
       RWeapon = RWeapons[i];
       LWeapon.fireAngle = moab.angle - 90;
       RWeapon.fireAngle = moab.angle + 90;
+      game.physics.arcade.overlap(islands, LWeapon.bullets, islandWasShot);
+      game.physics.arcade.overlap(islands, RWeapon.bullets, islandWasShot);
+      game.physics.arcade.overlap(player1.sprite, LWeapon.bullets, playerWasShot);
+      game.physics.arcade.overlap(player1.sprite, RWeapon.bullets, playerWasShot);
     }
   }
 
