@@ -5,12 +5,14 @@
 Utility class for accessing global variables more easily in game.js. It would be
 better to make this into several classes, but this is easier for now.
 */
-var storage = function (treasureGroup, enemyGroup, tentacleGroup) {
+var storage = function (treasureGroup, enemyGroup, tentacleGroup, allBosses) {
     this.wave = 0; //4 to test bosses, 0 normally
     this.treasures = treasureGroup;
     this.treasures.enableBody = true;
     this.enemies = enemyGroup;
     this.tentacleGroup = tentacleGroup;
+    this.allBosses = allBosses;
+    this.killedBosses = new Array();
 
     this.nextWave = function(){
       this.wave = this.wave + 1;
@@ -38,6 +40,22 @@ var storage = function (treasureGroup, enemyGroup, tentacleGroup) {
 
     this.changeEnemyGroup = function(group){
       this.enemies = group;
+    }
+
+    this.getAllBosses = function(){
+      return this.allBosses;
+    }
+
+    this.getKilledBosses = function(){
+      return this.killedBosses;
+    }
+
+    this.addKilledBoss = function(key){
+      this.killedBosses.push(key);
+    }
+
+    this.resetKilledBosses = function(){
+      this.killedBosses = [];
     }
 
     this.addTentacle = function(tentacle){

@@ -65,7 +65,9 @@ var ship = function (_sprite) {
 
     this.setHealth = function(value){
       if (value === "invincible"){
-        this.oldHealth = this.health;
+        if (this.health != "invincible"){
+          this.oldHealth = this.health;
+        }
       }
       this.health = value;
     }
@@ -124,5 +126,13 @@ var ship = function (_sprite) {
 
     this.getTotalKills = function(){
       return this.totalKills;
+    }
+
+    this.getAllKilledBosses = function(){
+      return this.allKilledBosses;
+    }
+
+    this.saveKilledBoss = function(key){
+      this.allKilledBosses.push(key);
     }
 }

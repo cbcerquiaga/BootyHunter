@@ -83,18 +83,11 @@ GameState.prototype.create = function() {
 //    this.game.stage.backgroundColor = 0x111111;
 
   //TODO: remove redundant code
-  this.numEnemies = 2;
-  //console.log("wave: " + wave + " waveDifficulty: " + waveDifficulty);
 
   //player1.kills = 0;
   //console.log("kills: " + playerKills);
 
   this.fireButtonHeld = 0;
-
-    //instantiates boss data
-    this.killedBosses = new Array();
-    this.allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab'];
-    //this.allBosses = ['moab'];
 
     //adds islands to map
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -126,11 +119,15 @@ GameState.prototype.create = function() {
     player1 = new ship(this.game.add.sprite(this.game.width/2, this.game.height/2, 'ship'));
 
 
+    //instantiates boss data
+    var allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab'];
+    //this.allBosses = ['moab'];
+
     var treasureGroup = this.game.add.group();
     var enemies = this.game.add.group();
     enemies.enableBody = true;
     var tentacleGroup = this.game.add.group();
-    storage1 = new storage(treasureGroup, enemies, tentacleGroup);
+    storage1 = new storage(treasureGroup, enemies, tentacleGroup, allBosses);
     //add weapons for the ghost ship boss
     var ghostWeapon = this.game.add.weapon(100, 'cannonball');
     var ghostWeapon2 = this.game.add.weapon(100, 'cannonball');
@@ -297,7 +294,7 @@ GameState.prototype.update = function () {
   //console.log(player1.sprite.body.velocity.x + " " + player1.sprite.body.velocity.y);
   //if there are no enemies, then the game moves to the next wave
   //console.log(storage1.getEnemies().countLiving());
-
+  console.log("Killed bosses: " + player1.getAllKilledBosses());
 
   //score
   var scoreString = player1.getScore().toString();
@@ -312,17 +309,20 @@ GameState.prototype.update = function () {
     //sets up the initial wave: randomizes the wind and generates 2 gunboats
     if (storage1.getWave() === 1){
       console.log("first wave. " + storage1.getWave());
-      generateEnemies(storage1.getWave(), 2, this.wind, storage1.getEnemies(), true);
+      generateEnemies(storage1.getWave(), this.wind, storage1.getEnemies(), true);
     } else if (isBossWave()){ //boss wave
       console.log("boss wave. " + storage1.getWave());
-      if (this.allBosses.length - 1 <= this.killedBosses.length){
-        this.killedBosses = [];
+      if (storage1.getAllBosses().length - 1 <= storage1.getKilledBosses().length){
+        storage1.resetKilledBosses();
       }
+      var allBosses = storage1.getAllBosses();
+      var killedBosses = storage1.getKilledBosses();
+
       //randomly chooses one of the available bosses
       while(1){
-        var guess = Math.floor(Math.random() * this.allBosses.length);
-        var bossType = this.allBosses[guess];
-        if (this.allBosses[guess], this.killedBosses.indexOf(bossType) === -1){
+        var guess = Math.floor(Math.random() * storage1.getAllBosses().length);
+        var bossType = allBosses[guess];
+        if (allBosses[guess], killedBosses.indexOf(bossType) === -1){
           var boss = bossWave(bossType);
           storage1.addEnemy(boss);
           //console.log("Number of living children after adding boss: " + storage1.getEnemies().countLiving());
@@ -332,9 +332,9 @@ GameState.prototype.update = function () {
     } else {
       //console.log("regular wave. " + storage1.getWave());
       killAllTentacles();
-      this.numEnemies += Math.round(1.5 * storage1.getWave());
-      console.log("Wave: " + storage1.getWave() + " NumEnemies: " + this.numEnemies);
-      generateEnemies(storage1.getWave(), this.numEnemies, this.wind, storage1.getEnemies(), false);
+      //this.numEnemies += Math.round(1.5 * storage1.getWave());
+      console.log("Wave: " + storage1.getWave());
+      generateEnemies(storage1.getWave(), this.wind, storage1.getEnemies(), false);
     }
 
       //randomizes wind once every three waves
@@ -789,7 +789,7 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
     //console.log("live enemies after production: " + storage1.getEnemies().countLiving());
   } else if (wave <= 4){
     //console.log("not the first wave");
-    for (var i = 0; i <= numEnemies; i++){
+    for (var i = 0; i <= wave * 3; i++){
     //console.log("in the loop: " + storage1.getEnemies());
     //TODO: find a way to weight the selection to favor a certain type of enemy if one of that type has already been added to the wave
       var shipChosen = false;
@@ -877,6 +877,8 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
         //console.log("you killed the kraken!");
         spawnTreasure(enemy.x, enemy.y, 10);
         enemy.kill();
+        storage1.addKilledBoss(enemy.key);
+        player1.saveKilledBoss(enemy.key);
         player1.addKill();
       }
     } else {
@@ -886,6 +888,10 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
       enemy.kill();
       player1.addKill();
       particleExplosion(enemy.x, enemy.y, 10, 'bigExplosionParticles', 8, 70);
+      if (storage1.getAllBosses().indexOf(enemy.key) >= 0){
+        storage1.addKilledBoss(enemy.key);
+        player1.saveKilledBoss(enemy.key);
+      }
       //play explosion and sound
       }
     }
@@ -902,6 +908,10 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
     for (var i = 0; i < bootyLength; i++){
       booty = spawnTreasure(enemy.x, enemy.y, 1);
       collectTreasure(player1, booty);
+    }
+    if (storage1.getAllBosses().indexOf(enemy.key) >= 0){
+      storage1.addKilledBoss(enemy.key);
+      player1.saveKilledBoss(enemy.key);
     }
     return retVal;
   }
@@ -1225,6 +1235,10 @@ function playerHitIsland(ship, island){
       player1.addKill();
       particleExplosion(enemy.x, enemy.y, 10, 'bigExplosionParticles', 8, 70);
       //TODO: add sound
+      if (storage1.getAllBosses().indexOf(enemy.key) >= 0){
+        storage1.addKilledBoss(enemy.key);
+        player1.saveKilledBoss(enemy.key);
+      }
     }
   }
   }
@@ -2761,6 +2775,28 @@ return closestIntersection;
     return false;
   }
 
+  function killedBossText(key){
+    switch(key){
+      case 'kraken':
+        return "the kraken";
+        break;
+      case 'ghost':
+        return "the ghost ship";
+        break;
+      case 'moab':
+        return "the M.O.A.B.";
+        break;
+      case 'junk':
+        return "a Chinese junk ship";
+        break;
+      case 'megaladon':
+        return "a megaladon";
+        break;
+      default:
+        return "the white whale";
+    }
+  }
+
 
   function gameOverSequence(score, wave, kills, bossesKilled) {
       player1.sprite.kill();
@@ -2777,13 +2813,33 @@ return closestIntersection;
       } else {
         var killsText = game.add.text(this.width/2 - 300, this.height/4 + 60, "You killed a total of " + player1.getTotalKills() + " enemies", { fontSize: '16px', fill: '#000' });
       }
-
       var text = game.cache.getText('pirateFacts');
       var factArray = text.split('\n');
       var pirateFact =  factArray[Math.floor(Math.random() * factArray.length)];
-      var factText = game.add.text(this.width/2 - 300, this.height/4 + 80, pirateFact, { fontSize: '16px', fill: '#000' });
+      var factText = game.add.text(this.width/2 - 300, this.height/4 + 100, pirateFact, { fontSize: '16px', fill: '#000' });
       var killText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#000' });
-      var bossText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#000' });
+      var bossesDefeated;
+      var killedBosses = player1.getAllKilledBosses();
+      if (killedBosses.length < 1){
+        bossesDefeated = "You didn't defeat any bosses this time.";
+      } else if (killedBosses.length === storage1.getAllBosses().length){
+        bossesDefeated = "You defeated every boss.";
+      }
+      } else {
+        bossesDefeated = "You defeated ";
+        var killedBoss;
+        for (var i = 0; i < killedBosses.length; i++){
+          killedBoss = killedBossText(killedBosses[i]);
+          if (i === 0){
+            bossesDefeated += "the " + killedBossText(killedBosses[i]);
+          } else if (i === killedBosses.length - 1){
+          bossesDefeated += "and the " + killedBossText(killedBosses[i]);
+          } else {
+            bossesDefeated += "the " + killedBossText(killedBosses[i]) + ", ";
+          }
+        }
+      }
+      var bossText = game.add.text(this.width/2 - 300, this.height/4 + 80, bossesDefeated, { fontSize: '16px', fill: '#000' });
   }
 
 
