@@ -60,6 +60,7 @@ GameState.prototype.preload = function() {
     this.game.load.spritesheet('megaladon', 'assets/megaladon.png', 73, 27);
     this.game.load.spritesheet('junk', 'assets/junkShip.png', 40, 24);
     this.game.load.spritesheet('moab', 'assets/moab.png', 84, 40);
+    this.game.load.spritesheet('mobyDick', 'assets/mobyDick.png', 51, 23);
     this.game.load.image('rocket', 'assets/rocket.png');
     this.game.load.image('seagull', 'assets/seagull.png');
     this.game.load.image('pelican', 'assets/pelican.png');
@@ -93,7 +94,7 @@ GameState.prototype.create = function() {
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
     this.islands = this.game.add.group();
     this.islands.enableBody = true;
-    generateIslands(width, height, 6, 100, 10, 'ship', this.islands);//usually 20 islands
+    generateIslands(width, height, 6, 100, 10, 'ship', this.islands);//usually 6 islands, originally 20, 0 for testing
 
     //creates whitecaps group
     this.whitecaps = this.game.add.group();
@@ -120,8 +121,8 @@ GameState.prototype.create = function() {
 
 
     //instantiates boss data
-    var allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab'];
-    //this.allBosses = ['moab'];
+    var allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab', 'mobyDick'];
+    //var allBosses = ['mobyDick'];
 
     var treasureGroup = this.game.add.group();
     var enemies = this.game.add.group();
@@ -473,6 +474,10 @@ GameState.prototype.update = function () {
           trackMoabWeapons(enemy, this.islands);
           avoidIslands(enemy, this.islands);
           moabAI(enemy);
+        } else if (enemy.key === 'mobyDick'){
+          avoidIslands(enemy,this.islands);
+          whaleAI(enemy);
+          enemy.animations.play('swim', 4, true);
         }
       }
       if (Math.abs(enemy.body.velocity.x) > oldXSpeed || Math.abs(enemy.body.velocity.y) > oldYSpeed){
@@ -2432,6 +2437,43 @@ return closestIntersection;
       }
     }
 
+    function whaleAI(whale){
+      console.log("Call me Ishmael " + whale.directions[whale.currentDirection] + " " + whale.directionTime);
+      if (whale.directionTime <= 0){
+        whale.directionTime = 60;
+        if (whale.currentDirection > whale.directions.length){
+          whale.currentDirection = 0;
+        } else {
+          whale.currentDirection++;
+        }
+      } else {
+        whale.directionTime--;
+        var targetAngle;
+        if (whale.directions[whale.currentDirection] === 'N'){
+          targetAngle = this.game.math.angleBetween(
+              whale.x, whale.y,
+              whale.x, 0
+          );
+        } else if (whale.directions[whale.currentDirection] === 'S'){
+          targetAngle = this.game.math.angleBetween(
+              whale.x, whale.y,
+              whale.x, this.height
+          );
+        } else if (whale.directions[whale.currentDirection] === 'W'){
+          targetAngle = this.game.math.angleBetween(
+              whale.x, whale.y,
+              0, whale.y
+          );
+        } else if (whale.directions[whale.currentDirection] === 'E'){
+          targetAngle = this.game.math.angleBetween(
+              whale.x, whale.y,
+              this.width, whale.y
+          );
+        }
+        navigate(whale, targetAngle);
+      }
+    }
+
 
   //calls the appropriate functions for each boss depending on what string is passed in
   //TODO: add otehr bosses
@@ -2450,6 +2492,9 @@ return closestIntersection;
         break;
       case 'moab':
         boss = motherOfAllBoats(this.wind);
+        break;
+      case 'mobyDick':
+        boss = greatWhiteWhale();
         break;
       default://kraken
         boss = releaseKraken();
@@ -2759,6 +2804,32 @@ return closestIntersection;
     }
   }
 
+  function greatWhiteWhale(){
+    var x, y, angle;
+    if (player1.sprite.y < this.height/2){
+      y = 0;
+      angle = 90;
+    } else {
+      y = this.height;
+      angle = -90;
+    }
+    x = Math.random() * this.width;
+    var whale = this.game.add.sprite(x, y, 'mobyDick');
+    whale.enableBody = true;
+    this.game.physics.enable(whale, Phaser.Physics.ARCADE);
+    whale.anchor.setTo(0.5, 0.5);
+    //TODO: balance health, speed, turn rate
+    whale.health = enemyHealth['manowar'] * 1.5;
+    whale.TURN_RATE = 10;
+    whale.maxSpeed = 400;
+    whale.directions = ['N', 'S', 'N', 'W', 'E', 'W', 'S', 'N', 'S', 'E', 'W', 'E'];
+    whale.currentDirection = 0;
+    whale.directionTime = 60;
+    whale.frame = 0;
+    whale.animations.add('swim');
+    return whale;
+  }
+
   function isBossWave(){
     return (storage1.getWave() % 5 === 0  || storage1.getWave() >= 25);
   }
@@ -2824,7 +2895,6 @@ return closestIntersection;
         bossesDefeated = "You didn't defeat any bosses this time.";
       } else if (killedBosses.length === storage1.getAllBosses().length){
         bossesDefeated = "You defeated every boss.";
-      }
       } else {
         bossesDefeated = "You defeated ";
         var killedBoss;
