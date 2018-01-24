@@ -2419,10 +2419,12 @@ return closestIntersection;
       }
     }
 
+    //sprays bullets everywhere for a short time at fixed intervals
     function  moabFiringPattern2(moab){
       console.log("Firing Pattern 2");
       for (i = 0; i < moab.weapons.length; i++){
-        if ((i % 2) === (Math.floor(moab.patternTime/10) % 2)){
+        if ((moab.patternTime < 600 && moab.patternTime >= 650) || (moab.patternTime < 450 && moab.patternTime >= 400) 
+        || (moab.patternTime < 250 && moab.patternTime >= 200) || (moab.patternTime <50 && moab.patternTime >= 0)){
         moab.weapons[0][i].fire();
         moab.weapons[1][i].fire();
       }
