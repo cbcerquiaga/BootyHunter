@@ -61,6 +61,7 @@ GameState.prototype.preload = function() {
     this.game.load.spritesheet('junk', 'assets/junkShip.png', 40, 24);
     this.game.load.spritesheet('moab', 'assets/moab.png', 84, 40);
     this.game.load.spritesheet('mobyDick', 'assets/mobyDick.png', 51, 23);
+    this.game.load.image('waterball', 'assets/waterBall.png');
     this.game.load.image('rocket', 'assets/rocket.png');
     this.game.load.image('seagull', 'assets/seagull.png');
     this.game.load.image('pelican', 'assets/pelican.png');
@@ -471,10 +472,14 @@ GameState.prototype.update = function () {
           junkAI(enemy, this.islands, this.wind);
         } else if (enemy.key === 'moab'){
           enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
-          trackMoabWeapons(enemy, this.islands);
+          trackMoabWeapons(enemy);
           avoidIslands(enemy, this.islands);
           moabAI(enemy);
         } else if (enemy.key === 'mobyDick'){
+          game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
+          game.physics.arcade.overlap(player1.sprite, enemy.weapons[1].bullets, playerWasShot);
+          enemy.weapons[0].fireAngle = enemy.angle - 90;
+          enemy.weapons[1].fireAngle = enemy.angle + 90;
           avoidIslands(enemy,this.islands);
           whaleAI(enemy);
           enemy.animations.play('swim', 4, true);
@@ -2437,6 +2442,20 @@ return closestIntersection;
       }
     }
 
+    //the same as moabFiringPattern3.
+    function whaleFiringPattern(whale){
+      if (whale.patternTime < 200 && whale.patternTime >= 100){
+        whale.weapons[0].fire();
+      } else {
+        whale.weapons[1].fire();
+      }
+      if (whale.patternTime <= 0){
+        whale.patternTime = 200;
+      } else {
+        whale.patternTime--;
+      }
+    }
+
     function whaleAI(whale){
       console.log("Call me Ishmael " + whale.directions[whale.currentDirection] + " " + whale.directionTime);
       if (whale.directionTime <= 0){
@@ -2472,6 +2491,7 @@ return closestIntersection;
         }
         navigate(whale, targetAngle);
       }
+      whaleFiringPattern(whale);
     }
 
 
@@ -2788,7 +2808,7 @@ return closestIntersection;
     return weapons;
   }
 
-  function trackMoabWeapons(moab, islands){
+  function trackMoabWeapons(moab){
     var LWeapon, RWeapon;
     var LWeapons = moab.weapons[0];
     var RWeapons = moab.weapons[1];
@@ -2827,6 +2847,29 @@ return closestIntersection;
     whale.directionTime = 60;
     whale.frame = 0;
     whale.animations.add('swim');
+    var weapons = new Array(); //this is to allow the whale to use moab firing patterns
+    var weapon = this.game.add.weapon(100, 'waterball');
+    weapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+    weapon.bulletLifespan = 2250;
+    weapon.bulletSpeed = 200;
+    weapon.fireRate = 30;
+    weapon.bulletAngleVariance = 2;
+    weapon.bulletCollideWorldBounds = false;
+    weapon.bulletWorldWrap = true;
+    weapon.trackSprite(whale, 0, 0, false);
+    weapons.push(weapon);
+    var weapon2 = this.game.add.weapon(100, 'waterball');
+    weapon2.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+    weapon2.bulletLifespan = 2250;
+    weapon2.bulletSpeed = 200;
+    weapon2.fireRate = 30;
+    weapon2.bulletAngleVariance = 2;
+    weapon2.bulletCollideWorldBounds = false;
+    weapon2.bulletWorldWrap = true;
+    weapon2.trackSprite(whale, 0, 0, false);
+    weapons.push(weapon2);
+    whale.weapons = weapons;
+    whale.patternTime = 200;
     return whale;
   }
 
