@@ -475,7 +475,7 @@ GameState.prototype.update = function () {
           junkAI(enemy, this.islands, this.wind);
         } else if (enemy.key === 'moab'){
           enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
-          trackMoabWeapons(enemy);
+          trackMoabWeapons(enemy, this.islands);
           avoidIslands(enemy, this.islands);
           moabAI(enemy);
         } else if (enemy.key === 'mobyDick'){
@@ -2878,7 +2878,7 @@ return closestIntersection;
     return weapons;
   }
 
-  function trackMoabWeapons(moab){
+  function trackMoabWeapons(moab, islands){
     var LWeapon, RWeapon;
     var LWeapons = moab.weapons[0];
     var RWeapons = moab.weapons[1];
