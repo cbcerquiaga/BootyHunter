@@ -25,9 +25,9 @@ var startWake = 0;
 //enemy global variables
 var wave;
 var numEnemies; //added 100 to all gunboat speeds
-var enemyDownWindSpeed = {'gunboat': 200, 'manowar': 210, 'normal': 220, 'dhow': 250, 'galleon': 300};
-var enemyCrossWindSpeed = {'gunboat': 160, 'manowar': 170, 'normal': 180, 'dhow': 350, 'galleon': 200};//the dhow goes faster across the wind than down
-var enemyUpWindSpeed = {'gunboat': 135, 'manowar': 100, 'normal': 140, 'dhow': 200, 'galleon': 130};
+var enemyDownWindSpeed = {'gunboat': 200, 'manowar': 210, 'normal': 220, 'dhow': 250, 'galleon': 300, 'clipper': 350};
+var enemyCrossWindSpeed = {'gunboat': 160, 'manowar': 170, 'normal': 180, 'dhow': 350, 'galleon': 200, 'clipper': 295};//the dhow goes faster across the wind than down
+var enemyUpWindSpeed = {'gunboat': 135, 'manowar': 100, 'normal': 140, 'dhow': 200, 'galleon': 130, 'clipper': 220};
 var enemyHealth = {'gunboat': 1, 'manowar': 70, 'normal': 40, 'dhow': 21};
 var enemyDifficulty = {'gunboat': 1, 'manowar': 10, 'normal': 5, 'dhow': 10};
 var enemyTurnRate = {'gunboat': 120, 'manowar': 115, 'normal': 120, 'dhow': 140, 'galleon': 45};
@@ -62,6 +62,9 @@ GameState.prototype.preload = function() {
     this.game.load.spritesheet('moab', 'assets/moab.png', 84, 40);
     this.game.load.spritesheet('mobyDick', 'assets/mobyDick.png', 51, 23);
     this.game.load.spritesheet('galleon', 'assets/galleon.png', 34, 21);
+    this.game.load.spritesheet('trireme', 'assets/trireme.png', 39, 32);
+    this.game.load.spritesheet('longboat', 'assets/vikingLongboat.png', 45, 31);
+    this.game.load.spritesheet('clipper', 'assets/clipper.png', 56, 32);
     this.game.load.image('bomb', 'assets/galleonBomb.png');
     this.game.load.spritesheet('piranha', 'assets/piranha.png', 23, 10);
     this.game.load.image('waterball', 'assets/waterBall.png');
@@ -125,8 +128,8 @@ GameState.prototype.create = function() {
 
 
     //instantiates boss data
-    var allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab', 'mobyDick', 'piranha', 'galleon'];
-    //var allBosses = ['piranha'];
+    var allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab', 'mobyDick', 'piranha', 'galleon', 'clipper'];
+    //var allBosses = ['clipper'];
 
     var treasureGroup = this.game.add.group();
     var enemies = this.game.add.group();
@@ -412,6 +415,7 @@ GameState.prototype.update = function () {
         //console.log("enemy angle: " + enemy.angle + " weapon angles: " + enemy.weapons[0].angle + ", "  + enemy.weapons[1].angle);
         gunBoatAI(enemy, this.wind, true); //the ship chases the player or runs away, turns to shoot
         avoidIslands(enemy, this.islands); //the ship tries to avoid islands
+        addWake(enemy);
       } else if (enemy.key === 'normal'){
         enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
         if (enemy.frame >= 0 && enemy.frame < 3){enemy.isGoingUpWind = true;} else {enemy.isGoingUpWind = false;}
@@ -427,6 +431,7 @@ GameState.prototype.update = function () {
         game.physics.arcade.overlap(player1.sprite, enemy.weapons[1].bullets, playerWasShot);
         normalAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
+        addWake(enemy);
       } else if (enemy.key === 'manowar'){
         enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
         if (enemy.frame >= 0 && enemy.frame < 3){enemy.isGoingUpWind = true;} else {enemy.isGoingUpWind = false;}
@@ -448,6 +453,7 @@ GameState.prototype.update = function () {
         game.physics.arcade.overlap(player1.sprite, enemy.weapons[3].bullets, playerWasShot);
         manOwarAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
+        addWake(enemy);
       } else if (enemy.key === 'dhow'){
         var dhowArray = dhowCheckWind(enemy.angle, this.wind);
         enemy.frame = dhowArray[0];
@@ -460,6 +466,7 @@ GameState.prototype.update = function () {
         game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
         dhowAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
+        addWake(enemy);
       } else {//boss
         if (enemy.key === 'ship'){//ghost ship, but it uses the same sprite as the player
           //console.log("It's the ghost ship");
@@ -473,11 +480,13 @@ GameState.prototype.update = function () {
           game.physics.arcade.overlap(player1.sprite, enemy.weapon.bullets, playerWasShot);
           enemy.frame = junkFrame(enemy.angle, this.wind);
           junkAI(enemy, this.islands, this.wind);
+          addWake(enemy);
         } else if (enemy.key === 'moab'){
           enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
           trackMoabWeapons(enemy, this.islands);
           avoidIslands(enemy, this.islands);
           moabAI(enemy);
+          addWake(enemy);
         } else if (enemy.key === 'mobyDick'){
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[1].bullets, playerWasShot);
@@ -503,13 +512,25 @@ GameState.prototype.update = function () {
           enemy.body.velocity.y = speedArray[1];
           galleonAI(enemy);
           avoidIslands(enemy, this.islands);
+        } else if (enemy.key === 'clipper'){
+          game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
+          game.physics.arcade.overlap(player1.sprite, enemy.weapons[1].bullets, playerWasShot);
+          enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
+          enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'clipper');
+          var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
+          enemy.body.velocity.x = speedArray[0];
+          enemy.body.velocity.y = speedArray[1];
+          clipperAI(enemy, this.islands);
         }
-      }
-      if (Math.abs(enemy.body.velocity.x) > oldXSpeed || Math.abs(enemy.body.velocity.y) > oldYSpeed){
-        enemy.frame += 2;
       }
     }
   }
+  }
+
+  function addWake(enemy){
+    if (Math.abs(enemy.body.velocity.x) > oldXSpeed || Math.abs(enemy.body.velocity.y) > oldYSpeed){
+      enemy.frame += 2;
+    }
   }
 
   //console.log("I am invincible in the update function! " + player1.getIsInvincible());
@@ -1256,7 +1277,9 @@ function playerHitIsland(ship, island){
 }
 
   function enemyHitIsland(enemy, island){
-    if (enemy.key !== 'ship'){
+    if (enemy.key === 'mobyDick' || enemy.key === 'clipper' || enemy.key === 'moab'){
+      getOutOfThere(enemy, island);
+    } else if (enemy.key !== 'ship'){
       enemy.health -= 1;//previously 5
       getOutOfThere(enemy, island);
     if (enemy.health <= 0){
@@ -2558,6 +2581,61 @@ return closestIntersection;
         }
     }
 
+    function clipperAI(clipper, islands){
+      //console.log("You're 100 years too early!" + clipper.directions[clipper.currentDirection] + " " + clipper.directionTime);
+      avoidIslands(clipper, islands)
+      if (clipper.directionTime <= 0){
+        clipper.directionTime = 50;
+        if (clipper.currentDirection > clipper.directions.length){
+          clipper.currentDirection = 0;
+        } else {
+          clipper.currentDirection++;
+        }
+      } else {
+        clipper.directionTime--;
+        var targetAngle;
+        if (clipper.directions[clipper.currentDirection] === 'N'){
+          targetAngle = this.game.math.angleBetween(
+              clipper.x, clipper.y,
+              clipper.x, 0
+          );
+        } else if (clipper.directions[clipper.currentDirection] === 'S'){
+          targetAngle = this.game.math.angleBetween(
+              clipper.x, clipper.y,
+              clipper.x, this.height
+          );
+        } else if (clipper.directions[clipper.currentDirection] === 'W'){
+          targetAngle = this.game.math.angleBetween(
+              clipper.x, clipper.y,
+              0, clipper.y
+          );
+        } else if (clipper.directions[clipper.currentDirection] === 'E'){
+          targetAngle = this.game.math.angleBetween(
+              clipper.x, clipper.y,
+              this.width, clipper.y
+          );
+        }
+        navigate(clipper, targetAngle);
+      }
+      clipperFiringPattern(clipper);
+    }
+
+    function clipperFiringPattern(clipper){
+      var weapon1 = clipper.weapons[0];
+      var weapon2 = clipper.weapons[1];
+      if (clipper.currentDirection < 8){//going counterclockwise
+        weapon1.fire();
+        weapon1.fireAngle += 2;
+        weapon2.fire();
+        weapon2.fireAngle += 2;
+      } else {
+        weapon1.fire();
+        weapon1.fireAngle -= 2;
+        weapon2.fire();
+        weapon2.fireAngle -= 2;
+      }
+    }
+
 
   //calls the appropriate functions for each boss depending on what string is passed in
   //TODO: add otehr bosses
@@ -2585,6 +2663,9 @@ return closestIntersection;
         break;
       case 'galleon':
         boss = galleon(this.wind);
+        break;
+      case 'clipper':
+        boss = clipperShip();
         break;
       default://kraken
         boss = releaseKraken();
@@ -2941,6 +3022,55 @@ return closestIntersection;
     whale.weapons = weapons;
     whale.patternTime = 200;
     return whale;
+  }
+
+  function clipperShip(){
+    var x, y, angle;
+    if (player1.sprite.y < this.height/2){
+      y = 0;
+      angle = 90;
+    } else {
+      y = this.height;
+      angle = -90;
+    }
+    x = Math.random() * this.width;
+    var clipper = this.game.add.sprite(x, y, 'clipper');
+    clipper.enableBody = true;
+    //clipper.body.bounce.set(0.5); //bugs out the game for some reason
+    this.game.physics.enable(clipper, Phaser.Physics.ARCADE);
+    clipper.anchor.setTo(0.5, 0.5);
+    //TODO: balance health, speed, turn rate
+    clipper.health = enemyHealth['normal'] * 2;
+    clipper.TURN_RATE = 10;
+    clipper.directions = ['N', 'N', 'W', 'W', 'S', 'S', 'E', 'E', 'W', 'W', 'N', 'N', 'E', 'E', 'S', 'S']; //goes in a big loop, turns around when it hits the SE corner
+    clipper.currentDirection = 0;
+    clipper.directionTime = 50;
+    clipper.maxSpeed = enemyUpWindSpeed['clipper'];
+    var weapons = new Array(); //this is to allow the whale to use moab firing patterns
+    var weapon = this.game.add.weapon(100, 'cannonball');
+    weapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+    weapon.bulletLifespan = 450;
+    weapon.bulletSpeed = 400;
+    weapon.fireRate = 30;
+    weapon.bulletAngleVariance = 5;
+    weapon.bulletCollideWorldBounds = false;
+    weapon.bulletWorldWrap = true;
+    weapon.fireAngle = angle + 90;
+    weapon.trackSprite(clipper, 0, 0, false);
+    weapons.push(weapon);
+    var weapon2 = this.game.add.weapon(100, 'cannonball');
+    weapon2.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+    weapon2.bulletLifespan = 450;
+    weapon2.bulletSpeed = 400;
+    weapon2.fireRate = 30;
+    weapon2.bulletAngleVariance = 5;
+    weapon2.bulletCollideWorldBounds = false;
+    weapon2.bulletWorldWrap = true;
+    weapon2.fireAngle = angle - 90;
+    weapon2.trackSprite(clipper, 0, 0, false);
+    weapons.push(weapon2);
+    clipper.weapons = weapons;
+    return clipper;
   }
 
   function generatePiranhas(numPiranhas){
