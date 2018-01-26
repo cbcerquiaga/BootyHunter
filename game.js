@@ -128,8 +128,8 @@ GameState.prototype.create = function() {
 
 
     //instantiates boss data
-    var allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab', 'mobyDick', 'piranha', 'galleon', 'clipper', 'longboat'];
-    //var allBosses = ['longboat'];
+    var allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab', 'mobyDick', 'piranha', 'galleon', 'clipper', 'longboat', 'trireme'];
+    //var allBosses = ['trireme'];
 
     var treasureGroup = this.game.add.group();
     var enemies = this.game.add.group();
@@ -524,7 +524,7 @@ GameState.prototype.update = function () {
           avoidIslands(enemy, this.islands);
           whaleAI(enemy)
           clipperFiringPattern(enemy);
-        } else if (enemy.key === 'longboat'){
+        } else if (enemy.key === 'longboat' || enemy.key === 'trireme'){
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[1].bullets, playerWasShot);
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[2].bullets, playerWasShot);
@@ -2662,6 +2662,9 @@ return closestIntersection;
       case 'longboat':
         boss = vikingShip();
         break;
+      case 'trireme':
+        boss = greekShip(this.wind);
+        break;
       default://kraken
         boss = releaseKraken();
     }
@@ -3237,13 +3240,103 @@ return closestIntersection;
   }
 
 
-  // function greekShip(){
-  //   if (angle === 0){ //makes the classic greek square zig-zag
-  //     trireme.directions = ['E', 'N', 'E', 'S'];
-  //   } else {
-  //     trireme.directions = ['W', 'N', 'W', 'S'];
-  //   }
-  // }
+  function greekShip(wind){
+    var x, y, angle;
+    switch(wind){
+      case 'N':
+        x = Math.random() * this.width;
+        y = 0;
+        angle = 90;
+        break;
+      case 'S':
+        x = Math.random() * this.width;
+        y = this.height;
+        angle = -90;
+        break;
+      case 'W':
+        x = 0;
+        y = Math.random() * this.height;
+        angle = 0;
+        break;
+      default://east
+        x = this.width;
+        y = Math.random() * this.height;
+        angle = 180;
+    }
+    var trireme = this.game.add.sprite(x, y, 'trireme');
+    trireme.enableBody = true;
+    this.game.physics.enable(trireme, Phaser.Physics.ARCADE);
+    trireme.anchor.setTo(0.5, 0.5);
+    //TODO: balance health, speed, turn rate
+    trireme.health = enemyHealth['manowar'] * 1.5;
+    trireme.TURN_RATE = 10;
+    trireme.maxSpeed = 200;
+    if (angle === 0){ //makes the classic greek square zig-zag
+      trireme.directions = ['E', 'N', 'E', 'S'];
+    } else  if (angle === 180){
+      trireme.directions = ['W', 'N', 'W', 'S'];
+    } else if (angle === 90){
+      trireme.directions = ['S', 'E', 'S', 'W'];
+    } else {//angle === -90
+      trireme.directions = ['N', 'W', 'N', 'E'];
+    }
+    trireme.currentDirection = 0;
+    trireme.directionTime = 60;
+    trireme.frame = 0;
+    trireme.animations.add('row');
+    var weapons = new Array();
+    var weapon = this.game.add.weapon(100, 'cannonball');
+    weapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+    weapon.bulletLifespan = 2250;
+    weapon.bulletSpeed = 200;
+    weapon.fireRate = 60;
+    weapon.bulletAngleVariance = 2;
+    weapon.bulletCollideWorldBounds = false;
+    weapon.bulletWorldWrap = true;
+    weapon.trackSprite(trireme, 0, 0, false);
+    weapon.fireAngle = -135;
+    weapon.bulletInheritSpriteSpeed = true;
+    weapons.push(weapon);
+    var weapon2 = this.game.add.weapon(100, 'cannonball');
+    weapon2.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+    weapon2.bulletLifespan = 2250;
+    weapon2.bulletSpeed = 200;
+    weapon2.fireRate = -45;
+    weapon2.bulletAngleVariance = 2;
+    weapon2.bulletCollideWorldBounds = false;
+    weapon2.bulletWorldWrap = true;
+    weapon2.trackSprite(trireme, 0, 0, false);
+    weapon2.fireAngle = 45;
+    weapon2.bulletInheritSpriteSpeed = true;
+    weapons.push(weapon2);
+    var weapon3 = this.game.add.weapon(100, 'cannonball');
+    weapon3.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+    weapon3.bulletLifespan = 2250;
+    weapon3.bulletSpeed = 200;
+    weapon3.fireRate = 135;
+    weapon3.bulletAngleVariance = 2;
+    weapon3.bulletCollideWorldBounds = false;
+    weapon3.bulletWorldWrap = true;
+    weapon3.trackSprite(trireme, 0, 0, false);
+    weapon3.fireAngle = 0;
+    weapon3.bulletInheritSpriteSpeed = true;
+    weapons.push(weapon3);
+    var weapon4 = this.game.add.weapon(100, 'cannonball');
+    weapon4.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+    weapon4.bulletLifespan = 2250;
+    weapon4.bulletSpeed = 200;
+    weapon4.fireRate = 60;
+    weapon4.bulletAngleVariance = 2;
+    weapon4.bulletCollideWorldBounds = false;
+    weapon4.bulletWorldWrap = true;
+    weapon4.trackSprite(trireme, 0, 0, false);
+    weapon4.fireAngle = 90;
+    weapon4.bulletInheritSpriteSpeed = true;
+    weapons.push(weapon4);
+    trireme.weapons = weapons;
+    trireme.patternTime = 250;
+    return trireme;
+  }
 
   function isBossWave(){
     return (storage1.getWave() % 5 === 0  || storage1.getWave() >= 25);
