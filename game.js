@@ -128,8 +128,8 @@ GameState.prototype.create = function() {
 
 
     //instantiates boss data
-    var allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab', 'mobyDick', 'piranha', 'galleon', 'clipper'];
-    //var allBosses = ['clipper'];
+    var allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab', 'mobyDick', 'piranha', 'galleon', 'clipper', 'longboat'];
+    //var allBosses = ['longboat'];
 
     var treasureGroup = this.game.add.group();
     var enemies = this.game.add.group();
@@ -474,7 +474,7 @@ GameState.prototype.update = function () {
         } else if (enemy.key === 'megaladon'){
           //console.log("You're supposed to be extinct!");
           sharkAI(enemy, this.islands);
-          enemy.animations.play('swim', 4, true);
+          enemy.animations.play('swim', 12, true);
         } else if (enemy.key === 'junk'){
           //console.log("What a hunk of junk!");
           game.physics.arcade.overlap(player1.sprite, enemy.weapon.bullets, playerWasShot);
@@ -494,12 +494,13 @@ GameState.prototype.update = function () {
           enemy.weapons[1].fireAngle = enemy.angle + 90;
           avoidIslands(enemy,this.islands);
           whaleAI(enemy);
+          whaleFiringPattern(enemy);
           enemy.animations.play('swim', 4, true);
         } else if (enemy.key === 'piranha'){
           tentacleAI(enemy);
           var repulsion = repelpiranhas(enemy, 12, 35);
           enemy.body.velocity.add(repulsion.x, repulsion.y);
-          enemy.animations.play('swim', 4, true);
+          enemy.animations.play('swim', 15, true);
         } else if (enemy.key === 'galleon'){
           game.physics.arcade.overlap(player1.sprite, enemy.weapon.bullets, kaboom);
           enemy.weapon.fireAngle = enemy.angle + 180;
@@ -520,7 +521,18 @@ GameState.prototype.update = function () {
           var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
           enemy.body.velocity.x = speedArray[0];
           enemy.body.velocity.y = speedArray[1];
-          clipperAI(enemy, this.islands);
+          avoidIslands(enemy, this.islands);
+          whaleAI(enemy)
+          clipperFiringPattern(enemy);
+        } else if (enemy.key === 'longboat'){
+          game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
+          game.physics.arcade.overlap(player1.sprite, enemy.weapons[1].bullets, playerWasShot);
+          game.physics.arcade.overlap(player1.sprite, enemy.weapons[2].bullets, playerWasShot);
+          game.physics.arcade.overlap(player1.sprite, enemy.weapons[3].bullets, playerWasShot);
+          enemy.animations.play('row', 16, true);
+          avoidIslands(enemy, this.islands);
+          whaleAI(enemy);
+          longBoatFiringPattern(enemy);
         }
       }
     }
@@ -1277,9 +1289,9 @@ function playerHitIsland(ship, island){
 }
 
   function enemyHitIsland(enemy, island){
-    if (enemy.key === 'mobyDick' || enemy.key === 'clipper' || enemy.key === 'moab'){
+    if (enemy.key === 'mobyDick' || enemy.key === 'clipper' || enemy.key === 'moab' || enemy.key === 'longboat'){//pattern bosses don't take damage from hitting islands
       getOutOfThere(enemy, island);
-    } else if (enemy.key !== 'ship'){
+    } else if (enemy.key !== 'ship'){//the ghost ship doesn't react to islands at all
       enemy.health -= 1;//previously 5
       getOutOfThere(enemy, island);
     if (enemy.health <= 0){
@@ -2554,7 +2566,6 @@ return closestIntersection;
         }
         navigate(whale, targetAngle);
       }
-      whaleFiringPattern(whale);
     }
 
     function galleonAI(galleon, wind,){
@@ -2581,45 +2592,6 @@ return closestIntersection;
         }
     }
 
-    function clipperAI(clipper, islands){
-      //console.log("You're 100 years too early!" + clipper.directions[clipper.currentDirection] + " " + clipper.directionTime);
-      avoidIslands(clipper, islands)
-      if (clipper.directionTime <= 0){
-        clipper.directionTime = 50;
-        if (clipper.currentDirection > clipper.directions.length){
-          clipper.currentDirection = 0;
-        } else {
-          clipper.currentDirection++;
-        }
-      } else {
-        clipper.directionTime--;
-        var targetAngle;
-        if (clipper.directions[clipper.currentDirection] === 'N'){
-          targetAngle = this.game.math.angleBetween(
-              clipper.x, clipper.y,
-              clipper.x, 0
-          );
-        } else if (clipper.directions[clipper.currentDirection] === 'S'){
-          targetAngle = this.game.math.angleBetween(
-              clipper.x, clipper.y,
-              clipper.x, this.height
-          );
-        } else if (clipper.directions[clipper.currentDirection] === 'W'){
-          targetAngle = this.game.math.angleBetween(
-              clipper.x, clipper.y,
-              0, clipper.y
-          );
-        } else if (clipper.directions[clipper.currentDirection] === 'E'){
-          targetAngle = this.game.math.angleBetween(
-              clipper.x, clipper.y,
-              this.width, clipper.y
-          );
-        }
-        navigate(clipper, targetAngle);
-      }
-      clipperFiringPattern(clipper);
-    }
-
     function clipperFiringPattern(clipper){
       var weapon1 = clipper.weapons[0];
       var weapon2 = clipper.weapons[1];
@@ -2633,6 +2605,26 @@ return closestIntersection;
         weapon1.fireAngle -= 2;
         weapon2.fire();
         weapon2.fireAngle -= 2;
+      }
+    }
+
+    function longBoatFiringPattern(longboat){
+      if (longboat.patternTime <= 0){
+        longboat.patternTime = 250;
+      } else {
+        if (longboat.patternTime < 50){
+          longboat.weapons[0].fire();
+          longboat.weapons[1].fire();
+          longboat.weapons[2].fire();
+          longboat.weapons[3].fire();
+        } else if ((Math.floor(longboat.patternTime/10) % 2) === 0){
+          longboat.weapons[0].fire();
+          longboat.weapons[2].fire();
+        } else {
+          longboat.weapons[1].fire();
+          longboat.weapons[3].fire();
+        }
+        longboat.patternTime--;
       }
     }
 
@@ -2666,6 +2658,9 @@ return closestIntersection;
         break;
       case 'clipper':
         boss = clipperShip();
+        break;
+      case 'longboat':
+        boss = vikingShip();
         break;
       default://kraken
         boss = releaseKraken();
@@ -3160,6 +3155,96 @@ return closestIntersection;
     return galleon;
   }
 
+  function vikingShip(){
+    var x, y, angle;
+    if (player1.sprite.x < this.width/2){
+      x = 0;
+      angle = 0;
+    } else {
+      x = this.width;
+      angle = 180;
+    }
+    y = Math.random() * this.height;
+    var longboat = this.game.add.sprite(x, y, 'longboat');
+    longboat.enableBody = true;
+    this.game.physics.enable(longboat, Phaser.Physics.ARCADE);
+    longboat.anchor.setTo(0.5, 0.5);
+    //TODO: balance health, speed, turn rate
+    longboat.health = enemyHealth['manowar'] * 1.5;
+    longboat.TURN_RATE = 10;
+    longboat.maxSpeed = 200;
+    if (angle === 0){
+      longboat.directions = ['E', 'N', 'E', 'N', 'E', 'N', 'E', 'N', 'E', 'S', 'E', 'S', 'E', 'S'];
+    } else {
+      longboat.directions = ['W', 'N', 'W', 'N', 'W', 'N', 'W', 'N', 'W', 'S', 'W', 'S', 'W', 'S'];
+    }
+    longboat.currentDirection = 0;
+    longboat.directionTime = 60;
+    longboat.frame = 0;
+    longboat.animations.add('row');
+    var weapons = new Array();
+    var weapon = this.game.add.weapon(100, 'cannonball');
+    weapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+    weapon.bulletLifespan = 2250;
+    weapon.bulletSpeed = 200;
+    weapon.fireRate = 60;
+    weapon.bulletAngleVariance = 2;
+    weapon.bulletCollideWorldBounds = false;
+    weapon.bulletWorldWrap = true;
+    weapon.trackSprite(longboat, 0, 0, false);
+    weapon.fireAngle = 180;
+    weapon.bulletInheritSpriteSpeed = true;
+    weapons.push(weapon);
+    var weapon2 = this.game.add.weapon(100, 'cannonball');
+    weapon2.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+    weapon2.bulletLifespan = 2250;
+    weapon2.bulletSpeed = 200;
+    weapon2.fireRate = 60;
+    weapon2.bulletAngleVariance = 2;
+    weapon2.bulletCollideWorldBounds = false;
+    weapon2.bulletWorldWrap = true;
+    weapon2.trackSprite(longboat, 0, 0, false);
+    weapon2.fireAngle = -90;
+    weapon2.bulletInheritSpriteSpeed = true;
+    weapons.push(weapon2);
+    var weapon3 = this.game.add.weapon(100, 'cannonball');
+    weapon3.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+    weapon3.bulletLifespan = 2250;
+    weapon3.bulletSpeed = 200;
+    weapon3.fireRate = 60;
+    weapon3.bulletAngleVariance = 2;
+    weapon3.bulletCollideWorldBounds = false;
+    weapon3.bulletWorldWrap = true;
+    weapon3.trackSprite(longboat, 0, 0, false);
+    weapon3.fireAngle = 0;
+    weapon3.bulletInheritSpriteSpeed = true;
+    weapons.push(weapon3);
+    var weapon4 = this.game.add.weapon(100, 'cannonball');
+    weapon4.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
+    weapon4.bulletLifespan = 2250;
+    weapon4.bulletSpeed = 200;
+    weapon4.fireRate = 60;
+    weapon4.bulletAngleVariance = 2;
+    weapon4.bulletCollideWorldBounds = false;
+    weapon4.bulletWorldWrap = true;
+    weapon4.trackSprite(longboat, 0, 0, false);
+    weapon4.fireAngle = 90;
+    weapon4.bulletInheritSpriteSpeed = true;
+    weapons.push(weapon4);
+    longboat.weapons = weapons;
+    longboat.patternTime = 250;
+    return longboat;
+  }
+
+
+  // function greekShip(){
+  //   if (angle === 0){ //makes the classic greek square zig-zag
+  //     trireme.directions = ['E', 'N', 'E', 'S'];
+  //   } else {
+  //     trireme.directions = ['W', 'N', 'W', 'S'];
+  //   }
+  // }
+
   function isBossWave(){
     return (storage1.getWave() % 5 === 0  || storage1.getWave() >= 25);
   }
@@ -3198,6 +3283,14 @@ return closestIntersection;
         break;
       case 'galleon':
         return "a Spanish galleon";
+      case 'clipper':
+        return "a clipper from the future";
+        break;
+      case 'trireme':
+        return "a Greek trireme";
+      case 'longboat':
+        return "a viking longboat";
+        break;
       default:
         return "the white whale";
     }
