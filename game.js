@@ -431,7 +431,7 @@ GameState.prototype.update = function () {
         game.physics.arcade.overlap(player1.sprite, enemy.weapons[1].bullets, playerWasShot);
         normalAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
-        addWake(enemy, oldXSpeed, oldYspeed);
+        addWake(enemy, oldXSpeed, oldYSpeed);
       } else if (enemy.key === 'manowar'){
         enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
         if (enemy.frame >= 0 && enemy.frame < 3){enemy.isGoingUpWind = true;} else {enemy.isGoingUpWind = false;}
