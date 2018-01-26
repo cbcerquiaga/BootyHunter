@@ -101,7 +101,7 @@ GameState.prototype.create = function() {
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
     this.islands = this.game.add.group();
     this.islands.enableBody = true;
-    generateIslands(width, height, 6, 100, 10, 'ship', this.islands);//usually 6 islands, originally 20, 0 for testing
+    generateIslands(width, height, 6, 100, 10, this.islands);//usually 6 islands, originally 20, 0 for testing
 
     //creates whitecaps group
     this.whitecaps = this.game.add.group();
@@ -383,7 +383,7 @@ GameState.prototype.update = function () {
   for (var i = 0; i < storage1.getTentacleGroup().children.length; i++){
     //console.log("looping through tentacles");
     var tentacle = storage1.getTentacleGroup().children[i];
-    tentacleAI(tentacle);
+    chaseAI(tentacle);
     //repel other tentacles to form a proper flock
     var repulsion = repelTentacles(tentacle, 8, 35);
     tentacle.body.velocity.add(repulsion.x, repulsion.y);
@@ -415,7 +415,7 @@ GameState.prototype.update = function () {
         //console.log("enemy angle: " + enemy.angle + " weapon angles: " + enemy.weapons[0].angle + ", "  + enemy.weapons[1].angle);
         gunBoatAI(enemy, this.wind, true); //the ship chases the player or runs away, turns to shoot
         avoidIslands(enemy, this.islands); //the ship tries to avoid islands
-        addWake(enemy);
+        addWake(enemy, oldXSpeed, oldYSpeed);
       } else if (enemy.key === 'normal'){
         enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
         if (enemy.frame >= 0 && enemy.frame < 3){enemy.isGoingUpWind = true;} else {enemy.isGoingUpWind = false;}
@@ -431,7 +431,7 @@ GameState.prototype.update = function () {
         game.physics.arcade.overlap(player1.sprite, enemy.weapons[1].bullets, playerWasShot);
         normalAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
-        addWake(enemy);
+        addWake(enemy, oldXSpeed, oldYspeed);
       } else if (enemy.key === 'manowar'){
         enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
         if (enemy.frame >= 0 && enemy.frame < 3){enemy.isGoingUpWind = true;} else {enemy.isGoingUpWind = false;}
@@ -453,7 +453,7 @@ GameState.prototype.update = function () {
         game.physics.arcade.overlap(player1.sprite, enemy.weapons[3].bullets, playerWasShot);
         manOwarAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
-        addWake(enemy);
+        addWake(enemy, oldXSpeed, oldYSpeed);
       } else if (enemy.key === 'dhow'){
         var dhowArray = dhowCheckWind(enemy.angle, this.wind);
         enemy.frame = dhowArray[0];
@@ -466,7 +466,7 @@ GameState.prototype.update = function () {
         game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
         dhowAI(enemy, this.wind);
         avoidIslands(enemy, this.islands);
-        addWake(enemy);
+        addWake(enemy, oldXSpeed, oldYSpeed);
       } else {//boss
         if (enemy.key === 'ship'){//ghost ship, but it uses the same sprite as the player
           //console.log("It's the ghost ship");
@@ -480,24 +480,24 @@ GameState.prototype.update = function () {
           game.physics.arcade.overlap(player1.sprite, enemy.weapon.bullets, playerWasShot);
           enemy.frame = junkFrame(enemy.angle, this.wind);
           junkAI(enemy, this.islands, this.wind);
-          addWake(enemy);
+          addWake(enemy, oldXSpeed, oldYSpeed);
         } else if (enemy.key === 'moab'){
           enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
           trackMoabWeapons(enemy, this.islands);
           avoidIslands(enemy, this.islands);
           moabAI(enemy);
-          addWake(enemy);
+          addWake(enemy, oldXSpeed, oldYSpeed);
         } else if (enemy.key === 'mobyDick'){
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[1].bullets, playerWasShot);
           enemy.weapons[0].fireAngle = enemy.angle - 90;
           enemy.weapons[1].fireAngle = enemy.angle + 90;
           avoidIslands(enemy,this.islands);
-          whaleAI(enemy);
+          patternAI(enemy);
           whaleFiringPattern(enemy);
           enemy.animations.play('swim', 4, true);
         } else if (enemy.key === 'piranha'){
-          tentacleAI(enemy);
+          chaseAI(enemy);
           var repulsion = repelpiranhas(enemy, 12, 35);
           enemy.body.velocity.add(repulsion.x, repulsion.y);
           enemy.animations.play('swim', 15, true);
@@ -522,7 +522,7 @@ GameState.prototype.update = function () {
           enemy.body.velocity.x = speedArray[0];
           enemy.body.velocity.y = speedArray[1];
           avoidIslands(enemy, this.islands);
-          whaleAI(enemy)
+          patternAI(enemy)
           clipperFiringPattern(enemy);
         } else if (enemy.key === 'longboat' || enemy.key === 'trireme'){
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
@@ -531,7 +531,7 @@ GameState.prototype.update = function () {
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[3].bullets, playerWasShot);
           enemy.animations.play('row', 16, true);
           avoidIslands(enemy, this.islands);
-          whaleAI(enemy);
+          patternAI(enemy);
           longBoatFiringPattern(enemy);
         }
       }
@@ -539,7 +539,8 @@ GameState.prototype.update = function () {
   }
   }
 
-  function addWake(enemy){
+  //for sailing enemies, their frame needs to relect their speed as well as the wind
+  function addWake(enemy, oldXspeed, oldYSpeed){
     if (Math.abs(enemy.body.velocity.x) > oldXSpeed || Math.abs(enemy.body.velocity.y) > oldYSpeed){
       enemy.frame += 2;
     }
@@ -907,12 +908,11 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
   }
 }
 
-  //function to kill bullets when they hit islands. I couldn't get it working,
-  //so it's commented out
-
+  //kills bullets when they hit islands
   function islandWasShot(island, bullet){
+    particleExplosion(bullet.x, bullet.y, 3, 'sandParticles', 8, 40);
     bullet.kill();
-    //TODO: add explosion
+    //TODO: add sound
     //play explosion sound
     /*
     var explosion = explosions.getFirstExists(false);
@@ -923,6 +923,7 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
     */
   }
 
+  //damages an enemy when an enemy is shot
   function enemyWasShot(enemy, bullet){
     bullet.kill();
     particleExplosion(enemy.x, enemy.y, 3, 'explosionParticles', 8, 40);
@@ -960,6 +961,7 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
     }
   }
 
+  //kills an enemy and collects their treasure when they are hit by a boarding pirate
   function enemyBoarded(enemy, boarder){
     var retVal = 0;
     boarder.kill();
@@ -979,6 +981,8 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
     return retVal;
   }
 
+  //gives a player a bonus for whatever powerup bird they collected and removes
+  //the bird from the screen
   function collectPowerUp(player, powerup){
     var type = powerup.key;
     switch(type){
@@ -995,6 +999,7 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
     powerup.kill();
   }
 
+  //when a tentacle grabs the player, it's supposed to
   function tentacleGrabbedPlayer(player, tentacle){
     if (player1.getIsInvincible() === false) { //We only damage the player if not invincible
       player1.damage();
@@ -1009,8 +1014,8 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
   }
   }
 
-
-function generateIslands(width, height, maxIslands, maxSize, minSize, tank, islands) {
+//randomly generates randomly sized and placed islands which may or may not have green "trees"
+function generateIslands(width, height, maxIslands, maxSize, minSize, islands) {
   var numIslands = Math.random() * maxIslands;
 
 for (var i = 0; i < numIslands; i++){
@@ -1041,6 +1046,7 @@ for (var i = 0; i < numIslands; i++){
 
 }
 
+//actually creates an island
 function createIsland(x, y, radius1, radius2) {
 
     // create a new bitmap data object
@@ -1308,6 +1314,7 @@ function playerHitIsland(ship, island){
   }
   }
 
+  //makes enemies turn away from an island they have hit
   function getOutOfThere(enemy, island){
     console.log("Get the hell out of there!");
     var outOfThereAngle = 180 + this.game.math.angleBetween(
@@ -1318,6 +1325,7 @@ function playerHitIsland(ship, island){
     navigate(enemy, outOfThereAngle);
   }
 
+  //damages the player if they've been shot and aren't invincible
   function playerWasShot(player, bullet){
     bullet.kill();
     if (player1.getIsInvincible() === false && player1.getHealth() != "invincible") { //We only damage the player if not invincible
@@ -1334,11 +1342,13 @@ function playerHitIsland(ship, island){
   }
   }
 
+  //damages the player if they run into an explosive barrel
   function kaboom(player, bomb){
     particleExplosion(bomb.x, bomb.y, 6, 'bigExplosionParticles', 8, 95);
     playerWasShot(player, bomb);
   }
 
+  //collides the player and enemies
   function playerHitShip(player, ship){
     if (player1.getHealth() === "invincible"){
       ship.health-= 10;
@@ -1360,6 +1370,7 @@ function playerHitIsland(ship, island){
     }
   }
 
+  //collides two enemies
   function shipsCollided(ship1, ship2){
     if ((Math.abs(ship1.body.velocity.x) + Math.abs(ship1.body.velocity.y) + Math.abs(ship2.body.velocity.x) + Math.abs(ship2.body.velocity.y) ) >= 300){
       ship1.health--;
@@ -1437,6 +1448,7 @@ function playerHitIsland(ship, island){
     return treasure;
   }
 
+  //adds score for the player when they collect treasures
   function collectTreasure(player, treasure){
     switch(treasure.key){
       case 'silverCoin': player1.addScore(10); break;
@@ -1565,6 +1577,7 @@ function playerHitIsland(ship, island){
     return enemy;
   }
 
+  //gives enemies weapons with different properties based on their type
   function addWeapons(enemy){
     var weaponArray = new Array();
     switch(enemy.key){
@@ -1861,7 +1874,8 @@ function playerHitIsland(ship, island){
       return retArray;
   }
 
-
+  //figures out an enemy's maximum speed based on its type and its angle relative
+  //to the current wind direction
   function enemyMaxSpeed(wake, maxSpeed, type){
     if (wake <=2){ //D
         if (maxSpeed > this.enemyUpWindSpeed[type]){
@@ -1887,6 +1901,8 @@ function playerHitIsland(ship, island){
     return maxSpeed;
   }
 
+  //figures out how fast an enemy ship can actually go based on its current speed
+  //and its max speed. If the ship is going too fast, it gets slowed down.
   function enemyActualSpeed(maxSpeed, xVelocity, yVelocity){
         if (Math.abs(xVelocity) > maxSpeed){
           if (xVelocity > 0){
@@ -1908,8 +1924,8 @@ function playerHitIsland(ship, island){
         return speedArray;
   }
 
-  //TODO: fill out this stub
-  //makes the gunboat perform very simple behaviors- take the shortest route to chase the player, and turn to shoot when in range
+  //makes an enemy perform very simple behaviors- take the shortest route to chase the player
+  // and shoot when the player is to its side
   function gunBoatAI(gunboat, wind, shootsFromSides){
     //console.log(gunboat + " in the Gunboat AI function");
     var straightDistance = game.physics.arcade.distanceBetween(player1.sprite, gunboat);//find the direct distance to the player
@@ -1923,12 +1939,12 @@ function playerHitIsland(ship, island){
         leadX, leadY
     );
     //console.log("Direct: " + straightDistance + " Da Gama: " + roundDistance);
-    //if one of those distances is within firing range, call a turnAndShoot() function
+    //if one of those distances is within firing range, call the broadside() function
     if (shootsFromSides){
       if (straightDistance <= 250){
-        turnAndShoot(gunboat, targetAngle);
+        broadside(gunboat, targetAngle);
       } else if (roundDistance <= 250){
-        turnAndShoot(gunboat, targetAngle);
+        broadside(gunboat, targetAngle);
       }
     }
     //if one of those distances is less than one third the other, go that way
@@ -1970,7 +1986,7 @@ function playerHitIsland(ship, island){
   angle where they might get hit, and fire the weapons
   */
 
-  function turnAndShoot(enemy, targetAngle){
+  function broadside(enemy, targetAngle){
     var weapon;
     var relFiringAngle = Math.abs(this.game.math.wrapAngle(enemy.angle - targetAngle));
     //console.log("relFiringAngle: "+ relFiringAngle);
@@ -2037,8 +2053,8 @@ function playerHitIsland(ship, island){
     }
   }
 
-
-
+  //TODO: add another ray that goes directly forwards from the enemy infinitely
+  //uses raycasting to avoid running into islands when chasing the player
   function avoidIslands(enemy, islands){
     //project a ray between the enemy and the player
     var ray = new Phaser.Line(enemy.x, enemy.y, player1.sprite.x, player1.sprite.y);
@@ -2160,7 +2176,7 @@ return closestIntersection;
       //repel nearby man o wars to form a proper flock
       var repulsion = repelShips(ship, manOwarArray, 70);
       ship.body.velocity.add(repulsion.x, repulsion.y);
-      turnAndShoot(ship, targetAngle);
+      broadside(ship, targetAngle);
       //if the player is in the firing cone, shoot
     } else { //ship is loose
       //if the player is close, attack, otherwise flock
@@ -2177,7 +2193,7 @@ return closestIntersection;
             ship.x, ship.y,
             leadX, leadY
           );
-        turnAndShoot(ship, targetAngle);
+        broadside(ship, targetAngle);
       } else {
         var centroid = Phaser.Point.centroid(manOwarArray);
 
@@ -2267,6 +2283,7 @@ return closestIntersection;
   }
 }
 
+  //when it's time, the dhow turns to the player and shoots for a shor time
   function dhowAttack(ship, wind){
     //console.log("I am not afraid!");
     var targetAngle = this.game.math.angleBetween(
@@ -2281,28 +2298,30 @@ return closestIntersection;
     //if shots land, reset the courage value so the dhow will run away
   }
 
-  function tentacleAI(tentacle){
-    //console.log("The tentacle has a mind");
-    if (!tentacle.grabbedPlayer){
-      var straightDistance = game.physics.arcade.distanceBetween(player1.sprite, tentacle);//find the direct distance to the player
+  //AI for melee enemies that just chase the player
+  function chaseAI(chaser){
+    //console.log("The tetnacle has a mind");
+    if (!chaser.grabbedPlayer){
+      var straightDistance = game.physics.arcade.distanceBetween(player1.sprite, chaser);//find the direct distance to the player
       //find the round the world distance to the player
-      var roundDistance = getDaGamaDistance(tentacle);
+      var roundDistance = getDaGamaDistance(chaser);
       //find the angle if the ship were to go directly
       var targetAngle = this.game.math.angleBetween(
-        tentacle.x, tentacle.y,
+        chaser.x, chaser.y,
         player1.sprite.x, player1.sprite.y
       );
       if (straightDistance <= roundDistance){
-        navigate(tentacle, targetAngle);
+        navigate(chaser, targetAngle);
       } else {
-        navigate (tentacle, 0 - targetAngle);
+        navigate (chaser, 0 - targetAngle);
       }
-    } else { //the tentacle has grabbed the player
-      tentacle.x = player1.x;
-      tentacle.y = player1.y;
+    } else { //the chaser has grabbed the player
+      chaser.x = player1.x;
+      chaser.y = player1.y;
     }
   }
 
+  //makes tentacles repel each other so they don't clump together
   function repelTentacles(tentacle, length, repulsionDistance){
     // keep tentacles away from closed tentacles
     var repulsion = new Phaser.Point(0, 0);
@@ -2316,6 +2335,7 @@ return closestIntersection;
     return repulsion;
   }
 
+  //makes piranhas repel each other so they don't clump together
   function repelpiranhas(piranha, length, repulsionDistace){
     var repulsion = new Phaser.Point(0, 0);
     for (var i=0; i < length; i++) {
@@ -2328,6 +2348,7 @@ return closestIntersection;
     return repulsion;
   }
 
+  //makes flocking ships repel each other so they don't clump together
   function repelShips(ship, array, repulsionDistance){
     var repulsion = new Phaser.Point(0, 0);
     for (var i=0; i < array.length; i++) {
@@ -2341,10 +2362,11 @@ return closestIntersection;
   }
 
   function sharkAI(shark, islands){
-    tentacleAI(shark);
+    chaseAI(shark);
     avoidIslands(shark, islands);
   }
 
+  //the ghost ship mirrors whatever the player does
   function ghostShipAI(ghostShip){
     //console.log("You're being haunted");
       if (ghostShip.x > (this.width - player1.sprite.x)){
@@ -2381,6 +2403,7 @@ return closestIntersection;
       }
     }
 
+    //finds the frame for the junk ship, which has a unique spritesheet
     function junkFrame(angle, wind){
       var retVal;
       switch(wind){
@@ -2423,7 +2446,7 @@ return closestIntersection;
       }
         junk.weapon.fire();
         junk.weapon.fireAngle += 15;
-          avoidIslands(junk, islands);
+        avoidIslands(junk, islands);//shouldn't work all the time because of how the function works
     }
 
     function moabAI(moab){
@@ -2531,40 +2554,41 @@ return closestIntersection;
       }
     }
 
-    function whaleAI(whale){
-      console.log("Call me Ishmael " + whale.directions[whale.currentDirection] + " " + whale.directionTime);
-      if (whale.directionTime <= 0){
-        whale.directionTime = 60;
-        if (whale.currentDirection > whale.directions.length){
-          whale.currentDirection = 0;
+    //lets bosses that move in fixed NSWE patterns execute the patterns in their directions array
+    function patternAI(enemy){
+      console.log("Call me Ishmael " + enemy.directions[enemy.currentDirection] + " " + enemy.directionTime);
+      if (enemy.directionTime <= 0){
+        enemy.directionTime = 60;
+        if (enemy.currentDirection > enemy.directions.length){
+          enemy.currentDirection = 0;
         } else {
-          whale.currentDirection++;
+          enemy.currentDirection++;
         }
       } else {
-        whale.directionTime--;
+        enemy.directionTime--;
         var targetAngle;
-        if (whale.directions[whale.currentDirection] === 'N'){
+        if (enemy.directions[enemy.currentDirection] === 'N'){
           targetAngle = this.game.math.angleBetween(
-              whale.x, whale.y,
-              whale.x, 0
+              enemy.x, enemy.y,
+              enemy.x, 0
           );
-        } else if (whale.directions[whale.currentDirection] === 'S'){
+        } else if (enemy.directions[enemy.currentDirection] === 'S'){
           targetAngle = this.game.math.angleBetween(
-              whale.x, whale.y,
-              whale.x, this.height
+              enemy.x, enemy.y,
+              enemy.x, this.height
           );
-        } else if (whale.directions[whale.currentDirection] === 'W'){
+        } else if (enemy.directions[enemy.currentDirection] === 'W'){
           targetAngle = this.game.math.angleBetween(
-              whale.x, whale.y,
-              0, whale.y
+              enemy.x, enemy.y,
+              0, enemy.y
           );
-        } else if (whale.directions[whale.currentDirection] === 'E'){
+        } else if (enemy.directions[enemy.currentDirection] === 'E'){
           targetAngle = this.game.math.angleBetween(
-              whale.x, whale.y,
-              this.width, whale.y
+              enemy.x, enemy.y,
+              this.width, enemy.y
           );
         }
-        navigate(whale, targetAngle);
+        navigate(enemy, targetAngle);
       }
     }
 
@@ -2577,7 +2601,7 @@ return closestIntersection;
         //console.log("Time to attack");
         gunBoatAI(galleon, wind, false);
       }
-      //a modified version of the turnAndShoot() function based on the galleon shooting backwards
+      //a modified version of the broadside() function based on the galleon shooting backwards
       var leadX = player1.sprite.x + (player1.sprite.body.velocity.x * 3);
       var leadY = player1.sprite.y + (player1.sprite.body.velocity.y * 3);
       var targetAngle = this.game.math.angleBetween(
@@ -2592,6 +2616,7 @@ return closestIntersection;
         }
     }
 
+    //the weapons fire continuously, rotating in the opposite direction as the ship is moving
     function clipperFiringPattern(clipper){
       var weapon1 = clipper.weapons[0];
       var weapon2 = clipper.weapons[1];
@@ -2608,6 +2633,7 @@ return closestIntersection;
       }
     }
 
+    //alternates firing weapons 1 & 3 and 2 & 4, fires in all 4 directions at the end
     function longBoatFiringPattern(longboat){
       if (longboat.patternTime <= 0){
         longboat.patternTime = 250;
@@ -2630,7 +2656,6 @@ return closestIntersection;
 
 
   //calls the appropriate functions for each boss depending on what string is passed in
-  //TODO: add otehr bosses
   function bossWave(type){
     console.log(type);
     var boss;
@@ -2689,6 +2714,7 @@ return closestIntersection;
     //TODO: add tentacles
   }
 
+  //moves the kraken to a new place after it has been shot
   function moveKraken(kraken){
     //console.log("We've moved to " + kraken.x + ", " + kraken.y);
     //var placeArray = findGoodPlace(Math.Random() * this.width, Math.random() * this.height, this.islands);
@@ -2698,6 +2724,7 @@ return closestIntersection;
     generateTentacles(kraken.x, kraken.y);
   }
 
+  //generates the kraken's tentacles, which are essentially its weapon
   function generateTentacles(x, y){
     for (var i = 0; i < 8; i++){
       var tentacle = this.game.add.sprite(x, y, 'tentacle');
@@ -2717,6 +2744,7 @@ return closestIntersection;
     }
   }
 
+  //sets the initial angle of each tentacle
   function setTentacleAngle(i){
     if (i === 0){
       return -90;
@@ -2731,6 +2759,7 @@ return closestIntersection;
     }
   }
 
+  //finds proper x speed based on the tentacle's angle
   function findTentacleXSpeed(i, maxSpeed){
     if (i === 0 || i === 4){
       return 0;
@@ -2745,6 +2774,7 @@ return closestIntersection;
     }
   }
 
+  //finds the proper y speed based on the tentacle's angle
   function findTentacleYSpeed(i, maxSpeed){
     if (i === 0){
       return maxSpeed;
@@ -2759,6 +2789,7 @@ return closestIntersection;
     }
   }
 
+  //destroys every tentacle after the kraken has moved or died
   function killAllTentacles(){
     //console.log("Kill all the tentacles");
     for (var i = 0; i < storage1.getTentacleGroup().children.length; i++){
@@ -2767,6 +2798,7 @@ return closestIntersection;
     }
   }
 
+  //initializes the ghost ship boss
   function ghostShip(){
     var x, y;
     if (player1.sprite.y < this.height/2){
@@ -2784,6 +2816,7 @@ return closestIntersection;
     return ship;
   }
 
+  //initializes the megaladon boss
   function megaladon(){
     //console.log("We're going to need a bigger boat");
     var x, y, angle;
@@ -2809,6 +2842,7 @@ return closestIntersection;
     return shark;
   }
 
+  //initializes the junk ship boss
   function junkShip(){
     var x, y, angle, xSpeed, ySpeed;
     var spawnLocation = Math.random();
@@ -2861,6 +2895,7 @@ return closestIntersection;
     return junk;
   }
 
+  //initializes the MOAB boss
   function motherOfAllBoats(wind){
     var x, y, angle, xSpeed, ySpeed, point1x, point1y, point2x, point2y;
     //find an open area on the upwind edge
@@ -2957,6 +2992,8 @@ return closestIntersection;
     return weapons;
   }
 
+  //sets the gangle for every one of the MOAB's weapons and makes sure arcade physics are
+  //working properly on them
   function trackMoabWeapons(moab, islands){
     var LWeapon, RWeapon;
     var LWeapons = moab.weapons[0];
@@ -2973,6 +3010,7 @@ return closestIntersection;
     }
   }
 
+  //initializes Moby Dick boss
   function greatWhiteWhale(){
     var x, y, angle;
     if (player1.sprite.y < this.height/2){
@@ -3022,6 +3060,7 @@ return closestIntersection;
     return whale;
   }
 
+  //initializes the clipper ship boss
   function clipperShip(){
     var x, y, angle;
     if (player1.sprite.y < this.height/2){
@@ -3071,6 +3110,7 @@ return closestIntersection;
     return clipper;
   }
 
+  //initializes several piranhas as a "boss"
   function generatePiranhas(numPiranhas){
     var piranha, x, y, angle;
     for (var i = 0; i < numPiranhas; i++){
@@ -3100,10 +3140,11 @@ return closestIntersection;
     }
   }
 
-  //the galleon always comes from upwind
+  //initializes the galleon boss
   function galleon(wind){
     //console.log("Is that Ponce de Leon?");
     var galleon, x, y, angle, xSpeed, ySpeed;
+    //the galleon always comes from upwind
     switch(wind){
       case 'N':
         x = Math.random() * this.width;
@@ -3158,6 +3199,7 @@ return closestIntersection;
     return galleon;
   }
 
+  //initializes the longboat boss
   function vikingShip(){
     var x, y, angle;
     if (player1.sprite.x < this.width/2){
@@ -3239,7 +3281,7 @@ return closestIntersection;
     return longboat;
   }
 
-
+  //initializes the trireme boss
   function greekShip(wind){
     var x, y, angle;
     switch(wind){
@@ -3338,10 +3380,13 @@ return closestIntersection;
     return trireme;
   }
 
+  //checks to see if the current wave is a boss wave
   function isBossWave(){
     return (storage1.getWave() % 5 === 0  || storage1.getWave() >= 25);
   }
 
+  //checks to see if the ghost ship is alive so the game knows whether pressing
+  //the spacebar makes just the player shoot or the player and the ghost ship
   function isGhostWave(){
     var children = storage1.getEnemies().children;
     var enemy;
@@ -3354,6 +3399,7 @@ return closestIntersection;
     return false;
   }
 
+  //gets text for the gameover screen for each boss the player has killed
   function killedBossText(key){
     switch(key){
       case 'kraken':
@@ -3389,7 +3435,7 @@ return closestIntersection;
     }
   }
 
-
+  //ends the game and shows the player what they accomplished in this game
   function gameOverSequence(score, wave, kills, bossesKilled) {
       player1.sprite.kill();
       game.paused = true;
@@ -3446,14 +3492,6 @@ GameState.prototype.render =function() {
 }
 
 /*TODO: Long-term goals
--add enemiy ships
--make enemy ships avoid islands, move towards the player, and turn to shoot when in range
--implement power-ups: temporary invincibility(red sea), health, ability to slow down,
- and ability to launch a boarding pirate that one-hits enemy ships
- -implement score: killed enemies drop loot, and loot  washes in from the direction of the wind,
- and must be picked up to score points.
- -implement waves of increasing difficulty
- -boss battles? multiple kinds of enemies?
  -high score?
 */
 
