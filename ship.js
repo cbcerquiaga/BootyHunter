@@ -11,7 +11,7 @@ var ship = function (_sprite) {
     this.isInvincible = false;
     this.invincibilityTime = 0;
     this.restoreOldHealthTime = 0;
-    this.numPirates = 1;
+    this.numPirates = 3;
     this.sprite = _sprite;
     this.sprite.anchor.setTo(0.5, 0.5);
     this.sprite.angle = -90;

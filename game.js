@@ -30,7 +30,7 @@ var enemyCrossWindSpeed = {'gunboat': 160, 'manowar': 170, 'normal': 180, 'dhow'
 var enemyUpWindSpeed = {'gunboat': 135, 'manowar': 100, 'normal': 140, 'dhow': 200, 'galleon': 130, 'clipper': 220};
 var enemyHealth = {'gunboat': 1, 'manowar': 70, 'normal': 40, 'dhow': 21};
 var enemyDifficulty = {'gunboat': 1, 'manowar': 10, 'normal': 5, 'dhow': 10};
-var enemyTurnRate = {'gunboat': 120, 'manowar': 115, 'normal': 120, 'dhow': 140, 'galleon': 45};
+var enemyTurnRate = {'gunboat': 20, 'manowar': 15, 'normal': 20, 'dhow': 40, 'galleon': 45};
 var enemyTreasureDrop = {'gunboat': 1, 'manowar': 4, 'normal': 2, 'dhow': 4}
 var waveDifficulty;
 
@@ -129,7 +129,7 @@ GameState.prototype.create = function() {
 
     //instantiates boss data
     var allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab', 'mobyDick', 'piranha', 'galleon', 'clipper', 'longboat', 'trireme'];
-    //var allBosses = ['trireme'];
+    //var allBosses = ['longboat'];
 
     var treasureGroup = this.game.add.group();
     var enemies = this.game.add.group();
@@ -201,10 +201,14 @@ GameState.prototype.create = function() {
     this.weapon2.trackSprite(player1.sprite, 0, 0, false);//TODO: shift over to actual position of gun
     //boarding pirate, can only be used when hasPirate === true
     //TODO: make the andle point towards the nearest enemy
-    this.boarder = this.game.add.weapon(1, 'pirate');
+    this.boarder = this.game.add.weapon(6, 'pirate');
     this.boarder.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
     this.boarder.bulletLifespan = 650;
     this.boarder.bulletSpeed = 200;
+    this.boarder.fireRate = 300;
+    this.boarder.onFire.add(function(){
+    player1.removePirate();
+    });
     this.boarder.bulletInheritSpriteSpeed = true;
     this.boarder.bulletCollideWorldBounds = false;
     this.boarder.bulletWorldWrap = true;
@@ -490,6 +494,8 @@ GameState.prototype.update = function () {
         } else if (enemy.key === 'mobyDick'){
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[1].bullets, playerWasShot);
+          game.physics.arcade.overlap(this.islands, enemy.weapons[0].bullets, islandWasShot);
+          game.physics.arcade.overlap(this.islands, enemy.weapons[1].bullets, islandWasShot);
           enemy.weapons[0].fireAngle = enemy.angle - 90;
           enemy.weapons[1].fireAngle = enemy.angle + 90;
           avoidIslands(enemy,this.islands);
@@ -516,6 +522,8 @@ GameState.prototype.update = function () {
         } else if (enemy.key === 'clipper'){
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[1].bullets, playerWasShot);
+          game.physics.arcade.overlap(this.islands, enemy.weapons[0].bullets, islandWasShot);
+          game.physics.arcade.overlap(this.islands, enemy.weapons[1].bullets, islandWasShot);
           enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
           enemy.maxSpeed = enemyMaxSpeed(enemy.frame, enemy.maxSpeed, 'clipper');
           var speedArray = enemyActualSpeed(enemy.maxSpeed, enemy.body.velocity.x, enemy.body.velocity.y);
@@ -529,6 +537,10 @@ GameState.prototype.update = function () {
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[1].bullets, playerWasShot);
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[2].bullets, playerWasShot);
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[3].bullets, playerWasShot);
+          game.physics.arcade.overlap(this.islands, enemy.weapons[0].bullets, islandWasShot);
+          game.physics.arcade.overlap(this.islands, enemy.weapons[1].bullets, islandWasShot);
+          game.physics.arcade.overlap(this.islands, enemy.weapons[2].bullets, islandWasShot);
+          game.physics.arcade.overlap(this.islands, enemy.weapons[3].bullets, islandWasShot);
           enemy.animations.play('row', 16, true);
           avoidIslands(enemy, this.islands);
           patternAI(enemy);
@@ -744,8 +756,7 @@ GameState.prototype.update = function () {
           if (player1.getPirates() > 0){
             //console.log("prepare the boarding party!");
             this.boarder.fire();
-            player1.removePirate();
-          }
+         }
 
 	} else {
         // Otherwise, stop thrusting
@@ -962,9 +973,9 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
   }
 
   //kills an enemy and collects their treasure when they are hit by a boarding pirate
-  function enemyBoarded(enemy, boarder){
+  function enemyBoarded(enemy, pirate){
     var retVal = 0;
-    boarder.kill();
+    pirate.kill();
     if (enemy.type === 'kraken'){retVal = 1; killAllTentacles();}
     enemy.kill();
     player1.addKill();
@@ -2936,9 +2947,9 @@ return closestIntersection;
     console.log("Holy mother of all boats! " + moab.body);
     moab.body.velocity.x = xSpeed;
     moab.body.velocity.y = ySpeed;
-    moab.maxSpeed = 250; //TODO: make the speed change depending on the direction of the wind
+    moab.maxSpeed = 180; //TODO: make the speed change depending on the direction of the wind
     moab.TURN_RATE = 16;
-    moab.health = enemyHealth['manowar'] * 3;
+    moab.health = enemyHealth['manowar'] * 2;
     moab.weapons = makeMoabWeapons(moab);
     moab.patternTime = 600;
     moab.pattern = 0;
@@ -2964,7 +2975,7 @@ return closestIntersection;
       LWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
       LWeapon.bulletLifespan = 2250;
       LWeapon.bulletSpeed = 200;
-      LWeapon.fireRate = 30;
+      LWeapon.fireRate = 35;
       LWeapon.bulletAngleVariance = 2;
       LWeapon.bulletCollideWorldBounds = false;
       LWeapon.bulletWorldWrap = true;
@@ -2977,7 +2988,7 @@ return closestIntersection;
       RWeapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
       RWeapon.bulletLifespan = 2250;
       RWeapon.bulletSpeed = 200;
-      RWeapon.fireRate = 30;
+      RWeapon.fireRate = 35;
       RWeapon.bulletAngleVariance = 2;
       RWeapon.bulletCollideWorldBounds = false;
       RWeapon.bulletWorldWrap = true;
@@ -3026,9 +3037,9 @@ return closestIntersection;
     this.game.physics.enable(whale, Phaser.Physics.ARCADE);
     whale.anchor.setTo(0.5, 0.5);
     //TODO: balance health, speed, turn rate
-    whale.health = enemyHealth['manowar'] * 1.5;
+    whale.health = enemyHealth['manowar'] * 1.2;
     whale.TURN_RATE = 10;
-    whale.maxSpeed = 400;
+    whale.maxSpeed = 250;
     whale.directions = ['N', 'S', 'N', 'W', 'E', 'W', 'S', 'N', 'S', 'E', 'W', 'E'];
     whale.currentDirection = 0;
     whale.directionTime = 60;
@@ -3038,8 +3049,8 @@ return closestIntersection;
     var weapon = this.game.add.weapon(100, 'waterball');
     weapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
     weapon.bulletLifespan = 2250;
-    weapon.bulletSpeed = 200;
-    weapon.fireRate = 30;
+    weapon.bulletSpeed = 180;
+    weapon.fireRate = 65;
     weapon.bulletAngleVariance = 2;
     weapon.bulletCollideWorldBounds = false;
     weapon.bulletWorldWrap = true;
@@ -3048,8 +3059,8 @@ return closestIntersection;
     var weapon2 = this.game.add.weapon(100, 'waterball');
     weapon2.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
     weapon2.bulletLifespan = 2250;
-    weapon2.bulletSpeed = 200;
-    weapon2.fireRate = 30;
+    weapon2.bulletSpeed = 180;
+    weapon2.fireRate = 65;
     weapon2.bulletAngleVariance = 2;
     weapon2.bulletCollideWorldBounds = false;
     weapon2.bulletWorldWrap = true;
@@ -3329,8 +3340,8 @@ return closestIntersection;
     var weapons = new Array();
     var weapon = this.game.add.weapon(100, 'cannonball');
     weapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-    weapon.bulletLifespan = 2250;
-    weapon.bulletSpeed = 200;
+    weapon.bulletLifespan = 1250;
+    weapon.bulletSpeed = 100;
     weapon.fireRate = 60;
     weapon.bulletAngleVariance = 2;
     weapon.bulletCollideWorldBounds = false;
@@ -3341,38 +3352,38 @@ return closestIntersection;
     weapons.push(weapon);
     var weapon2 = this.game.add.weapon(100, 'cannonball');
     weapon2.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-    weapon2.bulletLifespan = 2250;
-    weapon2.bulletSpeed = 200;
-    weapon2.fireRate = -45;
+    weapon2.bulletLifespan = 1250;
+    weapon2.bulletSpeed = 100;
+    weapon2.fireRate = 60;
     weapon2.bulletAngleVariance = 2;
     weapon2.bulletCollideWorldBounds = false;
     weapon2.bulletWorldWrap = true;
     weapon2.trackSprite(trireme, 0, 0, false);
-    weapon2.fireAngle = 45;
+    weapon2.fireAngle = -45;
     weapon2.bulletInheritSpriteSpeed = true;
     weapons.push(weapon2);
     var weapon3 = this.game.add.weapon(100, 'cannonball');
     weapon3.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-    weapon3.bulletLifespan = 2250;
-    weapon3.bulletSpeed = 200;
-    weapon3.fireRate = 135;
+    weapon3.bulletLifespan = 1250;
+    weapon3.bulletSpeed = 100;
+    weapon3.fireRate = 60;
     weapon3.bulletAngleVariance = 2;
     weapon3.bulletCollideWorldBounds = false;
     weapon3.bulletWorldWrap = true;
     weapon3.trackSprite(trireme, 0, 0, false);
-    weapon3.fireAngle = 0;
+    weapon3.fireAngle = 135;
     weapon3.bulletInheritSpriteSpeed = true;
     weapons.push(weapon3);
     var weapon4 = this.game.add.weapon(100, 'cannonball');
     weapon4.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-    weapon4.bulletLifespan = 2250;
-    weapon4.bulletSpeed = 200;
+    weapon4.bulletLifespan = 1250;
+    weapon4.bulletSpeed = 100;
     weapon4.fireRate = 60;
     weapon4.bulletAngleVariance = 2;
     weapon4.bulletCollideWorldBounds = false;
     weapon4.bulletWorldWrap = true;
     weapon4.trackSprite(trireme, 0, 0, false);
-    weapon4.fireAngle = 90;
+    weapon4.fireAngle = 45;
     weapon4.bulletInheritSpriteSpeed = true;
     weapons.push(weapon4);
     trireme.weapons = weapons;
