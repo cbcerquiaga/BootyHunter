@@ -74,7 +74,7 @@ GameState.prototype.preload = function() {
     this.game.load.image('albatross', 'assets/albatross.png');
     this.game.load.image('parrot', 'assets/parrot.png');
     this.game.load.image('pirate', 'assets/boardingPirate.png');
-    this.game.load.image('gameOver', 'assets/gameOver.png');
+    this.game.load.image('gameOver', 'assets/gameOver2.png');
     game.load.text('pirateFacts', 'PirateFacts.txt');
     this.game.load.spritesheet('sandParticles', 'assets/islandParticles.png', 1, 1);
     this.game.load.spritesheet('explosionParticles', 'assets/explosionParticles.png', 1,1);
@@ -3454,18 +3454,18 @@ return closestIntersection;
       //score, wave, kills and bossesKilled
       var gameOverScreen = this.game.add.sprite(this.width/2, this.height/2, 'gameOver');
       gameOverScreen.anchor.setTo(0.5, 0.5);
-      var gameOverText =  game.add.text(this.width/2 - 90, this.height/4 - 20, 'GAME OVER', { fontSize: '32px', fill: '#000' });
-      var scoreText = game.add.text(this.width/2 - 300, this.height/4 + 20, "You collected " + score + " doubloons worth of treasure", { fontSize: '16px', fill: '#000' });
-      var waveText = game.add.text(this.width/2 - 300, this.height/4 + 40, "You made it to wave " + wave, { fontSize: '16px', fill: '#000' });
+      //var gameOverText =  game.add.text(this.width/2 - 90, this.height/4 - 20, 'GAME OVER', { fontSize: '32px', fill: '#000' });
+      var scoreText = game.add.text(this.width/2 - 260, this.height/4 + 50, "You collected " + score + " doubloons worth of treasure", { fontSize: '16px', fill: '#000' });
+      var waveText = game.add.text(this.width/2 - 260, this.height/4 + 80, "You made it to wave " + wave, { fontSize: '16px', fill: '#000' });
       if (player1.getTotalKills() === 1){
-        var killsText = game.add.text(this.width/2 - 300, this.height/4 + 60, "You killed a single enemy", { fontSize: '16px', fill: '#000' });
+        var killsText = game.add.text(this.width/2 - 260, this.height/4 + 110, "You killed a single enemy", { fontSize: '16px', fill: '#000' });
       } else {
-        var killsText = game.add.text(this.width/2 - 300, this.height/4 + 60, "You killed a total of " + player1.getTotalKills() + " enemies", { fontSize: '16px', fill: '#000' });
+        var killsText = game.add.text(this.width/2 - 260, this.height/4 + 110, "You killed a total of " + player1.getTotalKills() + " enemies", { fontSize: '16px', fill: '#000' });
       }
       var text = game.cache.getText('pirateFacts');
       var factArray = text.split('\n');
       var pirateFact =  factArray[Math.floor(Math.random() * factArray.length)];
-      var factText = game.add.text(this.width/2 - 300, this.height/4 + 100, pirateFact, { fontSize: '16px', fill: '#000' });
+      var factText = game.add.text(this.width/2 - 260, this.height/4 + 170, pirateFact, { fontSize: '16px', fill: '#000' });
       var killText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#000' });
       var bossesDefeated;
       var printedKills = new Array();
@@ -3494,7 +3494,13 @@ return closestIntersection;
       }
     }
       }
-      var bossText = game.add.text(this.width/2 - 300, this.height/4 + 80, bossesDefeated, { fontSize: '16px', fill: '#000' });
+      var bossText = game.add.text(this.width/2 - 260, this.height/4 + 140, bossesDefeated, { fontSize: '16px', fill: '#000' });
+      game.input.onDown.add(newGame, self);
+  }
+
+  //refreshes the page
+  function newGame(event){
+    document.location.reload();
   }
 
 
