@@ -31,7 +31,7 @@ var enemyUpWindSpeed = {'gunboat': 135, 'manowar': 100, 'normal': 140, 'dhow': 2
 var enemyHealth = {'gunboat': 1, 'manowar': 70, 'normal': 40, 'dhow': 21};
 var enemyDifficulty = {'gunboat': 1, 'manowar': 10, 'normal': 5, 'dhow': 10};
 var enemyTurnRate = {'gunboat': 20, 'manowar': 15, 'normal': 20, 'dhow': 40, 'galleon': 45};
-var enemyTreasureDrop = {'gunboat': 1, 'manowar': 4, 'normal': 2, 'dhow': 4}
+var enemyTreasureDrop = {'gunboat': 1, 'manowar': 4, 'normal': 2, 'dhow': 4, 'piranha': 2};
 var waveDifficulty;
 
 //-----------------------------------------------------------------------------
@@ -67,6 +67,7 @@ GameState.prototype.preload = function() {
     this.game.load.spritesheet('clipper', 'assets/clipper.png', 56, 32);
     this.game.load.image('bomb', 'assets/galleonBomb.png');
     this.game.load.spritesheet('piranha', 'assets/piranha.png', 23, 10);
+    this.game.load.spritesheet('nessie', 'assets/lochNessMonster.png', 37, 20);
     this.game.load.image('waterball', 'assets/waterBall.png');
     this.game.load.image('rocket', 'assets/rocket.png');
     this.game.load.image('seagull', 'assets/seagull.png');
@@ -129,7 +130,7 @@ GameState.prototype.create = function() {
 
     //instantiates boss data
     var allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab', 'mobyDick', 'piranha', 'galleon', 'clipper', 'longboat', 'trireme'];
-    //var allBosses = ['longboat'];
+    //var allBosses = ['kraken'];
 
     var treasureGroup = this.game.add.group();
     var enemies = this.game.add.group();
@@ -200,7 +201,7 @@ GameState.prototype.create = function() {
     this.weapon2.bulletWorldWrap = true;
     this.weapon2.trackSprite(player1.sprite, 0, 0, false);//TODO: shift over to actual position of gun
     //boarding pirate, can only be used when hasPirate === true
-    //TODO: make the andle point towards the nearest enemy
+    //TODO: make the angle point towards the nearest enemy
     this.boarder = this.game.add.weapon(6, 'pirate');
     this.boarder.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
     this.boarder.bulletLifespan = 650;
@@ -322,6 +323,32 @@ GameState.prototype.update = function () {
     if (storage1.getWave() === 1){
       console.log("first wave. " + storage1.getWave());
       generateEnemies(storage1.getWave(), this.wind, storage1.getEnemies(), true);
+    } else if (storage1.getWave() === 42){ //maybe time for the loch ness monster?
+      var nessChance = Math.random();
+      if (nessChance < 0.42){ //I wonder what the question is...
+        console.log("Were we in Scotland this whole time?");
+        lochNessMonster();
+      } else {
+        //TODO: remove redundant code
+        console.log("boss wave. " + storage1.getWave());
+        if (storage1.getAllBosses().length - 1 <= storage1.getKilledBosses().length){
+          storage1.resetKilledBosses();
+        }
+        var allBosses = storage1.getAllBosses();
+        var killedBosses = storage1.getKilledBosses();
+
+        //randomly chooses one of the available bosses
+        while(1){
+          var guess = Math.floor(Math.random() * storage1.getAllBosses().length);
+          var bossType = allBosses[guess];
+          if (allBosses[guess], killedBosses.indexOf(bossType) === -1){
+            var boss = bossWave(bossType);
+            storage1.addEnemy(boss);
+            //console.log("Number of living children after adding boss: " + storage1.getEnemies().countLiving());
+            break;
+          }
+        }
+      }
     } else if (isBossWave()){ //boss wave
       console.log("boss wave. " + storage1.getWave());
       if (storage1.getAllBosses().length - 1 <= storage1.getKilledBosses().length){
@@ -499,7 +526,7 @@ GameState.prototype.update = function () {
           enemy.weapons[0].fireAngle = enemy.angle - 90;
           enemy.weapons[1].fireAngle = enemy.angle + 90;
           avoidIslands(enemy,this.islands);
-          patternAI(enemy);
+          patternAI(enemy, 60);
           whaleFiringPattern(enemy);
           enemy.animations.play('swim', 4, true);
         } else if (enemy.key === 'piranha'){
@@ -530,7 +557,7 @@ GameState.prototype.update = function () {
           enemy.body.velocity.x = speedArray[0];
           enemy.body.velocity.y = speedArray[1];
           avoidIslands(enemy, this.islands);
-          patternAI(enemy)
+          patternAI(enemy, 50)
           clipperFiringPattern(enemy);
         } else if (enemy.key === 'longboat' || enemy.key === 'trireme'){
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
@@ -543,8 +570,11 @@ GameState.prototype.update = function () {
           game.physics.arcade.overlap(this.islands, enemy.weapons[3].bullets, islandWasShot);
           enemy.animations.play('row', 16, true);
           avoidIslands(enemy, this.islands);
-          patternAI(enemy);
+          patternAI(enemy, 60);
           longBoatFiringPattern(enemy);
+        } else  if (enemy.key === 'nessie'){
+          patternAI(enemy, 45);
+          enemy.animations.play('swim', 6, true);
         }
       }
     }
@@ -959,7 +989,11 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
     } else {
 
       if (enemy.health <= 0){
-      spawnTreasure(enemy.x, enemy.y, 4);//spawn treasure
+        if (enemy.key === 'gunboat' || enemy.key === 'normal' || enemy.key === 'dhow' || enemy.key === 'manowar' || enemy.key === 'piranha'){
+          spawnTreasure(enemy.x, enemy.y, enemyTreasureDrop[enemy.key]);
+        } else {
+          spawnTreasure(enemy.x, enemy.y, 10);//spawn treasure
+        }
       enemy.kill();
       player1.addKill();
       particleExplosion(enemy.x, enemy.y, 10, 'bigExplosionParticles', 8, 70);
@@ -974,9 +1008,10 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
 
   //kills an enemy and collects their treasure when they are hit by a boarding pirate
   function enemyBoarded(enemy, pirate){
+    killAllTentacles();
     var retVal = 0;
     pirate.kill();
-    if (enemy.type === 'kraken'){retVal = 1; killAllTentacles();}
+    //if (enemy.key === 'kraken'){retVal = 1; killAllTentacles();}
     enemy.kill();
     player1.addKill();
     var bootyLength = Math.random() * 6;
@@ -1012,6 +1047,7 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
 
   //when a tentacle grabs the player, it's supposed to
   function tentacleGrabbedPlayer(player, tentacle){
+    if (player1.getHealth !== "invincible"){
     if (player1.getIsInvincible() === false) { //We only damage the player if not invincible
       player1.damage();
       player1.resetKills();
@@ -1022,6 +1058,7 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
       tentacle.grabbedPlayer = true; //now in the update() function we need to check for tentacles with this value and make them latch onto the player sprite
       //TODO: add sound for when the player is hit
       //TODO: add "explosion" of wood and/or water
+    }
   }
   }
 
@@ -1306,7 +1343,7 @@ function playerHitIsland(ship, island){
 }
 
   function enemyHitIsland(enemy, island){
-    if (enemy.key === 'mobyDick' || enemy.key === 'clipper' || enemy.key === 'moab' || enemy.key === 'longboat'){//pattern bosses don't take damage from hitting islands
+    if (enemy.key === 'mobyDick' || enemy.key === 'clipper' || enemy.key === 'moab' || enemy.key === 'longboat' || enemy.key === 'nessie'){//pattern bosses don't take damage from hitting islands
       getOutOfThere(enemy, island);
     } else if (enemy.key !== 'ship'){//the ghost ship doesn't react to islands at all
       enemy.health -= 1;//previously 5
@@ -2566,10 +2603,10 @@ return closestIntersection;
     }
 
     //lets bosses that move in fixed NSWE patterns execute the patterns in their directions array
-    function patternAI(enemy){
-      console.log("Call me Ishmael " + enemy.directions[enemy.currentDirection] + " " + enemy.directionTime);
+    function patternAI(enemy, time){
+      //console.log("Call me Ishmael " + enemy.directions[enemy.currentDirection] + " " + enemy.directionTime);
       if (enemy.directionTime <= 0){
-        enemy.directionTime = 60;
+        enemy.directionTime = time;
         if (enemy.currentDirection > enemy.directions.length){
           enemy.currentDirection = 0;
         } else {
@@ -2705,6 +2742,55 @@ return closestIntersection;
         boss = releaseKraken();
     }
     return boss;
+  }
+
+  //initializes the loch ness monster easter egg "boss"
+  function lochNessMonster(){
+    var monster = this.game.add.sprite(Math.random() * this.width, 0, 'nessie');
+    this.game.physics.enable(monster, Phaser.Physics.ARCADE);
+    monster.enableBody = true;
+    monster.collideWorldBounds = false;
+    monster.anchor.setTo(0.5, 0.5);
+    monster.health = 100;
+    monster.maxSpeed = 150;
+    monster.TURN_RATE = 13;
+    monster.directionTime = 45;
+    monster.animations.add('swim');
+    var pattern = new Array();
+    //var pattern = ['', '', '', '', '', '', '', '', '', '', '', '', '', '', ''];
+    //generate random pattern of movement
+    var randVal;
+    for (var i = 0; i < 16; i++){
+      randVal = Math.random();
+      if (randVal < 0.25){
+        if (i === 0){
+          monster.angle = -90;
+        }
+        pattern[i] = 'N';
+        console.log('N');
+      } else if (randVal < 0.5){
+        if (i === 0){
+          monster.angle = 90;
+        }
+        pattern[i] = 'S';
+        console.log('S');
+      } else if (randVal < 0.75){
+        if (i === 0){
+          monster.angle = 180;
+        }
+        pattern[i] = 'W';
+        console.log('W');
+      } else {
+        if (i === 0){
+          monster.angle = 0;
+        }
+        pattern[i] = 'E';
+        console.log('E');
+      }
+    }
+    monster.directions = pattern;
+    monster.currentDirection = 0;
+    storage1.addEnemy(monster);
   }
 
   //initializes the kraken boss
@@ -3416,7 +3502,7 @@ return closestIntersection;
       case 'kraken':
         return "the kraken";
         break;
-      case 'ghost':
+      case 'ship':
         return "the ghost ship";
         break;
       case 'moab':
@@ -3482,17 +3568,17 @@ return closestIntersection;
 
           if (printedKills.indexOf(killedBosses[i]) === -1){
           if (i === 0){
-            bossesDefeated += "the " + killedBossText(killedBosses[i]);
+            bossesDefeated += " " + killedBossText(killedBosses[i]);
           } else if (i === killedBosses.length - 1){
-          bossesDefeated += "and the " + killedBossText(killedBosses[i]);
+          bossesDefeated += " and " + killedBossText(killedBosses[i]);
           } else {
-            bossesDefeated += "the " + killedBossText(killedBosses[i]) + ", ";
+            bossesDefeated += killedBossText(killedBosses[i]) + ", ";
           }
           printedKills.push(killedBosses[i]);
-          //TODO: implement this line
-          //if (bossesDefeated.length > something) bossesDefeated = "You defeated " + killedBosses.length + " bosses";
       }
     }
+    //TODO: implement this line
+    //if (bossesDefeated.length > something) bossesDefeated = "You defeated " + killedBosses.length + " bosses";
       }
       var bossText = game.add.text(this.width/2 - 260, this.height/4 + 140, bossesDefeated, { fontSize: '16px', fill: '#000' });
       game.input.onDown.add(newGame, self);
