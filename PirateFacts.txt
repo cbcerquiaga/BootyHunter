@@ -42,3 +42,36 @@ Your ship will slow down if you go into the wind, but there's no other way to sl
 After every third wave, the wind direction will randomly change.
 Once you reach wave 25, every wave is a boss wave.
 The voice we often think of as a "pirate accent" was invented for the 1950 Disney film Treasure Island.
+Some bosses move and attack in pre-designed patterns.
+Some say that if you make it to wave 42, you might see the Loch Ness Monster.
+The more enemies you kill without being hit, the farther your cannons fire.
+The color of the sea represents your health. Bluer is better, greyer is worse.
+The Kraken was a mythical octopus-like sea monster.
+Clippers were extremely fast ships that were mostly used in the late 1700s and early 1800s.
+The word "junk" used to describe Chinese junk ships comes from the Chinese word for ship, "chuán".
+Viking longboats were symmetrical so that vikings escaping from a raid didn't have to worry about turning their boat around.
+The ghost ship boss mirrors everything you do, including shooting when you shoot.
+If a boarding pirate lands on any enemy, that enemy is instantly defeated and its treasure automatically collected.
+The jolly roger flag at the top of the screen tells you how many boarding pirates you have left.
+Powerup birds appear randomly, so sometimes it's best to wait for one rather than kill that final enemy and go right to the next wave.
+Large sailing ships almost always have weights at the bottom known as ballast to keep the ship upright.
+Pirate ships often had a rat problem below deck, so ships would keep cats onboard to catch the rats.
+Old, experienced sailors are called sea dogs.
+On old ships, people didn't say "left" or "right" when referring to directions. Instead, they called them "larboard" and "starboard".
+People didn't start saying "port" for "left" onboard boats until the mid-1800s.
+Sailing ships need a fin called a keel at the bottom to keep them from always drifting downwind.
+What sailors thought to be mermaids were probably just manatees.
+Blackbeard's ship, the Queen Anne's Revenge, started out as a French slave transport called the Concorde until he stole it.
+Anne Bonny and Mary Read were captured along with the rest of Jack Rackham's crew, but escaped death sentences because they were pregnant.
+Once, Jack Rackham was surrounded by Spanish ships when he and his crew rowed over to a sloop the Spanish had captured. The next day, he sailed away in the sloop while the Spanish destroyed his old ship.
+The biggest ship Bartholomew Roberts used in his pirating career was a former French Man O' War with 40 cannons and 157 crew.
+Greek Triremes had three rows of oars, hence the name.
+BootyHunter has 11 different bosses. Can you defeat them all?
+Try running pursuing enemies into islands to kill them.
+After you've taken damage, you are invincible for a short time to keep you from being instantly killed.
+If you spawn inside of an island, you can sail out of it but not back into it.
+Whitecaps indicate where the wind is coming from.
+Feeling like doing some real life piracy? Don't. Just restart the game.
+If there was no wind, pirates used to lower a sail into the ocean as a sort of bath tub in order to bathe without being eaten by sharks.
+The big, heavy, Man O' War enemies will flock together into lines if there are more than one.
+The light, nimble Dhow enemies will attack and then run away.

@@ -63,13 +63,16 @@ GameState.prototype.preload = function() {
     this.game.load.spritesheet('mobyDick', 'assets/mobyDick.png', 51, 23);
     this.game.load.spritesheet('galleon', 'assets/galleon.png', 34, 21);
     this.game.load.spritesheet('trireme', 'assets/trireme.png', 39, 32);
+    game.load.image('bronzeSpear', 'assets/bronzeSpear.png');
     this.game.load.spritesheet('longboat', 'assets/vikingLongboat.png', 45, 31);
+    game.load.image('vikingSpear', 'assets/vikingSpear.png');
     this.game.load.spritesheet('clipper', 'assets/clipper.png', 56, 32);
     this.game.load.image('bomb', 'assets/galleonBomb.png');
     this.game.load.spritesheet('piranha', 'assets/piranha.png', 23, 10);
     this.game.load.spritesheet('nessie', 'assets/lochNessMonster.png', 37, 20);
     this.game.load.image('waterball', 'assets/waterBall.png');
     this.game.load.image('rocket', 'assets/rocket.png');
+    game.load.spritesheet('rocketSpray', 'assets/rocketSpray.png', 1, 1);
     this.game.load.image('seagull', 'assets/seagull.png');
     this.game.load.image('pelican', 'assets/pelican.png');
     this.game.load.image('albatross', 'assets/albatross.png');
@@ -78,8 +81,16 @@ GameState.prototype.preload = function() {
     this.game.load.image('gameOver', 'assets/gameOver2.png');
     game.load.text('pirateFacts', 'PirateFacts.txt');
     this.game.load.spritesheet('sandParticles', 'assets/islandParticles.png', 1, 1);
+    game.load.spritesheet('seaSpray', 'assets/seaSpray.png', 1, 1);
     this.game.load.spritesheet('explosionParticles', 'assets/explosionParticles.png', 1,1);
     this.game.load.spritesheet('bigExplosionParticles', 'assets/bigExplosionParticles.png', 4, 4);
+    game.load.spritesheet('blood', 'assets/blood.png', 1,1);
+    game.load.spritesheet('krakenExplosion', 'assets/krakenExplosion.png', 4, 4);
+    game.load.spritesheet('megaladonExplosion', 'assets/megaladonExplosion.png', 4, 4);
+    game.load.spritesheet('piranahExplosion', 'assets/piranhaExplosion.png', 2, 2);
+    game.load.spritesheet('seaSpray', 'assets/seaSpray.png', 1, 1);
+    game.load.spritesheet('lochNessExplosion', 'assets/lochNessExplosion.png', 4, 4);
+    game.load.spritesheet('mobyDickExplosion', 'assets/mobyDickExplosion.png', 4, 4);
     this.game.load.image('startScreen', 'assets/introScreen.png');
     this.game.load.image('jollyRoger', 'assets/jollyRoger.png');
     this.game.load.audio('your-sound', 'assets/your-sound.mp3');
@@ -129,8 +140,8 @@ GameState.prototype.create = function() {
 
 
     //instantiates boss data
-    var allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab', 'mobyDick', 'piranha', 'galleon', 'clipper', 'longboat', 'trireme'];
-    //var allBosses = ['kraken'];
+    //var allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab', 'mobyDick', 'piranha', 'galleon', 'clipper', 'longboat', 'trireme'];
+    var allBosses = ['junk'];
 
     var treasureGroup = this.game.add.group();
     var enemies = this.game.add.group();
@@ -274,6 +285,7 @@ GameState.prototype.update = function () {
   //collides whitecaps with the world
   game.physics.arcade.overlap(player1.sprite, this.whitecaps, whiteCapHitShip);
   game.physics.arcade.overlap(this.islands, this.whitecaps, whiteCapHitIsland);
+  game.physics.arcade.overlap(this.whitecaps, this.whitecaps, whiteCapHitShip);
   game.physics.arcade.overlap(storage1.getEnemies(), this.whitecaps, whiteCapHitShip);
   game.physics.arcade.overlap(player1.sprite, storage1.getTentacleGroup(), tentacleGrabbedPlayer);
 
@@ -508,7 +520,7 @@ GameState.prototype.update = function () {
           enemy.animations.play('swim', 12, true);
         } else if (enemy.key === 'junk'){
           //console.log("What a hunk of junk!");
-          game.physics.arcade.overlap(player1.sprite, enemy.weapon.bullets, playerWasShot);
+          game.physics.arcade.overlap(player1.sprite, enemy.weapon.bullets, playerWasRocketed);
           enemy.frame = junkFrame(enemy.angle, this.wind);
           junkAI(enemy, this.islands, this.wind);
           addWake(enemy, oldXSpeed, oldYSpeed);
@@ -951,7 +963,7 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
 
   //kills bullets when they hit islands
   function islandWasShot(island, bullet){
-    particleExplosion(bullet.x, bullet.y, 3, 'sandParticles', 8, 40);
+    particleExplosion(bullet.x, bullet.y, 3, 'sandParticles', 5, 40);
     bullet.kill();
     //TODO: add sound
     //play explosion sound
@@ -967,7 +979,12 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
   //damages an enemy when an enemy is shot
   function enemyWasShot(enemy, bullet){
     bullet.kill();
-    particleExplosion(enemy.x, enemy.y, 3, 'explosionParticles', 8, 40);
+    if (enemy.key === 'megaladon' || enemy.key === 'mobyDick' || enemy.key === 'piranha'
+    || enemy.key === 'nessie' || enemy.key === 'kraken'){
+      particleExplosion(enemy.x, enemy.y, 3, 'blood', 4, 40);
+    } else {
+      particleExplosion(enemy.x, enemy.y, 3, 'explosionParticles', 8, 40);
+    }
     enemy.health--;
     //console.log("bang! " + enemy.health);
     //TODO: add explosion
@@ -980,6 +997,7 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
         return 0;
       } else {
         //console.log("you killed the kraken!");
+        //krakenExplosion
         spawnTreasure(enemy.x, enemy.y, 10);
         enemy.kill();
         storage1.addKilledBoss(enemy.key);
@@ -996,12 +1014,22 @@ function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
         }
       enemy.kill();
       player1.addKill();
-      particleExplosion(enemy.x, enemy.y, 10, 'bigExplosionParticles', 8, 70);
+      if (enemy.key === 'mobyDick'){
+        particleExplosion(enemy.x, enemy.y, 10, 'mobyDickExplosion', 8, 70);
+      } else if (enemy.key === 'megaladon'){
+        particleExplosion(enemy.x, enemy.y, 10, 'megaladonExplosion', 8, 70);
+      } else if (enemy.key === 'piranha'){
+        particleExplosion(enemy.x, enemy.y, 10, 'piranhaExplosion', 8, 70);
+      } else if (enemy.key === 'nessie'){
+        particleExplosion(enemy.x, enemy.y, 25, 'lochNessExplosion', 7, 70);
+      } else {
+        particleExplosion(enemy.x, enemy.y, 10, 'bigExplosionParticles', 8, 70);
+      }
       if (storage1.getAllBosses().indexOf(enemy.key) >= 0){
         storage1.addKilledBoss(enemy.key);
         player1.saveKilledBoss(enemy.key);
       }
-      //play explosion and sound
+      //play sound
       }
     }
   }
@@ -1312,7 +1340,8 @@ function checkWind(facing, wind){
 function whiteCapHitIsland(island, whitecap){
   whitecap.kill();
     //TODO: make wave crashing sound?
-    //TODO: create explosion animation for whitecaps
+    particleExplosion(whitecap.x, whitecap.y, 5, 'seaSpray', 4, 80);
+    particleExplosion(island.x, island.y, 2, 'sandParticles', 5, 80);
     //var explosion = explosions.getFirstExists(false);
     //explosion.play('whitecapSound', 10, false, true);
     //explosion_sound.play("",0,.5,false,true);
@@ -1321,7 +1350,7 @@ function whiteCapHitIsland(island, whitecap){
 function whiteCapHitShip(ship, whitecap){
   whitecap.kill();
     //TODO: make wave crashing sound?
-    //TODO: create explosion animation for whitecaps
+    particleExplosion(whitecap.x, whitecap.y, 5, 'seaSpray', 4, 80);
     //var explosion = explosions.getFirstExists(false);
     //explosion.play('whitecapSound', 10, false, true);
     //explosion_sound.play("",0,.5,false,true);
@@ -1390,6 +1419,23 @@ function playerHitIsland(ship, island){
   }
   }
 
+  //just a copy of the playerWasShot function but with a different explosion
+  function playerWasRocketed(player, bullet){
+    bullet.kill();
+    if (player1.getIsInvincible() === false && player1.getHealth() != "invincible") { //We only damage the player if not invincible
+      player1.damage();
+      player1.resetKills();
+      player1.toggleInvincible();
+      console.log("I am invincible! " + player1.getIsInvincible() + " Health: " + player1.getHealth());
+      //and then we add a timer to restore the player to a vulnerable state. The normal timer didn't work, so I came up with this which uses update frames
+      player1.setInvincibilityTime(50); //TODO: balance this time
+      //TODO: add sound for when the player is hit
+      //explosion
+      particleExplosion(player1.sprite.body.x, player1.sprite.body.y, 10, 'rocketSpray', 8, 40);
+      //console.log("We've been hit, Captain! " + player1.getHealth());
+  }
+  }
+
   //damages the player if they run into an explosive barrel
   function kaboom(player, bomb){
     particleExplosion(bomb.x, bomb.y, 6, 'bigExplosionParticles', 8, 95);
@@ -1445,8 +1491,8 @@ function playerHitIsland(ship, island){
         particle.enableBody = true;
         //console.log("Particle " + i + " " + particle + " particle body = " + particle.enableBody);
         particle.anchor.setTo(0.5, 0.5);
-        particle.body.velocity.x = Math.random() * maxSpeed;
-        particle.body.velocity.y = Math.random() * maxSpeed;
+        particle.body.velocity.x = Math.random() * maxSpeed * (Math.random()>0.5?-1:1);
+        particle.body.velocity.y = Math.random() * maxSpeed * (Math.random()>0.5?-1:1);
         particle.lifespan = 1000;
         particle.angle = Math.random() * 90;
         particle.frame = Math.floor(Math.random() * spriteSheetLength);
@@ -3325,11 +3371,11 @@ return closestIntersection;
     longboat.frame = 0;
     longboat.animations.add('row');
     var weapons = new Array();
-    var weapon = this.game.add.weapon(100, 'cannonball');
+    var weapon = this.game.add.weapon(100, 'vikingSpear');
     weapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
     weapon.bulletLifespan = 2250;
     weapon.bulletSpeed = 200;
-    weapon.fireRate = 60;
+    weapon.fireRate = 120;
     weapon.bulletAngleVariance = 2;
     weapon.bulletCollideWorldBounds = false;
     weapon.bulletWorldWrap = true;
@@ -3337,11 +3383,11 @@ return closestIntersection;
     weapon.fireAngle = 180;
     weapon.bulletInheritSpriteSpeed = true;
     weapons.push(weapon);
-    var weapon2 = this.game.add.weapon(100, 'cannonball');
+    var weapon2 = this.game.add.weapon(100, 'vikingSpear');
     weapon2.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
     weapon2.bulletLifespan = 2250;
     weapon2.bulletSpeed = 200;
-    weapon2.fireRate = 60;
+    weapon2.fireRate = 120;
     weapon2.bulletAngleVariance = 2;
     weapon2.bulletCollideWorldBounds = false;
     weapon2.bulletWorldWrap = true;
@@ -3349,11 +3395,11 @@ return closestIntersection;
     weapon2.fireAngle = -90;
     weapon2.bulletInheritSpriteSpeed = true;
     weapons.push(weapon2);
-    var weapon3 = this.game.add.weapon(100, 'cannonball');
+    var weapon3 = this.game.add.weapon(100, 'vikingSpear');
     weapon3.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
     weapon3.bulletLifespan = 2250;
     weapon3.bulletSpeed = 200;
-    weapon3.fireRate = 60;
+    weapon3.fireRate = 120;
     weapon3.bulletAngleVariance = 2;
     weapon3.bulletCollideWorldBounds = false;
     weapon3.bulletWorldWrap = true;
@@ -3361,11 +3407,11 @@ return closestIntersection;
     weapon3.fireAngle = 0;
     weapon3.bulletInheritSpriteSpeed = true;
     weapons.push(weapon3);
-    var weapon4 = this.game.add.weapon(100, 'cannonball');
+    var weapon4 = this.game.add.weapon(100, 'vikingSpear');
     weapon4.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
     weapon4.bulletLifespan = 2250;
     weapon4.bulletSpeed = 200;
-    weapon4.fireRate = 60;
+    weapon4.fireRate = 120;
     weapon4.bulletAngleVariance = 2;
     weapon4.bulletCollideWorldBounds = false;
     weapon4.bulletWorldWrap = true;
@@ -3424,11 +3470,11 @@ return closestIntersection;
     trireme.frame = 0;
     trireme.animations.add('row');
     var weapons = new Array();
-    var weapon = this.game.add.weapon(100, 'cannonball');
+    var weapon = this.game.add.weapon(100, 'bronzeSpear');
     weapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
     weapon.bulletLifespan = 1250;
     weapon.bulletSpeed = 100;
-    weapon.fireRate = 60;
+    weapon.fireRate = 120;
     weapon.bulletAngleVariance = 2;
     weapon.bulletCollideWorldBounds = false;
     weapon.bulletWorldWrap = true;
@@ -3436,11 +3482,11 @@ return closestIntersection;
     weapon.fireAngle = -135;
     weapon.bulletInheritSpriteSpeed = true;
     weapons.push(weapon);
-    var weapon2 = this.game.add.weapon(100, 'cannonball');
+    var weapon2 = this.game.add.weapon(100, 'bronzeSpear');
     weapon2.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
     weapon2.bulletLifespan = 1250;
     weapon2.bulletSpeed = 100;
-    weapon2.fireRate = 60;
+    weapon2.fireRate = 120;
     weapon2.bulletAngleVariance = 2;
     weapon2.bulletCollideWorldBounds = false;
     weapon2.bulletWorldWrap = true;
@@ -3448,11 +3494,11 @@ return closestIntersection;
     weapon2.fireAngle = -45;
     weapon2.bulletInheritSpriteSpeed = true;
     weapons.push(weapon2);
-    var weapon3 = this.game.add.weapon(100, 'cannonball');
+    var weapon3 = this.game.add.weapon(100, 'bronzeSpear');
     weapon3.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
     weapon3.bulletLifespan = 1250;
     weapon3.bulletSpeed = 100;
-    weapon3.fireRate = 60;
+    weapon3.fireRate = 120;
     weapon3.bulletAngleVariance = 2;
     weapon3.bulletCollideWorldBounds = false;
     weapon3.bulletWorldWrap = true;
@@ -3460,11 +3506,11 @@ return closestIntersection;
     weapon3.fireAngle = 135;
     weapon3.bulletInheritSpriteSpeed = true;
     weapons.push(weapon3);
-    var weapon4 = this.game.add.weapon(100, 'cannonball');
+    var weapon4 = this.game.add.weapon(100, 'bronzeSpear');
     weapon4.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
     weapon4.bulletLifespan = 1250;
     weapon4.bulletSpeed = 100;
-    weapon4.fireRate = 60;
+    weapon4.fireRate = 120;
     weapon4.bulletAngleVariance = 2;
     weapon4.bulletCollideWorldBounds = false;
     weapon4.bulletWorldWrap = true;
