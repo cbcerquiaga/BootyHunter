@@ -1,37 +1,60 @@
-## Welcome to GitHub Pages
+<!DOCTYPE HTML>
+<!--This is just a copy of index.html for use in GitHub Pages-->
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>BooTyHunTer</title>
+    <!--<base href="../">-->
+    <style>
+        html{
+            height:100%;
+            width:100%;
+        }
+        body{
+            height:100%;
+            width:100%;
+            background-image:url("assets/customTreasureMap.png");
+            background-repeat:repeat-x;
+            margin:0px;
+        }
+        canvas {
+            border:5px groove black;
+        margin:auto;
+        }
 
-You can use the [editor on GitHub](https://github.com/cbcerquiaga/BootyHunter/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+    </style>
+    <script type='text/javascript' src='phaser.min.js'></script>
+    <!--<meta name="viewport" content="initial-scale=1 maximum-scale=1 user-scalable=0" />-->
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+       <!-- <script type='text/javascript'  src='maze.js'></script> -->
+    <script src = "enemyWeapons.js"></script>
+    <script src = "storage.js"></script>
+    <script src="ship.js"></script><!-- HTML5 assumes the script type is JS. no need to explictly call it-->
+    <script type='text/javascript'  src='game.js'></script>
+    <!-- START SOUND CODE V4.1a HTML5 -->
+    <script type="text/javascript">
 
-### Markdown
+        // PLAYER VARIABLES
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+        var mp3snd = "assets/your-sound.mp3";
 
-```markdown
-Syntax highlighted code block
+        document.write('<audio autoplay="autoplay">');
+        document.write('<source src="'+mp3snd+'" type="audio/mpeg">');
+        document.write('<!--[if lt IE 9]>');
+        document.write('<bgsound src="'+mp3snd+'" loop="1">');
+        document.write('<![endif]-->');
+        document.write('</audio>');
 
-# Header 1
-## Header 2
-### Header 3
+    </script>
+    <br>
+    <!-- END SOUND CODE V4.1a -->
 
-- Bulleted
-- List
 
-1. Numbered
-2. List
 
-**Bold** and _Italic_ and `Code` text
 
-[Link](url) and ![Image](src)
-```
+</head>
+<body>
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
 
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/cbcerquiaga/BootyHunter/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+</body>
+</html>
