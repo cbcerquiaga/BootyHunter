@@ -24,13 +24,13 @@ var startWake = 0;
 
 //enemy global variables
 var wave;
-var numEnemies; //added 100 to all gunboat speeds
-var enemyDownWindSpeed = {'gunboat': 200, 'manowar': 210, 'normal': 220, 'dhow': 250, 'galleon': 300, 'clipper': 350};
-var enemyCrossWindSpeed = {'gunboat': 160, 'manowar': 170, 'normal': 180, 'dhow': 350, 'galleon': 200, 'clipper': 295};//the dhow goes faster across the wind than down
-var enemyUpWindSpeed = {'gunboat': 135, 'manowar': 100, 'normal': 140, 'dhow': 200, 'galleon': 130, 'clipper': 220};
+var numEnemies;
+var enemyDownWindSpeed = {'gunboat': 150, 'manowar': 200, 'normal': 220, 'dhow': 250, 'galleon': 300, 'clipper': 350};
+var enemyCrossWindSpeed = {'gunboat': 110, 'manowar': 160, 'normal': 180, 'dhow': 350, 'galleon': 200, 'clipper': 295};//the dhow goes faster across the wind than down
+var enemyUpWindSpeed = {'gunboat': 85, 'manowar': 100, 'normal': 140, 'dhow': 200, 'galleon': 130, 'clipper': 220};
 var enemyHealth = {'gunboat': 1, 'manowar': 70, 'normal': 40, 'dhow': 21};
 var enemyDifficulty = {'gunboat': 1, 'manowar': 10, 'normal': 5, 'dhow': 10};
-var enemyTurnRate = {'gunboat': 20, 'manowar': 15, 'normal': 20, 'dhow': 40, 'galleon': 45};
+var enemyTurnRate = {'gunboat': 10, 'manowar': 8, 'normal': 10, 'dhow': 20, 'galleon': 25};
 var enemyTreasureDrop = {'gunboat': 1, 'manowar': 4, 'normal': 2, 'dhow': 4, 'piranha': 2};
 var waveDifficulty;
 
@@ -88,7 +88,6 @@ GameState.prototype.preload = function() {
     game.load.spritesheet('krakenExplosion', 'assets/krakenExplosion.png', 4, 4);
     game.load.spritesheet('megaladonExplosion', 'assets/megaladonExplosion.png', 4, 4);
     game.load.spritesheet('piranahExplosion', 'assets/piranhaExplosion.png', 2, 2);
-    game.load.spritesheet('seaSpray', 'assets/seaSpray.png', 1, 1);
     game.load.spritesheet('lochNessExplosion', 'assets/lochNessExplosion.png', 4, 4);
     game.load.spritesheet('mobyDickExplosion', 'assets/mobyDickExplosion.png', 4, 4);
     this.game.load.image('startScreen', 'assets/introScreen.png');
@@ -141,7 +140,7 @@ GameState.prototype.create = function() {
 
     //instantiates boss data
     //var allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab', 'mobyDick', 'piranha', 'galleon', 'clipper', 'longboat', 'trireme'];
-    var allBosses = ['junk'];
+    var allBosses = ['longboat'];
 
     var treasureGroup = this.game.add.group();
     var enemies = this.game.add.group();
@@ -1350,7 +1349,7 @@ function whiteCapHitIsland(island, whitecap){
 function whiteCapHitShip(ship, whitecap){
   whitecap.kill();
     //TODO: make wave crashing sound?
-    particleExplosion(whitecap.x, whitecap.y, 5, 'seaSpray', 4, 80);
+    particleExplosion(whitecap.x, whitecap.y, 10, 'seaSpray', 4, 40);
     //var explosion = explosions.getFirstExists(false);
     //explosion.play('whitecapSound', 10, false, true);
     //explosion_sound.play("",0,.5,false,true);
@@ -1372,7 +1371,8 @@ function playerHitIsland(ship, island){
 }
 
   function enemyHitIsland(enemy, island){
-    if (enemy.key === 'mobyDick' || enemy.key === 'clipper' || enemy.key === 'moab' || enemy.key === 'longboat' || enemy.key === 'nessie'){//pattern bosses don't take damage from hitting islands
+    if (enemy.key === 'mobyDick' || enemy.key === 'clipper' || enemy.key === 'moab' || enemy.key === 'longboat'
+    || enemy.key === 'nessie' || enemy.key === 'trireme'){//pattern bosses don't take damage from hitting islands
       getOutOfThere(enemy, island);
     } else if (enemy.key !== 'ship'){//the ghost ship doesn't react to islands at all
       enemy.health -= 1;//previously 5
@@ -3019,7 +3019,7 @@ return closestIntersection;
     this.game.physics.enable(junk, Phaser.Physics.ARCADE);
     junk.anchor.setTo(0.5, 0.5);
     //TODO: balance health, speed, turn rate
-    junk.health = enemyHealth['manowar'] * 1.5;
+    junk.health = enemyHealth['manowar'];
     junk.TURN_RATE = 10;
     junk.maxSpeed = 65;
     junk.angle = angle;
@@ -3027,8 +3027,8 @@ return closestIntersection;
     junk.body.velocity.y = ySpeed;
     var weapon = this.game.add.weapon(30, 'rocket');
     weapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-    weapon.bulletLifespan = 2350;
-    weapon.bulletSpeed = 200;
+    weapon.bulletLifespan = 2950;
+    weapon.bulletSpeed = 180;
     weapon.fireRate = 50;
     weapon.bulletAngleVariance = 10;
     weapon.bulletCollideWorldBounds = false;
@@ -3358,7 +3358,7 @@ return closestIntersection;
     this.game.physics.enable(longboat, Phaser.Physics.ARCADE);
     longboat.anchor.setTo(0.5, 0.5);
     //TODO: balance health, speed, turn rate
-    longboat.health = enemyHealth['manowar'] * 1.5;
+    longboat.health = enemyHealth['dhow'];
     longboat.TURN_RATE = 10;
     longboat.maxSpeed = 200;
     if (angle === 0){
@@ -3375,7 +3375,7 @@ return closestIntersection;
     weapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
     weapon.bulletLifespan = 2250;
     weapon.bulletSpeed = 200;
-    weapon.fireRate = 120;
+    weapon.fireRate = 420;
     weapon.bulletAngleVariance = 2;
     weapon.bulletCollideWorldBounds = false;
     weapon.bulletWorldWrap = true;
@@ -3387,7 +3387,7 @@ return closestIntersection;
     weapon2.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
     weapon2.bulletLifespan = 2250;
     weapon2.bulletSpeed = 200;
-    weapon2.fireRate = 120;
+    weapon2.fireRate = 420;
     weapon2.bulletAngleVariance = 2;
     weapon2.bulletCollideWorldBounds = false;
     weapon2.bulletWorldWrap = true;
@@ -3399,7 +3399,7 @@ return closestIntersection;
     weapon3.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
     weapon3.bulletLifespan = 2250;
     weapon3.bulletSpeed = 200;
-    weapon3.fireRate = 120;
+    weapon3.fireRate = 420;
     weapon3.bulletAngleVariance = 2;
     weapon3.bulletCollideWorldBounds = false;
     weapon3.bulletWorldWrap = true;
@@ -3411,7 +3411,7 @@ return closestIntersection;
     weapon4.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
     weapon4.bulletLifespan = 2250;
     weapon4.bulletSpeed = 200;
-    weapon4.fireRate = 120;
+    weapon4.fireRate = 420;
     weapon4.bulletAngleVariance = 2;
     weapon4.bulletCollideWorldBounds = false;
     weapon4.bulletWorldWrap = true;
@@ -3453,7 +3453,7 @@ return closestIntersection;
     this.game.physics.enable(trireme, Phaser.Physics.ARCADE);
     trireme.anchor.setTo(0.5, 0.5);
     //TODO: balance health, speed, turn rate
-    trireme.health = enemyHealth['manowar'] * 1.5;
+    trireme.health = enemyHealth['dhow'];
     trireme.TURN_RATE = 10;
     trireme.maxSpeed = 200;
     if (angle === 0){ //makes the classic greek square zig-zag
@@ -3472,9 +3472,9 @@ return closestIntersection;
     var weapons = new Array();
     var weapon = this.game.add.weapon(100, 'bronzeSpear');
     weapon.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-    weapon.bulletLifespan = 1250;
+    weapon.bulletLifespan = 2500;
     weapon.bulletSpeed = 100;
-    weapon.fireRate = 120;
+    weapon.fireRate = 420;
     weapon.bulletAngleVariance = 2;
     weapon.bulletCollideWorldBounds = false;
     weapon.bulletWorldWrap = true;
@@ -3484,9 +3484,9 @@ return closestIntersection;
     weapons.push(weapon);
     var weapon2 = this.game.add.weapon(100, 'bronzeSpear');
     weapon2.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-    weapon2.bulletLifespan = 1250;
+    weapon2.bulletLifespan = 2500;
     weapon2.bulletSpeed = 100;
-    weapon2.fireRate = 120;
+    weapon2.fireRate = 420;
     weapon2.bulletAngleVariance = 2;
     weapon2.bulletCollideWorldBounds = false;
     weapon2.bulletWorldWrap = true;
@@ -3496,9 +3496,9 @@ return closestIntersection;
     weapons.push(weapon2);
     var weapon3 = this.game.add.weapon(100, 'bronzeSpear');
     weapon3.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-    weapon3.bulletLifespan = 1250;
+    weapon3.bulletLifespan = 2500;
     weapon3.bulletSpeed = 100;
-    weapon3.fireRate = 120;
+    weapon3.fireRate = 420;
     weapon3.bulletAngleVariance = 2;
     weapon3.bulletCollideWorldBounds = false;
     weapon3.bulletWorldWrap = true;
@@ -3508,9 +3508,9 @@ return closestIntersection;
     weapons.push(weapon3);
     var weapon4 = this.game.add.weapon(100, 'bronzeSpear');
     weapon4.bulletKillType = Phaser.Weapon.KILL_LIFESPAN;
-    weapon4.bulletLifespan = 1250;
+    weapon4.bulletLifespan = 2500;
     weapon4.bulletSpeed = 100;
-    weapon4.fireRate = 120;
+    weapon4.fireRate = 420;
     weapon4.bulletAngleVariance = 2;
     weapon4.bulletCollideWorldBounds = false;
     weapon4.bulletWorldWrap = true;
