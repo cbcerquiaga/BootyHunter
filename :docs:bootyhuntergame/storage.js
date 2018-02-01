@@ -6,7 +6,7 @@ Utility class for accessing global variables more easily in game.js. It would be
 better to make this into several classes, but this is easier for now.
 */
 var storage = function (treasureGroup, enemyGroup, tentacleGroup, allBosses) {
-    this.wave = 0; //4 to test bosses, 0 normally
+    this.wave = 4; //4 to test bosses, 0 normally
     this.treasures = treasureGroup;
     this.treasures.enableBody = true;
     this.enemies = enemyGroup;
