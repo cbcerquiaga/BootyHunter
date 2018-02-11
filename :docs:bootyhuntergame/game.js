@@ -318,7 +318,7 @@ GameState.prototype.update = function () {
   //console.log(player1.sprite.body.velocity.x + " " + player1.sprite.body.velocity.y);
   //if there are no enemies, then the game moves to the next wave
   //console.log(storage1.getEnemies().countLiving());
-  console.log("Killed bosses: " + player1.getAllKilledBosses());
+  //console.log("Killed bosses: " + player1.getAllKilledBosses());
 
   //score
   var scoreString = player1.getScore().toString();
@@ -333,15 +333,26 @@ GameState.prototype.update = function () {
     //sets up the initial wave: randomizes the wind and generates 2 gunboats
     if (storage1.getWave() === 1){
       console.log("first wave. " + storage1.getWave());
+      var randWind = Math.random();
+      //console.log(randWind);
+      if (randWind < 0.25){
+        this.wind = 'N';
+      } else if (randWind < 0.5){
+        this.wind = 'S';
+      } else if (randWind < 0.75){
+        this.wind = 'W';
+      } else {
+        this.wind = 'E';
+      }
       generateEnemies(storage1.getWave(), this.wind, storage1.getEnemies());
     } else if (storage1.getWave() === 42){ //maybe time for the loch ness monster?
       var nessChance = Math.random();
       if (nessChance < 0.42){ //I wonder what the question is...
-        console.log("Were we in Scotland this whole time?");
+        //console.log("Were we in Scotland this whole time?");
         lochNessMonster();
       } else {
         //TODO: remove redundant code
-        console.log("boss wave. " + storage1.getWave());
+        //console.log("boss wave. " + storage1.getWave());
         if (storage1.getAllBosses().length - 1 <= storage1.getKilledBosses().length){
           storage1.resetKilledBosses();
         }
@@ -390,6 +401,7 @@ GameState.prototype.update = function () {
       //randomizes wind once every three waves
       if (storage1.getWave() % 3 === 0){
         var randWind = Math.random();
+        //console.log(randWind);
         if (randWind < 0.25){
           this.wind = 'N';
         } else if (randWind < 0.5){
@@ -615,7 +627,7 @@ GameState.prototype.update = function () {
       //console.log(player1.getRestoreOldHealthTime() + " more updates ")
       player1.lessRestoreOldHealthTime();
     } else {
-      console.log("Polly got her cracker " + player1.getOldHealth());
+      //console.log("Polly got her cracker " + player1.getOldHealth());
       player1.restoreOldHealth();
     }
   }
@@ -889,8 +901,9 @@ GameState.prototype.update = function () {
         this.game.stage.backgroundColor = 0x019ab2;// caribbean teal sea
       }
   }
-
-
+  //clean up the enemy and whitecap group in order to plug any memory leaks
+  removeDeadEnemies();
+  removeDeadWhitecaps(this.whitecaps);
 };
 
 function generateEnemies(wave, numEnemies, wind, enemies){
@@ -1346,7 +1359,7 @@ function playerHitIsland(ship, island){
       player1.damage();
       player1.resetKills();
       player1.toggleInvincible();
-      console.log("I am invincible! " + player1.getIsInvincible() + " Health: " + player1.getHealth());
+      //console.log("I am invincible! " + player1.getIsInvincible() + " Health: " + player1.getHealth());
       //and then we add a timer to restore the player to a vulnerable state. The normal game timer didn't work, so I came up with this which uses update frames
       player1.setInvincibilityTime(100); //TODO: balance this time
       //explosion, needs to be improved somewhat but usually it looks good
@@ -1378,7 +1391,7 @@ function playerHitIsland(ship, island){
 
   //makes enemies turn away from an island they have hit
   function getOutOfThere(enemy, island){
-    console.log("Get the hell out of there!");
+    //console.log("Get the hell out of there!");
     var outOfThereAngle = 180 + this.game.math.angleBetween(
       enemy.x, enemy.y,
       island.x, island.y
@@ -1394,7 +1407,7 @@ function playerHitIsland(ship, island){
       player1.damage();
       player1.resetKills();
       player1.toggleInvincible();
-      console.log("I am invincible! " + player1.getIsInvincible() + " Health: " + player1.getHealth());
+      //console.log("I am invincible! " + player1.getIsInvincible() + " Health: " + player1.getHealth());
       //and then we add a timer to restore the player to a vulnerable state. The normal timer didn't work, so I came up with this which uses update frames
       player1.setInvincibilityTime(50); //TODO: balance this time
       //TODO: add sound for when the player is hit
@@ -1411,7 +1424,7 @@ function playerHitIsland(ship, island){
       player1.damage();
       player1.resetKills();
       player1.toggleInvincible();
-      console.log("I am invincible! " + player1.getIsInvincible() + " Health: " + player1.getHealth());
+      //console.log("I am invincible! " + player1.getIsInvincible() + " Health: " + player1.getHealth());
       //and then we add a timer to restore the player to a vulnerable state. The normal timer didn't work, so I came up with this which uses update frames
       player1.setInvincibilityTime(50); //TODO: balance this time
       //TODO: add sound for when the player is hit
@@ -2212,8 +2225,8 @@ return closestIntersection;
   function normalAI(ship, wind){
     //look for man o'wars to flock with
     // if there is another normal enemy in front of/behind this ship, flock with it
-    // if health is high (over 50%?), or the player's health is low and not invincible, attack the player like a gunboat
-    if ((ship.health > enemyHealth['normal']/2) || (player1.health <= 2 && !player1.getIsInvincible())){
+    // if health is high (over 25%?), or the player's health is low and not invincible, attack the player like a gunboat
+    if ((ship.health > enemyHealth['normal']/4) || (player1.health <= 2 && !player1.getIsInvincible())){
       gunBoatAI(ship,wind,true);
     } else {
       // otherwise, run away from the player
@@ -2562,16 +2575,16 @@ return closestIntersection;
       }
         navigate(moab, navigationAngle);
         if (moab.goingToPoint1 && (game.physics.arcade.distanceBetween(moab, moab.point1) < 10)){
-          console.log("passed point1");
+          //console.log("passed point1");
           moab.goingToPoint1 = false;
         } else if (!moab.goingToPoint1 && (game.physics.arcade.distanceBetween(moab, moab.point2) < 10)){
-          console.log("passed point2");
+          //console.log("passed point2");
           moab.goingToPoint1 = true;
         }
     }
 
     function  moabFiringPattern0(moab){
-      console.log("Firing pattern 0");
+      //console.log("Firing pattern 0");
       for (i = 0; i < moab.weapons.length; i++){//alternates between shooting for 120 frames and for 40 frames
         //long and short bursts with 60 frames inbetween them
         if ((moab.patternTime < 600 && moab.patternTime >= 480) || (moab.patternTime < 420 && moab.patternTime >= 380) ||
@@ -2584,7 +2597,7 @@ return closestIntersection;
 
     //This firing pattern is good for now. It leaves nice ship-sized gaps in it.
     function  moabFiringPattern1(moab){
-      console.log("Firing Pattern 1");
+      //console.log("Firing Pattern 1");
       for (i = 0; i < moab.weapons.length; i++){
         if (Math.floor(moab.patternTime/10) % 2 === 0){
           moab.weapons[0][i].fire();
@@ -2596,7 +2609,7 @@ return closestIntersection;
 
     //sprays bullets everywhere for a short time at fixed intervals
     function  moabFiringPattern2(moab){
-      console.log("Firing Pattern 2");
+      //console.log("Firing Pattern 2");
       for (i = 0; i < moab.weapons.length; i++){
         if ((moab.patternTime < 600 && moab.patternTime >= 650) || (moab.patternTime < 450 && moab.patternTime >= 400)
         || (moab.patternTime < 250 && moab.patternTime >= 200) || (moab.patternTime <50 && moab.patternTime >= 0)){
@@ -2608,7 +2621,7 @@ return closestIntersection;
 
     //fires the left weapon half the time and the right weapon the other half
     function  moabFiringPattern3(moab){
-      console.log("Firing Pattern 3");
+      //console.log("Firing Pattern 3");
       for (i = 0; i < moab.weapons.length; i++){
         if ((moab.patternTime < 600 && moab.patternTime >= 500) || (moab.patternTime < 400 && moab.patternTime >= 300)
         || (moab.patternTime < 200 && moab.patternTime >= 100)){
@@ -2736,7 +2749,7 @@ return closestIntersection;
 
   //calls the appropriate functions for each boss depending on what string is passed in
   function bossWave(type){
-    console.log(type);
+    //console.log(type);
     var boss;
     switch(type){
       case 'ghost':
@@ -2798,25 +2811,25 @@ return closestIntersection;
           monster.angle = -90;
         }
         pattern[i] = 'N';
-        console.log('N');
+        //console.log('N');
       } else if (randVal < 0.5){
         if (i === 0){
           monster.angle = 90;
         }
         pattern[i] = 'S';
-        console.log('S');
+        //console.log('S');
       } else if (randVal < 0.75){
         if (i === 0){
           monster.angle = 180;
         }
         pattern[i] = 'W';
-        console.log('W');
+        //console.log('W');
       } else {
         if (i === 0){
           monster.angle = 0;
         }
         pattern[i] = 'E';
-        console.log('E');
+        //console.log('E');
       }
     }
     monster.directions = pattern;
@@ -3061,7 +3074,7 @@ return closestIntersection;
     moab.enableBody = true;
     this.game.physics.enable(moab, Phaser.Physics.ARCADE);
     moab.anchor.setTo(0.5, 0.5);
-    console.log("Holy mother of all boats! " + moab.body);
+    //console.log("Holy mother of all boats! " + moab.body);
     moab.body.velocity.x = xSpeed;
     moab.body.velocity.y = ySpeed;
     moab.maxSpeed = 180; //TODO: make the speed change depending on the direction of the wind
@@ -3613,6 +3626,27 @@ return closestIntersection;
       }
       var bossText = game.add.text(this.width/2 - 260, this.height/4 + 140, bossesDefeated, { fontSize: '16px', fill: '#000' });
       game.input.onDown.add(newGame, self);
+  }
+
+  function removeDeadEnemies(){
+    var enemy;
+    for (var i = 0; i < storage1.getEnemies().length; i++){
+      enemy = storage1.getEnemies().children[i];
+      if (!enemy.alive){
+        storage1.getEnemies().remove(enemy, false, true);
+      }
+    }
+  }
+
+  function removeDeadWhitecaps(whitecaps){
+    var array = whitecaps.children;
+    var whitecap;
+    for (var i = 0; i < array.length; i++){
+      whitecap = array[i];
+      if (!whitecap.alive){
+        whitecaps.remove(whitecap, false, true);
+      }
+    }
   }
 
   //refreshes the page
