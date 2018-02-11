@@ -333,7 +333,7 @@ GameState.prototype.update = function () {
     //sets up the initial wave: randomizes the wind and generates 2 gunboats
     if (storage1.getWave() === 1){
       console.log("first wave. " + storage1.getWave());
-      generateEnemies(storage1.getWave(), this.wind, storage1.getEnemies(), true);
+      generateEnemies(storage1.getWave(), this.wind, storage1.getEnemies());
     } else if (storage1.getWave() === 42){ //maybe time for the loch ness monster?
       var nessChance = Math.random();
       if (nessChance < 0.42){ //I wonder what the question is...
@@ -384,7 +384,7 @@ GameState.prototype.update = function () {
       killAllTentacles();
       //this.numEnemies += Math.round(1.5 * storage1.getWave());
       console.log("Wave: " + storage1.getWave());
-      generateEnemies(storage1.getWave(), this.wind, storage1.getEnemies(), false);
+      generateEnemies(storage1.getWave(), this.wind, storage1.getEnemies());
     }
 
       //randomizes wind once every three waves
@@ -893,58 +893,43 @@ GameState.prototype.update = function () {
 
 };
 
-function generateEnemies(wave, numEnemies, wind, enemies, isFirstWave){
+function generateEnemies(wave, numEnemies, wind, enemies){
   //console.log(wind + " wind in generateEnemies");
   var enemy;
   //TODO: figure out if this is redundant or efficient
-  if (isFirstWave){
+  if (wave === 1){
     enemy = initializeEnemy('gunboat', wind, enemies);
     storage1.addEnemy(enemy);
     enemy = initializeEnemy('gunboat', wind, enemies);
     storage1.addEnemy(enemy);
     //console.log("live enemies after production: " + storage1.getEnemies().countLiving());
-  } else if (wave <= 4){
-    //console.log("not the first wave");
-    for (var i = 0; i <= wave * 3; i++){
-    //console.log("in the loop: " + storage1.getEnemies());
-    //TODO: find a way to weight the selection to favor a certain type of enemy if one of that type has already been added to the wave
-      var shipChosen = false;
-      if ((wave) >= 4 && !shipChosen){ //difficulty value of the man o' war and dhow
-        var useThisSprite = Math.random()>0.5?true:false; //TODO: balance frequency of selecting hardest available enemy
-        if (useThisSprite){
-          shipChosen = true;
-          var useDhow =  Math.random()>0.5?true:false; //determines whether to use dhow or man o' war
-          if (useDhow){//create a dhow
-            enemy = initializeEnemy('dhow', wind);
+  } else if (wave <= 4){ //early waves but not the first wave
+        var waveType = Math.random();
+        if (waveType < 0.25){ //gunboat swarm
+          for (var i = 0; i < 6; i++){
+            enemy = initializeEnemy('gunboat', wind);
             storage1.addEnemy(enemy);
-            i += 10;
-          } else {// create a man o war
-            enemy = initializeEnemy('manowar', wind);
-            storage1.addEnemy(enemy);
-            i +=10;
           }
-        }
-    }
-    if ((wave) >= 2 && !shipChosen){
-      var useThisSprite = Math.random()>0.5?true:false;//TODO: balance freequency of selecting hardest available enemy
-      if (useThisSprite){
-        shipChosen = true;
+        } else if (waveType < 0.5){ //man o' war wave
+          enemy = initializeEnemy('manowar', wind);
+          storage1.addEnemy(enemy);
+          enemy = initializeEnemy('manowar', wind);
+          storage1.addEnemy(enemy);
+      } else if (waveType < 0.75){//dhow wave
+        enemy = initializeEnemy('dhow', wind);
+        storage1.addEnemy(enemy);
+        enemy = initializeEnemy('dhow', wind);
+        storage1.addEnemy(enemy);
+      } else { //normal wave
         enemy = initializeEnemy('normal', wind);
         storage1.addEnemy(enemy);
-        i += 2;
+        enemy = initializeEnemy('normal', wind);
+        storage1.addEnemy(enemy);
       }
-    }
-    if (!shipChosen){//no other ship was chosen and/or the remaining difficulty value is too low
-      shipChosen = true;
-      enemy = initializeEnemy('gunboat', wind);
-      storage1.addEnemy(enemy);
-      i++;
-    }
-  }
-} else { //once the waves get high enough, we cap the total
+} else { //once the waves get high enough, there are no more gunboats
   for (var i = 0; i < 16; i++){
     var spriteChoice = Math.random();
-    if (spriteChoice < 0.4){
+    if (spriteChoice < 0.3){
       enemy = initializeEnemy('normal', wind);
       storage1.addEnemy(enemy);
       i += 3;
@@ -1467,8 +1452,8 @@ function playerHitIsland(ship, island){
   //collides two enemies
   function shipsCollided(ship1, ship2){
     if ((Math.abs(ship1.body.velocity.x) + Math.abs(ship1.body.velocity.y) + Math.abs(ship2.body.velocity.x) + Math.abs(ship2.body.velocity.y) ) >= 300){
-      ship1.health--;
-      ship2.health--;
+      ship1.health-= 5;
+      ship2.health-= 5;
     }
     if (ship1.health <= 0){
       spawnTreasure(ship1.x, ship1.y, 4);//TODO: use mapped enemytreasureDrop values
