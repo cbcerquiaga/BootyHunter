@@ -87,7 +87,7 @@ GameState.prototype.preload = function() {
     game.load.spritesheet('blood', 'assets/blood.png', 1,1);
     game.load.spritesheet('krakenExplosion', 'assets/krakenExplosion.png', 4, 4);
     game.load.spritesheet('megaladonExplosion', 'assets/megaladonExplosion.png', 4, 4);
-    game.load.spritesheet('piranahExplosion', 'assets/piranhaExplosion.png', 2, 2);
+    game.load.spritesheet('piranhaExplosion', 'assets/piranhaExplosion.png', 2, 2);
     game.load.spritesheet('lochNessExplosion', 'assets/lochNessExplosion.png', 4, 4);
     game.load.spritesheet('mobyDickExplosion', 'assets/mobyDickExplosion.png', 4, 4);
     this.game.load.image('startScreen', 'assets/introScreen.png');
@@ -140,7 +140,7 @@ GameState.prototype.create = function() {
 
     //instantiates boss data
     var allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab', 'mobyDick', 'piranha', 'galleon', 'clipper', 'longboat', 'trireme'];
-    //var allBosses = ['mobyDick'];
+    //var allBosses = ['piranha'];
 
     var treasureGroup = this.game.add.group();
     var enemies = this.game.add.group();
@@ -391,6 +391,9 @@ GameState.prototype.update = function () {
         }
       }
     } else {
+      //clean up the enemy and whitecap group in order to plug any memory leaks
+      removeDeadEnemies();
+      removeDeadWhitecaps(this.whitecaps);
       //console.log("regular wave. " + storage1.getWave());
       killAllTentacles();
       //this.numEnemies += Math.round(1.5 * storage1.getWave());
@@ -901,9 +904,6 @@ GameState.prototype.update = function () {
         this.game.stage.backgroundColor = 0x019ab2;// caribbean teal sea
       }
   }
-  //clean up the enemy and whitecap group in order to plug any memory leaks
-  removeDeadEnemies();
-  removeDeadWhitecaps(this.whitecaps);
 };
 
 function generateEnemies(wave, numEnemies, wind, enemies){
