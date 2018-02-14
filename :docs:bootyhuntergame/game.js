@@ -128,7 +128,6 @@ GameState.prototype.create = function() {
     this.ROTATION_SPEED = 180; // degrees/second
     this.ACCELERATION = 90; // pixels/second/second
     this.MAX_SPEED = 850; // pixels/second. This is the max max speed in the game
-    this.DRAG = 50; // pixels/second
     this.wake = this.startWake; // starting wake sprite
 
     // Add the ship to the stage
@@ -228,13 +227,6 @@ GameState.prototype.create = function() {
     // Enable physics on the ship
     this.game.physics.enable(player1.sprite, Phaser.Physics.ARCADE);
     player1.enablePhysics();
-
-    // Set maximum velocity
-    //this.ship.body.maxVelocity.setTo(this.MAX_SPEED, this.MAX_SPEED); // x, y// Moved to ship.js
-
-    // Add drag to the ship that slows it down when it is not accelerating
-    //this.ship.body.drag.setTo(this.DRAG, this.DRAG); // x, y
-    //A game decision was made that the ship doesn't slow down unless it crashes
 
 
     // Capture certain keys to prevent their default actions in the browser.
@@ -372,6 +364,7 @@ GameState.prototype.update = function () {
         }
       }
     } else if (isBossWave()){ //boss wave
+      killAllTentacles();
       console.log("boss wave. " + storage1.getWave());
       if (storage1.getAllBosses().length - 1 <= storage1.getKilledBosses().length){
         storage1.resetKilledBosses();
@@ -808,6 +801,9 @@ GameState.prototype.update = function () {
       player1.sprite.frame = this.wake;
 
     }  else if (this.input.keyboard.isDown(Phaser.Keyboard.DOWN) || this.input.keyboard.isDown(Phaser.Keyboard.S)) {
+      //Normally, down would be the brakes, but
+      //A game decision was made that the ship doesn't slow down unless it crashes, and
+      //it makes sense for the pirate fire button to be near the other controls
       //console.log("pressing DOWN " + player1.getPirate());
           if (player1.getPirates() > 0){
             //console.log("prepare the boarding party!");
@@ -952,6 +948,9 @@ function generateEnemies(wave, numEnemies, wind, enemies){
         enemy = initializeEnemy('dhow', wind);
         storage1.addEnemy(enemy);
         i += 4;
+      } else {
+        enemy = initializeEnemy('manowar', wind);
+        storage1.addEnemy(enemy);
       }
     }
   }
@@ -1026,7 +1025,7 @@ function generateEnemies(wave, numEnemies, wind, enemies){
         storage1.addKilledBoss(enemy.key);
         player1.saveKilledBoss(enemy.key);
       }
-      //play sound
+      //TODO: play sound
       }
     }
   }
@@ -1036,7 +1035,6 @@ function generateEnemies(wave, numEnemies, wind, enemies){
     killAllTentacles();
     var retVal = 0;
     pirate.kill();
-    //if (enemy.key === 'kraken'){retVal = 1; killAllTentacles();}
     enemy.kill();
     player1.addKill();
     var bootyLength = Math.random() * 6;
@@ -1045,7 +1043,8 @@ function generateEnemies(wave, numEnemies, wind, enemies){
       booty = spawnTreasure(enemy.x, enemy.y, 1);
       collectTreasure(player1, booty);
     }
-    if (storage1.getAllBosses().indexOf(enemy.key) >= 0){
+    if ((storage1.getAllBosses().indexOf(enemy.key) >= 0 || enemy.key === 'ship') && storage1.getEnemies().countLiving() === 0){
+      //console.log("adding enemy with key " + enemy.key + " to killed bosses.");
       storage1.addKilledBoss(enemy.key);
       player1.saveKilledBoss(enemy.key);
     }
@@ -1070,7 +1069,7 @@ function generateEnemies(wave, numEnemies, wind, enemies){
     powerup.kill();
   }
 
-  //when a tentacle grabs the player, it's supposed to
+  //when a tentacle grabs the player, it's supposed to stick
   function tentacleGrabbedPlayer(player, tentacle){
     if (player1.getHealth !== "invincible"){
     if (player1.getIsInvincible() === false) { //We only damage the player if not invincible
@@ -1139,7 +1138,6 @@ function createIsland(x, y, radius1, radius2) {
     island.body.immovable = true;
     island.x = x;
     island.y = y;
-    //island.body.loadpolygon()
     return island;
   }
 }
@@ -1348,7 +1346,6 @@ function whiteCapHitShip(ship, whitecap){
   whitecap.kill();
     //TODO: make wave crashing sound?
     particleExplosion(whitecap.x, whitecap.y, 10, 'seaSpray', 4, 40);
-    //var explosion = explosions.getFirstExists(false);
     //explosion.play('whitecapSound', 10, false, true);
     //explosion_sound.play("",0,.5,false,true);
 }
@@ -1445,15 +1442,14 @@ function playerHitIsland(ship, island){
     if (player1.getHealth() === "invincible"){
       ship.health-= 10;
     } else {
-      if (!player1.getIsInvincible()){ //TODO: add check for if the enemy is invincible
-      //TODO: add key to check so different bosses have different abilities
+      if (!player1.getIsInvincible()){
       if ((Math.abs(player1.sprite.body.velocity.x) + Math.abs(player1.sprite.body.velocity.y) + Math.abs(ship.body.velocity.x) + Math.abs(ship.body.velocity.y) ) >= 300){
         player1.damage();
         player1.toggleInvincible();
         player1.setInvincibilityTime(100);
         ship.health--;
         if (ship.health <= 0){
-          spawnTreasure(ship.x, ship.y, 4);//TODO: use mapped enemytreasureDrop values
+          spawnTreasure(ship.x, ship.y, enemyTreasureDrop[ship.key]);
           ship.kill();
           player1.addKill();
         }
@@ -1469,12 +1465,12 @@ function playerHitIsland(ship, island){
       ship2.health-= 5;
     }
     if (ship1.health <= 0){
-      spawnTreasure(ship1.x, ship1.y, 4);//TODO: use mapped enemytreasureDrop values
+      spawnTreasure(ship1.x, ship1.y, enemyTreasureDrop[ship1.key]);
       ship1.kill();
       player1.addKill();
     }
     if (ship2.health <= 0){
-      spawnTreasure(ship2.x, ship2.y, 4);//TODO: use mapped enemytreasureDrop values
+      spawnTreasure(ship2.x, ship2.y, enemyTreasureDrop[ship2.key]);
       ship2.kill();
       player1.addKill();
     }
@@ -3167,7 +3163,7 @@ return closestIntersection;
     this.game.physics.enable(whale, Phaser.Physics.ARCADE);
     whale.anchor.setTo(0.5, 0.5);
     //TODO: balance health, speed, turn rate
-    whale.health = enemyHealth['manowar'] * 1.2;
+    whale.health = enemyHealth['normal'] * 1.2;
     whale.TURN_RATE = 10;
     whale.maxSpeed = 250;
     whale.directions = ['N', 'S', 'N', 'W', 'E', 'W', 'S', 'N', 'S', 'E', 'W', 'E'];
@@ -3580,8 +3576,6 @@ return closestIntersection;
   function gameOverSequence(score, wave, kills, bossesKilled) {
       player1.sprite.kill();
       game.paused = true;
-      //TODO Change the current screen to a GameOver Screen with
-      //score, wave, kills and bossesKilled
       var gameOverScreen = this.game.add.sprite(this.width/2, this.height/2, 'gameOver');
       gameOverScreen.anchor.setTo(0.5, 0.5);
       //var gameOverText =  game.add.text(this.width/2 - 90, this.height/4 - 20, 'GAME OVER', { fontSize: '32px', fill: '#000' });
@@ -3602,27 +3596,16 @@ return closestIntersection;
       var killedBosses = player1.getAllKilledBosses();
       if (killedBosses.length < 1){
         bossesDefeated = "You didn't defeat any bosses this time.";
-      } else if (killedBosses.length === storage1.getAllBosses().length){
+      } else if (allBossesDefeated(killedBosses.length)){
         bossesDefeated = "You defeated every boss.";
       } else {
         bossesDefeated = "You defeated ";
-        var killedBoss;
-        for (var i = 0; i < killedBosses.length; i++){
-          killedBoss = killedBossText(killedBosses[i]);
-
-          if (printedKills.indexOf(killedBosses[i]) === -1){
-          if (i === 0){
-            bossesDefeated += " " + killedBossText(killedBosses[i]);
-          } else if (i === killedBosses.length - 1){
-          bossesDefeated += " and " + killedBossText(killedBosses[i]);
-          } else {
-            bossesDefeated += killedBossText(killedBosses[i]) + ", ";
-          }
-          printedKills.push(killedBosses[i]);
-      }
+        killedBossStrings = makeKilledBossStrings(killedBosses);
+        bossesDefeated += oxfordComma(killedBossStrings);
     }
-    //TODO: implement this line
-    //if (bossesDefeated.length > something) bossesDefeated = "You defeated " + killedBosses.length + " bosses";
+    if (bossesDefeated.length > 60){
+      bossesDefeated = "You defeated " + killedBosses.length + " bosses";
+      //console.log(bossesDefeated.length);
       }
       var bossText = game.add.text(this.width/2 - 260, this.height/4 + 140, bossesDefeated, { fontSize: '16px', fill: '#000' });
       game.input.onDown.add(newGame, self);
@@ -3649,15 +3632,49 @@ return closestIntersection;
     }
   }
 
+  //checks to see if every boss has been defeated or not
+  function allBossesDefeated(numKilledBosses){
+    if (numKilledBosses < storage1.getAllBosses().length){
+      return false;
+    }
+    var key;
+    var bosses = storage1.getAllBosses();
+    for (var i = 0; i < bosses.length; i++){
+      key = bosses[i];
+      if (bosses.indexOf(key) < 0){
+        return false;
+      }
+    }
+    return true;
+  }
+
+  //takes the killed bosses array and returns an array of the killedBossText for
+  //each boss the player killed.
+  function makeKilledBossStrings(array){
+    var retArray = new Array();
+    var enemy;
+    var stringl
+    for (var i = 0; i < array.length; i++){
+      enemy = array[i];
+      if (retArray.indexOf(enemy) < 0){
+      string = killedBossText(enemy);
+      retArray.push(string);
+      }
+    }
+    return retArray;
+  }
+
+  //converts the bosses into a proper Oxford comma-separated string
+  function oxfordComma(array) {
+    return array.slice(0, -2).join(', ') +
+    (array.slice(0, -2).length ? ', ' : '') +
+    array.slice(-2).join(' and ');
+}
+
   //refreshes the page
   function newGame(event){
     document.location.reload();
   }
-
-
-GameState.prototype.render =function() {
-
-}
 
 /*TODO: Long-term goals
  -high score?
