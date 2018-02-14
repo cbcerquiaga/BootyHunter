@@ -25,9 +25,9 @@ var startWake = 0;
 //enemy global variables
 var wave;
 var numEnemies;
-var enemyDownWindSpeed = {'gunboat': 150, 'manowar': 200, 'normal': 220, 'dhow': 250, 'galleon': 300, 'clipper': 350};
-var enemyCrossWindSpeed = {'gunboat': 110, 'manowar': 160, 'normal': 180, 'dhow': 350, 'galleon': 200, 'clipper': 295};//the dhow goes faster across the wind than down
-var enemyUpWindSpeed = {'gunboat': 85, 'manowar': 100, 'normal': 140, 'dhow': 200, 'galleon': 130, 'clipper': 220};
+var enemyDownWindSpeed = {'gunboat': 150, 'manowar': 200, 'normal': 220, 'dhow': 250, 'galleon': 300, 'clipper': 300};
+var enemyCrossWindSpeed = {'gunboat': 110, 'manowar': 160, 'normal': 180, 'dhow': 350, 'galleon': 200, 'clipper': 265};//the dhow goes faster across the wind than down
+var enemyUpWindSpeed = {'gunboat': 85, 'manowar': 100, 'normal': 140, 'dhow': 200, 'galleon': 130, 'clipper': 200};
 var enemyHealth = {'gunboat': 1, 'manowar': 70, 'normal': 40, 'dhow': 21};
 var enemyDifficulty = {'gunboat': 1, 'manowar': 10, 'normal': 5, 'dhow': 10};
 var enemyTurnRate = {'gunboat': 10, 'manowar': 8, 'normal': 10, 'dhow': 20, 'galleon': 25};
@@ -139,7 +139,7 @@ GameState.prototype.create = function() {
 
     //instantiates boss data
     var allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab', 'mobyDick', 'piranha', 'galleon', 'clipper', 'longboat', 'trireme'];
-    //var allBosses = ['piranha'];
+    //var allBosses = ['mobyDick', 'clipper'];
 
     var treasureGroup = this.game.add.group();
     var enemies = this.game.add.group();
@@ -951,6 +951,7 @@ function generateEnemies(wave, numEnemies, wind, enemies){
       } else {
         enemy = initializeEnemy('manowar', wind);
         storage1.addEnemy(enemy);
+        i += 4;
       }
     }
   }
@@ -3165,7 +3166,7 @@ return closestIntersection;
     //TODO: balance health, speed, turn rate
     whale.health = enemyHealth['normal'] * 1.2;
     whale.TURN_RATE = 10;
-    whale.maxSpeed = 250;
+    whale.maxSpeed = 200;
     whale.directions = ['N', 'S', 'N', 'W', 'E', 'W', 'S', 'N', 'S', 'E', 'W', 'E'];
     whale.currentDirection = 0;
     whale.directionTime = 60;
