@@ -139,7 +139,7 @@ GameState.prototype.create = function() {
 
     //instantiates boss data
     var allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab', 'mobyDick', 'piranha', 'galleon', 'clipper', 'longboat', 'trireme'];
-    //var allBosses = ['mobyDick', 'clipper'];
+    //var allBosses = ['galleon'];
 
     var treasureGroup = this.game.add.group();
     var enemies = this.game.add.group();
@@ -563,7 +563,7 @@ GameState.prototype.update = function () {
           enemy.body.velocity.x = speedArray[0];
           //console.log(enemy.body.velocity.x);
           enemy.body.velocity.y = speedArray[1];
-          galleonAI(enemy);
+          galleonAI(enemy, this.wind);
           avoidIslands(enemy, this.islands);
         } else if (enemy.key === 'clipper'){
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
@@ -2220,14 +2220,16 @@ return closestIntersection;
   //AI for the standard, "normal" enemy. It uses a blend of simple chasing,
   //flocking, and running away to keep the player on their toes
   function normalAI(ship, wind){
-    //look for man o'wars to flock with
-    // if there is another normal enemy in front of/behind this ship, flock with it
     // if health is high (over 25%?), or the player's health is low and not invincible, attack the player like a gunboat
-    if ((ship.health > enemyHealth['normal']/4) || (player1.health <= 2 && !player1.getIsInvincible())){
+    if ((ship.health > enemyHealth['normal']/4) || (player1.health <= 2 && !player1.getIsInvincible()) || ship.courage >= 80){
       gunBoatAI(ship,wind,true);
+      if (ship.courage > 0){
+        ship.courage--;
+      }
     } else {
-      // otherwise, run away from the player
+      // otherwise, run away from the player until the ship builds up the courage
       runAway(ship, wind);
+      ship.courage++;
     }
   }
 
@@ -2285,7 +2287,7 @@ return closestIntersection;
         broadside(ship, targetAngle);
       } else {
         var centroid = Phaser.Point.centroid(manOwarArray);
-
+        navigate(ship, this.game.math.angleBetween(centroid.x, centroid.y, ship.x, ship.y));
       }
     }
   }
@@ -2681,9 +2683,9 @@ return closestIntersection;
       }
     }
 
-    function galleonAI(galleon, wind,){
+    function galleonAI(galleon, wind){
       //console.log("Queremos que navigar " + galleon.position);
-      if (galleon.health < galleon.health/3){
+      if (galleon.health < galleon.health/6){
         //console.log("Time to run away");
         runAway(galleon, wind);
       } else {
@@ -2697,7 +2699,7 @@ return closestIntersection;
               galleon.x, galleon.y,
               leadX, leadY
           );
-      var relFiringAngle = Math.abs(this.game.math.wrapAngle(galleon.angle - targetAngle));
+      var relFiringAngle = Math.abs(this.game.math.wrapAngle(targetAngle - galleon.angle));
       //console.log("relFiringAngle: "+ relFiringAngle);
     //if the player is in or near the firing angle
       if ((relFiringAngle >=160 && relFiringAngle <= 180) || (relFiringAngle <= -160 && relFiringAngle >= -180)){
