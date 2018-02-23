@@ -80,6 +80,7 @@ GameState.prototype.preload = function() {
     this.game.load.image('pirate', 'assets/boardingPirate.png');
     this.game.load.image('gameOver', 'assets/gameOver2.png');
     game.load.text('pirateFacts', 'PirateFacts.txt');
+    game.load.text('secondLine', 'SecondLine.txt');
     this.game.load.spritesheet('sandParticles', 'assets/islandParticles.png', 1, 1);
     game.load.spritesheet('seaSpray', 'assets/seaSpray.png', 1, 1);
     this.game.load.spritesheet('explosionParticles', 'assets/explosionParticles.png', 1,1);
@@ -139,7 +140,7 @@ GameState.prototype.create = function() {
 
     //instantiates boss data
     var allBosses = ['kraken', 'ghost', 'megaladon', 'junk', 'moab', 'mobyDick', 'piranha', 'galleon', 'clipper', 'longboat', 'trireme'];
-    //var allBosses = ['galleon'];
+    //var allBosses = ['kraken'];
 
     var treasureGroup = this.game.add.group();
     var enemies = this.game.add.group();
@@ -977,14 +978,16 @@ function generateEnemies(wave, numEnemies, wind, enemies){
   function enemyWasShot(enemy, bullet){
     bullet.kill();
     if (enemy.key === 'megaladon' || enemy.key === 'mobyDick' || enemy.key === 'piranha'
-    || enemy.key === 'nessie' || enemy.key === 'kraken'){
+    || enemy.key === 'nessie'){
       particleExplosion(enemy.x, enemy.y, 3, 'blood', 4, 40);
+    } else if (enemy.key === 'kraken'){
+      particleExplosion(enemy.x, enemy.y, 32, 'blood', 4, 40);
+      particleExplosion(enemy.x, enemy.y, 32, 'seaSpray', 4, 40);
     } else {
       particleExplosion(enemy.x, enemy.y, 3, 'explosionParticles', 8, 40);
     }
     enemy.health--;
     //console.log("bang! " + enemy.health);
-    //TODO: add explosion
     //play explosion sound
     if (enemy.key === 'kraken'){
       killAllTentacles();
@@ -994,7 +997,7 @@ function generateEnemies(wave, numEnemies, wind, enemies){
         return 0;
       } else {
         //console.log("you killed the kraken!");
-        //krakenExplosion
+        particleExplosion(enemy.x, enemy.y, 10, 'krakenExplosion', 8, 70);
         spawnTreasure(enemy.x, enemy.y, 10);
         enemy.kill();
         storage1.addKilledBoss(enemy.key);
@@ -1379,7 +1382,7 @@ function playerHitIsland(ship, island){
       player1.addKill();
       particleExplosion(enemy.x, enemy.y, 10, 'bigExplosionParticles', 8, 70);
       //TODO: add sound
-      if (storage1.getAllBosses().indexOf(enemy.key) >= 0){
+      if (storage1.getAllBosses().indexOf(enemy.key) >= 0 && storage1.getEnemies().countLiving() === 0){
         storage1.addKilledBoss(enemy.key);
         player1.saveKilledBoss(enemy.key);
       }
@@ -3590,9 +3593,17 @@ return closestIntersection;
         var killsText = game.add.text(this.width/2 - 260, this.height/4 + 110, "You killed a total of " + player1.getTotalKills() + " enemies", { fontSize: '16px', fill: '#000' });
       }
       var text = game.cache.getText('pirateFacts');
+      var text2 = game.cache.getText('secondLine');
       var factArray = text.split('\n');
-      var pirateFact =  factArray[Math.floor(Math.random() * factArray.length)];
+      var factArray2 = text2.split('\n');
+      var index = Math.floor(Math.random() * factArray.length);
+      console.log("Index of the pirate fact: " + index);
+      var pirateFact = factArray[index];
+      var secondLine = factArray2[index];
+      console.log(pirateFact);
+      console.log(secondLine);
       var factText = game.add.text(this.width/2 - 260, this.height/4 + 170, pirateFact, { fontSize: '16px', fill: '#000' });
+      var factText2 = game.add.text(this.width/2 - 260, this.height/4 + 200, secondLine, { fontSize: '16px', fill: '#000' });
       var killText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#000' });
       var bossesDefeated;
       var printedKills = new Array();
@@ -3672,7 +3683,21 @@ return closestIntersection;
     return array.slice(0, -2).join(', ') +
     (array.slice(0, -2).length ? ', ' : '') +
     array.slice(-2).join(' and ');
-}
+  }
+
+  function splitFact(pirateFact, splitChar){
+    var ch;
+    for (var i = 0; i < pirateFact.length; i++){
+      ch = pirateFact.charAt(i);
+      console.log("Char is " + ch);
+      if (ch === splitChar){
+        pirateFact.replaceAt(i, '\n');
+        console.log("Found a " + splitChar + "at index " + i);
+      }
+    }
+
+    return pirateFact;
+  }
 
   //refreshes the page
   function newGame(event){
