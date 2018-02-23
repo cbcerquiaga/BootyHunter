@@ -113,7 +113,7 @@ GameState.prototype.create = function() {
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
     this.islands = this.game.add.group();
     this.islands.enableBody = true;
-    generateIslands(width, height, 6, 100, 10, this.islands);//usually 6 islands, originally 20, 0 for testing
+    generateIslands(width, height, 6, 100, 15, this.islands);//usually 6 islands, originally 20, 0 for testing
 
     //creates whitecaps group
     this.whitecaps = this.game.add.group();
@@ -388,6 +388,7 @@ GameState.prototype.update = function () {
       //clean up the enemy and whitecap group in order to plug any memory leaks
       removeDeadEnemies();
       removeDeadWhitecaps(this.whitecaps);
+      removeDeadTreasures();
       //console.log("regular wave. " + storage1.getWave());
       killAllTentacles();
       //this.numEnemies += Math.round(1.5 * storage1.getWave());
@@ -1075,7 +1076,7 @@ function generateEnemies(wave, numEnemies, wind, enemies){
 
   //when a tentacle grabs the player, it's supposed to stick
   function tentacleGrabbedPlayer(player, tentacle){
-    if (player1.getHealth !== "invincible"){
+    if (player1.getIsInvincible() === false && player1.getHealth() != "invincible"){
     if (player1.getIsInvincible() === false) { //We only damage the player if not invincible
       player1.damage();
       player1.resetKills();
@@ -1239,7 +1240,7 @@ function initializeWhitecap(whitecap, angle){
       if (randVal > 0.94){//TODO: balance this
         var powerup;
         var side = Math.random();
-        if (randVal > 0.96){// 0.96 normal, .2 for testing
+        if (randVal > 0.94){// 0.96 normal, .2 for testing, adjusted to 0.94
           randVal = Math.random();
         if (randVal < 0.5){ //50% chance
           powerup = initializePowerup('seagull', side);//seagull, 1 health
@@ -1535,7 +1536,7 @@ function playerHitIsland(ship, island){
     this.game.physics.enable(treasure, Phaser.Physics.ARCADE);
     treasure.enableBody = true;
     treasure.body.collideWorldBounds = false;
-    treasure.lifespan = 8000;//TODO: balance treasure lifespan
+    treasure.lifespan = 9000;//TODO: balance treasure lifespan
     treasure.value = this.treasureMinVal[type];
     return treasure;
   }
@@ -3169,7 +3170,7 @@ return closestIntersection;
     this.game.physics.enable(whale, Phaser.Physics.ARCADE);
     whale.anchor.setTo(0.5, 0.5);
     //TODO: balance health, speed, turn rate
-    whale.health = enemyHealth['normal'] * 1.2;
+    whale.health = enemyHealth['normal'];
     whale.TURN_RATE = 10;
     whale.maxSpeed = 200;
     whale.directions = ['N', 'S', 'N', 'W', 'E', 'W', 'S', 'N', 'S', 'E', 'W', 'E'];
@@ -3220,7 +3221,7 @@ return closestIntersection;
     this.game.physics.enable(clipper, Phaser.Physics.ARCADE);
     clipper.anchor.setTo(0.5, 0.5);
     //TODO: balance health, speed, turn rate
-    clipper.health = enemyHealth['normal'] * 2;
+    clipper.health = enemyHealth['normal'];
     clipper.TURN_RATE = 10;
     clipper.directions = ['N', 'N', 'W', 'W', 'S', 'S', 'E', 'E', 'W', 'W', 'N', 'N', 'E', 'E', 'S', 'S']; //goes in a big loop, turns around when it hits the SE corner
     clipper.currentDirection = 0;
@@ -3358,7 +3359,7 @@ return closestIntersection;
     this.game.physics.enable(longboat, Phaser.Physics.ARCADE);
     longboat.anchor.setTo(0.5, 0.5);
     //TODO: balance health, speed, turn rate
-    longboat.health = enemyHealth['dhow'];
+    longboat.health = enemyHealth['dhow'] * .5;
     longboat.TURN_RATE = 10;
     longboat.maxSpeed = 160;
     if (angle === 0){
@@ -3453,7 +3454,7 @@ return closestIntersection;
     this.game.physics.enable(trireme, Phaser.Physics.ARCADE);
     trireme.anchor.setTo(0.5, 0.5);
     //TODO: balance health, speed, turn rate
-    trireme.health = enemyHealth['dhow'];
+    trireme.health = enemyHealth['dhow'] * 0.6;
     trireme.TURN_RATE = 10;
     trireme.maxSpeed = 200;
     if (angle === 0){ //makes the classic greek square zig-zag
@@ -3608,6 +3609,7 @@ return closestIntersection;
       var bossesDefeated;
       var printedKills = new Array();
       var killedBosses = player1.getAllKilledBosses();
+      //console.log("Killed bosses length: " + killedBosses.length + "\nSet length: " + killedBossesSet.length);
       if (killedBosses.length < 1){
         bossesDefeated = "You didn't defeat any bosses this time.";
       } else if (allBossesDefeated(killedBosses.length)){
@@ -3630,7 +3632,7 @@ return closestIntersection;
     for (var i = 0; i < storage1.getEnemies().length; i++){
       enemy = storage1.getEnemies().children[i];
       if (!enemy.alive){
-        storage1.getEnemies().remove(enemy, false, true);
+        storage1.getEnemies().remove(enemy, true, true);
       }
     }
   }
@@ -3641,7 +3643,18 @@ return closestIntersection;
     for (var i = 0; i < array.length; i++){
       whitecap = array[i];
       if (!whitecap.alive){
-        whitecaps.remove(whitecap, false, true);
+        whitecaps.remove(whitecap, true, true);
+      }
+    }
+  }
+
+  function removeDeadTreasures(){
+    var array = storage1.getTreasures().children;
+    var treasure;
+    for (var i = 0; i < array.length; i++){
+      treasure = array[i];
+      if (!treasure.alive){
+        storage1.getTreasures().remove(treasure, true, true);
       }
     }
   }

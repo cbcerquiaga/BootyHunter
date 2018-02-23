@@ -52,7 +52,13 @@ var ship = function (_sprite) {
       this.health += value;
       }
       //console.log("new health: " + this.health);
+    } else {
+      if ((this.oldHealth + value) >= 6){
+        this.oldHealth = 6;
+      } else {
+        this.oldHealth += value;
       }
+    }
     }
 
     this.getHealth = function(){
