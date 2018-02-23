@@ -77,3 +77,7 @@ The light, nimble Dhow enemies will attack and then run away.
 The first 4 waves are the easiest.
 Cannons onboard ships are called "guns," and ships when talking about
 Sailors call ropes "lines".
+If you go off the edge of the map, you'll come back on the opposite
+Whitecaps tell you which way the wind is coming from.
+Pirates used to make stink bombs out of rotting meat and throw
+Once treasures go off the edge of the map, they're gone for good.

@@ -76,3 +76,7 @@ if there are more than one.
 
 
 how big a ship is, it was referred to by the number of guns it has
+
+side of the map. The world is round!
+
+them onto ships they wanted to attack.
