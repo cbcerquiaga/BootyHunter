@@ -10,7 +10,7 @@
 var player1;//represents playable character
 var storage1;//stores things like the wave count and the treasures group
 var enemyWeapons;
-var width = 960, height = 650;
+var width = 960, height = 640;//originally 960 x 650
 var score = 0;
 var fireButtonHeld = 0;
 var treasureMinVal = {'silverCoin': 10, 'goldCoin': 80, 'emerald': 100, 'purpleGem': 150, 'diamond': 0};
@@ -3724,5 +3724,5 @@ return closestIntersection;
 //-----------------------------------------------------------------------------
 
 //var game = new Phaser.Game(848, 450, Phaser.AUTO, 'game');
-var game = new Phaser.Game(960, 650, Phaser.AUTO, 'game');
+var game = new Phaser.Game(this.width, this.height, Phaser.AUTO, 'game');
 game.state.add('game', GameState, true);
