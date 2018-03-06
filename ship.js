@@ -114,6 +114,10 @@ var ship = function (_sprite) {
       this.invincibilityTime = value;
     }
 
+    this.addInvincibilityTime = function(value){
+      this.invincibilityTime += value;
+    }
+
     this.lessTime = function(){
       this.invincibilityTime--;
     }

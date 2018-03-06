@@ -3,8 +3,8 @@
 //-----------------------------------------------------------------------------
 //BOOTYHUNTER: A SWASHBUCKLING ADVENTURE
 //Concept by Blake Erquiaga
-//Written by Blake Erquiaga, Dan Zweiner, Jason Watts, Liem Gearen, David Queen
-//Special thanks to Dr. Thomas Houpt and Dr. Forrest Stonedahl
+//Written by Blake Erquiaga, Dan Zweiner, Jason Watts, and David Queen
+//Special thanks to Dr. Thomas Houpt, Chuck Houpt, and Dr. Forrest Stonedahl
 
 //global variables
 var player1;//represents playable character
@@ -25,10 +25,10 @@ var startWake = 0;
 //enemy global variables
 var wave;
 var numEnemies;
-var enemyDownWindSpeed = {'gunboat': 150, 'manowar': 200, 'normal': 220, 'dhow': 250, 'galleon': 300, 'clipper': 300};
+var enemyDownWindSpeed = {'gunboat': 150, 'manowar': 200, 'normal': 220, 'dhow': 250, 'galleon': 280, 'clipper': 250};
 var enemyCrossWindSpeed = {'gunboat': 110, 'manowar': 160, 'normal': 180, 'dhow': 350, 'galleon': 200, 'clipper': 265};//the dhow goes faster across the wind than down
-var enemyUpWindSpeed = {'gunboat': 85, 'manowar': 100, 'normal': 140, 'dhow': 200, 'galleon': 130, 'clipper': 200};
-var enemyHealth = {'gunboat': 1, 'manowar': 70, 'normal': 40, 'dhow': 21};
+var enemyUpWindSpeed = {'gunboat': 85, 'manowar': 100, 'normal': 140, 'dhow': 200, 'galleon': 130, 'clipper': 180};
+var enemyHealth = {'gunboat': 1, 'manowar': 60, 'normal': 40, 'dhow': 21};
 var enemyDifficulty = {'gunboat': 1, 'manowar': 10, 'normal': 5, 'dhow': 10};
 var enemyTurnRate = {'gunboat': 10, 'manowar': 8, 'normal': 10, 'dhow': 20, 'galleon': 25};
 var enemyTreasureDrop = {'gunboat': 1, 'manowar': 4, 'normal': 2, 'dhow': 4, 'piranha': 2};
@@ -99,9 +99,6 @@ GameState.prototype.preload = function() {
 
 // Setup the example
 GameState.prototype.create = function() {
-    // Set stage background color
-//    this.game.stage.backgroundColor = 0x111111;
-
   //TODO: remove redundant code
 
   //player1.kills = 0;
@@ -325,7 +322,7 @@ GameState.prototype.update = function () {
     storage1.nextWave();
     //sets up the initial wave: randomizes the wind and generates 2 gunboats
     if (storage1.getWave() === 1){
-      console.log("first wave. " + storage1.getWave());
+      //console.log("first wave. " + storage1.getWave());
       var randWind = Math.random();
       //console.log(randWind);
       if (randWind < 0.25){
@@ -366,7 +363,7 @@ GameState.prototype.update = function () {
       }
     } else if (isBossWave()){ //boss wave
       killAllTentacles();
-      console.log("boss wave. " + storage1.getWave());
+      //console.log("boss wave. " + storage1.getWave());
       if (storage1.getAllBosses().length - 1 <= storage1.getKilledBosses().length){
         storage1.resetKilledBosses();
       }
@@ -392,7 +389,7 @@ GameState.prototype.update = function () {
       //console.log("regular wave. " + storage1.getWave());
       killAllTentacles();
       //this.numEnemies += Math.round(1.5 * storage1.getWave());
-      console.log("Wave: " + storage1.getWave());
+      //console.log("Wave: " + storage1.getWave());
       generateEnemies(storage1.getWave(), this.wind, storage1.getEnemies());
     }
 
@@ -832,7 +829,7 @@ GameState.prototype.update = function () {
     }
   } else { //reduce the fireButtonHeld value
       if (this.fireButtonHeld > 0)
-        this.fireButtonHeld -= 1; //TODO: balance cooldown time vs spam time. Should it be longer? Should it be shorter?
+        this.fireButtonHeld -= 2; //TODO: balance cooldown time vs spam time. Should it be longer? Should it be shorter?
       if (this.fireButtonHeld < 0)
         this.fireButtonHeld = 0;
   }
@@ -1544,18 +1541,21 @@ function playerHitIsland(ship, island){
   //adds score for the player when they collect treasures
   function collectTreasure(player, treasure){
     switch(treasure.key){
-      case 'silverCoin': player1.addScore(10); break;
-      case 'goldCoin': player1.addScore(80); break;
+      case 'silverCoin': player1.addScore(10); player1.addInvincibilityTime(10); break;
+      case 'goldCoin': player1.addScore(80); player1.addInvincibilityTime(80); break;
       case 'emerald':
         var score = 100 + Math.round((0.1 * (Math.abs(player1.sprite.body.velocity.x) + Math.abs(player1.sprite.body.velocity.y))));
+        player1.addInvincibilityTime(120);
         player1.addScore(score);
         break;
       case 'purpleGem':
         var score = 100 + Math.round((0.2 * (Math.abs(player1.sprite.body.velocity.x) + Math.abs(player1.sprite.body.velocity.y))));
+        player1.addInvincibilityTime(120);
         player1.addScore(score);
         break;
       default://diamond
         var score = Math.round(Math.abs(player1.sprite.body.velocity.x) + Math.abs(player1.sprite.body.velocity.y));
+        player1.addInvincibilityTime(120);
         player1.addScore(score);
     }
     treasure.kill();
@@ -2563,7 +2563,7 @@ return closestIntersection;
         }
       }
       var navigationAngle;
-      console.log("Going to point 1? " + moab.goingToPoint1);
+      //console.log("Going to point 1? " + moab.goingToPoint1);
       if (moab.goingToPoint1){
         navigationAngle = this.game.math.angleBetween(
             moab.x, moab.y,
@@ -3172,7 +3172,7 @@ return closestIntersection;
     //TODO: balance health, speed, turn rate
     whale.health = enemyHealth['normal'];
     whale.TURN_RATE = 10;
-    whale.maxSpeed = 200;
+    whale.maxSpeed = 190;
     whale.directions = ['N', 'S', 'N', 'W', 'E', 'W', 'S', 'N', 'S', 'E', 'W', 'E'];
     whale.currentDirection = 0;
     whale.directionTime = 60;
@@ -3456,7 +3456,7 @@ return closestIntersection;
     //TODO: balance health, speed, turn rate
     trireme.health = enemyHealth['dhow'] * 0.6;
     trireme.TURN_RATE = 10;
-    trireme.maxSpeed = 200;
+    trireme.maxSpeed = 180;
     if (angle === 0){ //makes the classic greek square zig-zag
       trireme.directions = ['E', 'N', 'E', 'S'];
     } else  if (angle === 180){
@@ -3598,11 +3598,11 @@ return closestIntersection;
       var factArray = text.split('\n');
       var factArray2 = text2.split('\n');
       var index = Math.floor(Math.random() * factArray.length);
-      console.log("Index of the pirate fact: " + index);
+      //console.log("Index of the pirate fact: " + index);
       var pirateFact = factArray[index];
       var secondLine = factArray2[index];
-      console.log(pirateFact);
-      console.log(secondLine);
+      //console.log(pirateFact);
+      //console.log(secondLine);
       var factText = game.add.text(this.width/2 - 260, this.height/4 + 170, pirateFact, { fontSize: '16px', fill: '#000' });
       var factText2 = game.add.text(this.width/2 - 260, this.height/4 + 200, secondLine, { fontSize: '16px', fill: '#000' });
       var killText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#000' });
@@ -3620,7 +3620,14 @@ return closestIntersection;
         bossesDefeated += oxfordComma(killedBossStrings);
     }
     if (bossesDefeated.length > 60){
-      bossesDefeated = "You defeated " + killedBosses.length + " bosses";
+      var num = 0;
+      if (wave > 25){
+        num += wave - 25;
+        num += 5;
+      } else {
+        num = Math.floor(wave/5);
+      }
+      bossesDefeated = "You defeated " + num + " bosses";
       //console.log(bossesDefeated.length);
       }
       var bossText = game.add.text(this.width/2 - 260, this.height/4 + 140, bossesDefeated, { fontSize: '16px', fill: '#000' });
@@ -3696,20 +3703,6 @@ return closestIntersection;
     return array.slice(0, -2).join(', ') +
     (array.slice(0, -2).length ? ', ' : '') +
     array.slice(-2).join(' and ');
-  }
-
-  function splitFact(pirateFact, splitChar){
-    var ch;
-    for (var i = 0; i < pirateFact.length; i++){
-      ch = pirateFact.charAt(i);
-      console.log("Char is " + ch);
-      if (ch === splitChar){
-        pirateFact.replaceAt(i, '\n');
-        console.log("Found a " + splitChar + "at index " + i);
-      }
-    }
-
-    return pirateFact;
   }
 
   //refreshes the page
