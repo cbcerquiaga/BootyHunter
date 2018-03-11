@@ -36,12 +36,10 @@
 
         // PLAYER VARIABLES
 
-        var mp3snd = "assets/your-sound.mp3";
-
-        document.write('<audio autoplay="autoplay">');
+        var mp3snd = "assets/less-gamey-song.m4a";
+        document.write('<audio autoplay="autoplay" loop = "true">');
         document.write('<source src="'+mp3snd+'" type="audio/mpeg">');
         document.write('<!--[if lt IE 9]>');
-        document.write('<bgsound src="'+mp3snd+'" loop="1">');
         document.write('<![endif]-->');
         document.write('</audio>');
 

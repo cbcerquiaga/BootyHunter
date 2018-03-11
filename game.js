@@ -16,6 +16,7 @@ var fireButtonHeld = 0;
 var treasureMinVal = {'silverCoin': 10, 'goldCoin': 80, 'emerald': 100, 'purpleGem': 150, 'diamond': 0};
 var numRandTreasure = 0;
 var alreadyTreasure = false;
+var cannonSound;
 
 //wind global variables
 var wind = 'S'; //the direction the wind is coming from. N means the wind blows north to south, N,S,E,W
@@ -93,7 +94,8 @@ GameState.prototype.preload = function() {
     game.load.spritesheet('mobyDickExplosion', 'assets/mobyDickExplosion.png', 4, 4);
     this.game.load.image('startScreen', 'assets/introScreen.png');
     this.game.load.image('jollyRoger', 'assets/jollyRoger.png');
-    this.game.load.audio('your-sound', 'assets/your-sound.mp3');
+    this.game.load.audio('your-sound', 'assets/less-gamey-song.m4a');
+    game.load.audio('cannon', 'assets/Cannonfire.wav');
     //console.log("Hello world");
 };
 
@@ -103,7 +105,7 @@ GameState.prototype.create = function() {
 
   //player1.kills = 0;
   //console.log("kills: " + playerKills);
-
+  this.cannonSound = game.add.audio('cannon');
   this.fireButtonHeld = 0;
 
     //adds islands to map
@@ -196,6 +198,7 @@ GameState.prototype.create = function() {
     this.weapon.bulletAngleVariance = 10;
     this.weapon.bulletCollideWorldBounds = false;
     this.weapon.bulletWorldWrap = true;
+    this.weapon.onFire.add(fireCannon, this);
     this.weapon.trackSprite(player1.sprite, 0, 0, false);//TODO: shift over to actual position of gun
     //second weapon, fires left relative to the ship
     this.weapon2 = this.game.add.weapon(100, 'cannonball');
@@ -206,6 +209,7 @@ GameState.prototype.create = function() {
     this.weapon2.bulletAngleVariance = 10;
     this.weapon2.bulletCollideWorldBounds = false;
     this.weapon2.bulletWorldWrap = true;
+    this.weapon2.onFire.add(fireCannon, this);
     this.weapon2.trackSprite(player1.sprite, 0, 0, false);//TODO: shift over to actual position of gun
     //boarding pirate, can only be used when hasPirate === true
     //TODO: make the angle point towards the nearest enemy
@@ -263,6 +267,10 @@ GameState.prototype.create = function() {
         menu.destroy();
         game.paused = false;
       }
+  }
+
+  function fireCannon(){
+        //this.cannonSound.play();
   }
 
 
@@ -462,7 +470,7 @@ GameState.prototype.update = function () {
         game.physics.arcade.overlap(this.islands, enemy.weapons[1].bullets, islandWasShot);
         game.physics.arcade.overlap(player1.sprite, enemy.weapons[1].bullets, playerWasShot);
         //console.log("enemy angle: " + enemy.angle + " weapon angles: " + enemy.weapons[0].angle + ", "  + enemy.weapons[1].angle);
-        gunBoatAI(enemy, this.wind, true); //the ship chases the player or runs away, turns to shoot
+        gunBoatAI(enemy, this.wind, true, this.cannonSound); //the ship chases the player or runs away, turns to shoot
         avoidIslands(enemy, this.islands); //the ship tries to avoid islands
         addWake(enemy, oldXSpeed, oldYSpeed);
       } else if (enemy.key === 'normal'){
@@ -478,7 +486,7 @@ GameState.prototype.update = function () {
         game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
         game.physics.arcade.overlap(this.islands, enemy.weapons[1].bullets, islandWasShot);
         game.physics.arcade.overlap(player1.sprite, enemy.weapons[1].bullets, playerWasShot);
-        normalAI(enemy, this.wind);
+        normalAI(enemy, this.wind, this.cannonSound);
         avoidIslands(enemy, this.islands);
         addWake(enemy, oldXSpeed, oldYSpeed);
       } else if (enemy.key === 'manowar'){
@@ -500,7 +508,7 @@ GameState.prototype.update = function () {
         game.physics.arcade.overlap(player1.sprite, enemy.weapons[2].bullets, playerWasShot);
         game.physics.arcade.overlap(this.islands, enemy.weapons[3].bullets, islandWasShot);
         game.physics.arcade.overlap(player1.sprite, enemy.weapons[3].bullets, playerWasShot);
-        manOwarAI(enemy, this.wind);
+        manOwarAI(enemy, this.wind, this.cannonSound);
         avoidIslands(enemy, this.islands);
         addWake(enemy, oldXSpeed, oldYSpeed);
       } else if (enemy.key === 'dhow'){
@@ -513,7 +521,7 @@ GameState.prototype.update = function () {
         enemy.body.velocity.y = speedArray[1];
         game.physics.arcade.overlap(this.islands, enemy.weapons[0].bullets, islandWasShot);
         game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
-        dhowAI(enemy, this.wind);
+        dhowAI(enemy, this.wind, this.cannonSound);
         avoidIslands(enemy, this.islands);
         addWake(enemy, oldXSpeed, oldYSpeed);
       } else {//boss
@@ -534,7 +542,7 @@ GameState.prototype.update = function () {
           enemy.frame = squareSailCheckWind(enemy.angle, this.wind);
           trackMoabWeapons(enemy, this.islands);
           avoidIslands(enemy, this.islands);
-          moabAI(enemy);
+          moabAI(enemy, this.cannonSound);
           addWake(enemy, oldXSpeed, oldYSpeed);
         } else if (enemy.key === 'mobyDick'){
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
@@ -576,7 +584,7 @@ GameState.prototype.update = function () {
           enemy.body.velocity.y = speedArray[1];
           avoidIslands(enemy, this.islands);
           patternAI(enemy, 50)
-          clipperFiringPattern(enemy);
+          clipperFiringPattern(enemy, cannonSound);
         } else if (enemy.key === 'longboat' || enemy.key === 'trireme'){
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[0].bullets, playerWasShot);
           game.physics.arcade.overlap(player1.sprite, enemy.weapons[1].bullets, playerWasShot);
@@ -2019,7 +2027,7 @@ function playerHitIsland(ship, island){
 
   //makes an enemy perform very simple behaviors- take the shortest route to chase the player
   // and shoot when the player is to its side
-  function gunBoatAI(gunboat, wind, shootsFromSides){
+  function gunBoatAI(gunboat, wind, shootsFromSides, cannonSound){
     //console.log(gunboat + " in the Gunboat AI function");
     var straightDistance = game.physics.arcade.distanceBetween(player1.sprite, gunboat);//find the direct distance to the player
     //find the round the world distance to the player
@@ -2035,9 +2043,9 @@ function playerHitIsland(ship, island){
     //if one of those distances is within firing range, call the broadside() function
     if (shootsFromSides){
       if (straightDistance <= 250){
-        broadside(gunboat, targetAngle);
+        broadside(gunboat, targetAngle, cannonSound);
       } else if (roundDistance <= 250){
-        broadside(gunboat, targetAngle);
+        broadside(gunboat, targetAngle, cannonSound);
       }
     }
     //if one of those distances is less than one third the other, go that way
@@ -2079,7 +2087,7 @@ function playerHitIsland(ship, island){
   angle where they might get hit, and fire the weapons
   */
 
-  function broadside(enemy, targetAngle){
+  function broadside(enemy, targetAngle, cannonSound){
     var weapon;
     var relFiringAngle = Math.abs(this.game.math.wrapAngle(enemy.angle - targetAngle));
     //console.log("relFiringAngle: "+ relFiringAngle);
@@ -2089,7 +2097,7 @@ function playerHitIsland(ship, island){
           //if it is, fire the weapons
         for (var i = 0; i < enemy.weapons.length; i++){
         weapon = enemy.weapons[i];
-        weapon.fire();
+        weapon.fire(); //cannonSound.play();
         }
       }
     }
@@ -2223,10 +2231,10 @@ return closestIntersection;
 */
   //AI for the standard, "normal" enemy. It uses a blend of simple chasing,
   //flocking, and running away to keep the player on their toes
-  function normalAI(ship, wind){
+  function normalAI(ship, wind, cannonSound){
     // if health is high (over 25%?), or the player's health is low and not invincible, attack the player like a gunboat
     if ((ship.health > enemyHealth['normal']/4) || (player1.health <= 2 && !player1.getIsInvincible()) || ship.courage >= 80){
-      gunBoatAI(ship,wind,true);
+      gunBoatAI(ship,wind,true, cannonSound);
       if (ship.courage > 0){
         ship.courage--;
       }
@@ -2239,13 +2247,13 @@ return closestIntersection;
 
   //AI for the heavy "man O' war" enemy. It wants to flock with other ships (especially otehr man o wars)
   //into either a line formation or into a circled-wagon formation in order to maximize firepower
-  function manOwarAI(ship, wind){
+  function manOwarAI(ship, wind, cannonSound){
     var manOwarArray = countManOwars();
     //check if the ship has a ship in front of it
     //check if the ship has a ship behind it
     //ship is in front of the line or ship is at 30% health
     if ((ship.isLeader && !ship.isFollowing) || ship.health < enemyHealth[ship.key] * 0.3){
-      gunBoatAI(ship,wind, true);
+      gunBoatAI(ship,wind, true, cannonSound);
     } else if (ship.isFollowing){ //ship is in the middle of the line
       if (!ship.followingShip.alive){
         ship.isFollwing = false;
@@ -2271,12 +2279,12 @@ return closestIntersection;
       //repel nearby man o wars to form a proper flock
       var repulsion = repelShips(ship, manOwarArray, 70);
       ship.body.velocity.add(repulsion.x, repulsion.y);
-      broadside(ship, targetAngle);
+      broadside(ship, targetAngle, cannonSound);
       //if the player is in the firing cone, shoot
     } else { //ship is loose
       //if the player is close, attack, otherwise flock
       if (game.physics.arcade.distanceBetween(player1.sprite, ship) < 400){
-        gunBoatAI(ship, wind, true);
+        gunBoatAI(ship, wind, true, cannonSound);
       } else if (manOwarArray.length > 0){ //there are ships to flock with
         var friend = findNearestShip(ship, manOwarArray);
         ship.followingShip = friend;
@@ -2288,7 +2296,7 @@ return closestIntersection;
             ship.x, ship.y,
             leadX, leadY
           );
-        broadside(ship, targetAngle);
+        broadside(ship, targetAngle, cannonSound);
       } else {
         var centroid = Phaser.Point.centroid(manOwarArray);
         navigate(ship, this.game.math.angleBetween(centroid.x, centroid.y, ship.x, ship.y));
@@ -2323,14 +2331,14 @@ return closestIntersection;
 
   //AI for the light "dhow" enemy. It wants to avoid getting hit as much as possible, so it runs
   //away most of the time and only attacks when the player would be most vulnerable
-  function dhowAI(ship, wind){
+  function dhowAI(ship, wind, cannonSound){
     //check the ship's current "courage" value
     if (ship.courage < 150){
       ship.courage++;
       runAway(ship, wind);
     } else {
       //if it's at or above the threshhold, look to attack.
-      dhowAttack(ship);
+      dhowAttack(ship, wind, cannonSound);
     }
   }
 
@@ -2379,7 +2387,7 @@ return closestIntersection;
 }
 
   //when it's time, the dhow turns to the player and shoots for a shor time
-  function dhowAttack(ship, wind){
+  function dhowAttack(ship, wind, cannonSound){
     //console.log("I am not afraid!");
     var targetAngle = this.game.math.angleBetween(
       ship.x, ship.y,
@@ -2387,7 +2395,7 @@ return closestIntersection;
     );
     navigate(ship, targetAngle);
     if (game.physics.arcade.distanceBetween(player1.sprite,ship) < 400){
-      ship.weapons[0].fire();
+      ship.weapons[0].fire(); //cannonSound.play();
       game.time.events.add(800, function () {ship.courage = 0;});
     }
     //if shots land, reset the courage value so the dhow will run away
@@ -2544,7 +2552,7 @@ return closestIntersection;
         avoidIslands(junk, islands);//shouldn't work all the time because of how the function works
     }
 
-    function moabAI(moab){
+    function moabAI(moab, cannonSound){
       //console.log("Just, you know, doing MOAB stuff");
       if (moab.patternTime <= 0){
         //randomly chooses one of the 3 possible patterns if the patternTime has run out
@@ -2553,13 +2561,13 @@ return closestIntersection;
       } else {
         moab.patternTime--;
         if (moab.pattern === 0){
-          moabFiringPattern0(moab);
+          moabFiringPattern0(moab, cannonSound);
         } else if (moab.pattern === 1){
-          moabFiringPattern1(moab);
+          moabFiringPattern1(moab, cannonSound);
         } else if (moab.pattern === 2){
-          moabFiringPattern2(moab);
+          moabFiringPattern2(moab, cannonSound);
         } else {
-          moabFiringPattern3(moab);
+          moabFiringPattern3(moab, cannonSound);
         }
       }
       var navigationAngle;
@@ -2586,51 +2594,51 @@ return closestIntersection;
         }
     }
 
-    function  moabFiringPattern0(moab){
+    function  moabFiringPattern0(moab, cannonSound){
       //console.log("Firing pattern 0");
       for (i = 0; i < moab.weapons.length; i++){//alternates between shooting for 120 frames and for 40 frames
         //long and short bursts with 60 frames inbetween them
         if ((moab.patternTime < 600 && moab.patternTime >= 480) || (moab.patternTime < 420 && moab.patternTime >= 380) ||
         (moab.patternTime < 320 && moab.patternTime >= 200) || (moab.patternTime < 140 && moab.patternTime >= 20)){
-        moab.weapons[0][i].fire();
-        moab.weapons[1][i].fire();
+        moab.weapons[0][i].fire(); //cannonSound.play();
+        moab.weapons[1][i].fire(); //cannonSound.play();
         }
       }
     }
 
     //This firing pattern is good for now. It leaves nice ship-sized gaps in it.
-    function  moabFiringPattern1(moab){
+    function  moabFiringPattern1(moab, cannonSound){
       //console.log("Firing Pattern 1");
       for (i = 0; i < moab.weapons.length; i++){
         if (Math.floor(moab.patternTime/10) % 2 === 0){
-          moab.weapons[0][i].fire();
+          moab.weapons[0][i].fire(); //cannonSound.play();
         } else {
-          moab.weapons[1][i].fire();
+          moab.weapons[1][i].fire(); //cannonSound.play();
         }
       }
     }
 
     //sprays bullets everywhere for a short time at fixed intervals
-    function  moabFiringPattern2(moab){
+    function  moabFiringPattern2(moab, cannonSound){
       //console.log("Firing Pattern 2");
       for (i = 0; i < moab.weapons.length; i++){
         if ((moab.patternTime < 600 && moab.patternTime >= 650) || (moab.patternTime < 450 && moab.patternTime >= 400)
         || (moab.patternTime < 250 && moab.patternTime >= 200) || (moab.patternTime <50 && moab.patternTime >= 0)){
-        moab.weapons[0][i].fire();
-        moab.weapons[1][i].fire();
+        moab.weapons[0][i].fire(); //cannonSound.play();
+        moab.weapons[1][i].fire(); //cannonSound.play();
       }
       }
     }
 
     //fires the left weapon half the time and the right weapon the other half
-    function  moabFiringPattern3(moab){
+    function  moabFiringPattern3(moab, cannonSound){
       //console.log("Firing Pattern 3");
       for (i = 0; i < moab.weapons.length; i++){
         if ((moab.patternTime < 600 && moab.patternTime >= 500) || (moab.patternTime < 400 && moab.patternTime >= 300)
         || (moab.patternTime < 200 && moab.patternTime >= 100)){
-          moab.weapons[0][i].fire();
+          moab.weapons[0][i].fire(); //cannonSound.play();
         } else {
-          moab.weapons[1][i].fire();
+          moab.weapons[1][i].fire(); //cannonSound.play();
         }
       }
     }
@@ -2694,7 +2702,7 @@ return closestIntersection;
         runAway(galleon, wind);
       } else {
         //console.log("Time to attack");
-        gunBoatAI(galleon, wind, false);
+        gunBoatAI(galleon, wind, false, cannonSound);
       }
       //a modified version of the broadside() function based on the galleon shooting backwards
       var leadX = player1.sprite.x + (player1.sprite.body.velocity.x * 3);
@@ -2712,18 +2720,18 @@ return closestIntersection;
     }
 
     //the weapons fire continuously, rotating in the opposite direction as the ship is moving
-    function clipperFiringPattern(clipper){
+    function clipperFiringPattern(clipper, cannonSound){
       var weapon1 = clipper.weapons[0];
       var weapon2 = clipper.weapons[1];
       if (clipper.currentDirection < 8){//going counterclockwise
-        weapon1.fire();
+        weapon1.fire(); //cannonSound.play();
         weapon1.fireAngle += 2;
-        weapon2.fire();
+        weapon2.fire(); //cannonSound.play();
         weapon2.fireAngle += 2;
       } else {
-        weapon1.fire();
+        weapon1.fire(); //cannonSound.play();
         weapon1.fireAngle -= 2;
-        weapon2.fire();
+        weapon2.fire(); //cannonSound.play();
         weapon2.fireAngle -= 2;
       }
     }
@@ -3603,8 +3611,8 @@ return closestIntersection;
       var secondLine = factArray2[index];
       //console.log(pirateFact);
       //console.log(secondLine);
-      var factText = game.add.text(this.width/2 - 260, this.height/4 + 170, pirateFact, { fontSize: '16px', fill: '#000' });
-      var factText2 = game.add.text(this.width/2 - 260, this.height/4 + 200, secondLine, { fontSize: '16px', fill: '#000' });
+      var factText = game.add.text(this.width/2 - 260, this.height/4 + 230, pirateFact, { fontSize: '16px', fill: '#000' });
+      var factText2 = game.add.text(this.width/2 - 260, this.height/4 + 260, secondLine, { fontSize: '16px', fill: '#000' });
       var killText = game.add.text(40, 16, '', { fontSize: '16px', fill: '#000' });
       var bossesDefeated;
       var printedKills = new Array();
